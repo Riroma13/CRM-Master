@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Multi-tenant ───────────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  logo      String?
+  config    Json?    @default("{}")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users    User[]
+  clients  Cliente[]
+  sistemas Sistema[]
+  items    ItemInventario[]
+  eventos  EventoBitacora[]
+  tareas   Tarea[]
+
+  @@map("tenants")
+}
+
+// ─── Auth / Users ───────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  email     String   @unique
+  name      String?
+  role      String   @default("user") // "superadmin" | "admin" | "user"
+  avatar    String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+// ─── Cliente ────────────────────────────────────────────────────────
+
+model Cliente {
+  id               String   @id @default(uuid())
+  tenantId         String   @map("tenant_id")
+  nombre           String
+  tipoNegocio      String?  @map("tipo_negocio")
+  contactoPrincipal String? @map("contacto_principal")
+  estadoRelacion   String   @default("Activo") @map("estado_relacion")
+  saludGeneral     String   @default("🟢") @map("salud_general")
+  fechaInicio      DateTime? @map("fecha_inicio")
+  notasGenerales   String?  @map("notas_generales")
+  tags             String[]
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  sistemas Sistema[]
+  tareas   Tarea[]
+
+  @@index([tenantId])
+  @@map("clientes")
+}
+
+// ─── Sistema ────────────────────────────────────────────────────────
+
+model Sistema {
+  id                String    @id @default(uuid())
+  tenantId          String    @map("tenant_id")
+  clienteId         String    @map("cliente_id")
+  nombreSistema     String    @map("nombre_sistema")
+  tipo              String
+  entorno           String?
+  version           String?
+  estadoTecnico     String    @default("🟢") @map("estado_tecnico")
+  fechaUltimoChequeo DateTime? @map("fecha_ultimo_chequeo")
+  credencialesRef   String?   @map("credenciales_ref")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  tenant  Tenant           @relation(fields: [tenantId], references: [id])
+  cliente Cliente          @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  items   ItemInventario[]
+  eventos EventoBitacora[]
+  tareas  Tarea[]
+
+  @@index([tenantId])
+  @@index([clienteId])
+  @@map("sistemas")
+}
+
+// ─── ItemInventario ─────────────────────────────────────────────────
+
+model ItemInventario {
+  id                 String   @id @default(uuid())
+  tenantId           String   @map("tenant_id")
+  sistemaId          String   @map("sistema_id")
+  categoria          String
+  nombre             String
+  estado             String   @default("Implementado")
+  descripcion        String?
+  fechaImplementacion DateTime? @map("fecha_implementacion")
+  responsable        String?
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  sistema Sistema @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([sistemaId])
+  @@map("items_inventario")
+}
+
+// ─── EventoBitacora ─────────────────────────────────────────────────
+
+model EventoBitacora {
+  id             String   @id @default(uuid())
+  tenantId       String   @map("tenant_id")
+  sistemaId      String   @map("sistema_id")
+  fecha          DateTime @default(now())
+  tipo           String
+  titulo         String
+  descripcion    String?
+  siguienteAccion String? @map("siguiente_accion")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  sistema Sistema @relation(fields: [sistemaId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([sistemaId])
+  @@index([fecha])
+  @@map("eventos_bitacora")
+}
+
+// ─── Tarea ──────────────────────────────────────────────────────────
+
+model Tarea {
+  id          String    @id @default(uuid())
+  tenantId    String    @map("tenant_id")
+  clienteId   String?   @map("cliente_id")
+  sistemaId   String?   @map("sistema_id")
+  titulo      String
+  estado      String    @default("Pendiente")
+  prioridad   String    @default("Media")
+  fechaLimite DateTime? @map("fecha_limite")
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  cliente Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  sistema Sistema? @relation(fields: [sistemaId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([clienteId])
+  @@index([sistemaId])
+  @@map("tareas")
+}
