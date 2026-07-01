@@ -1,23 +1,24 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TenantModule } from './modules/tenants/tenant.module';
+import { TenantsModule } from './modules/tenants/tenant.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { ClientModule } from './modules/clients/client.module';
-import { SystemModule } from './modules/systems/system.module';
-import { InventoryModule } from './modules/inventory/inventory.module';
-import { BitacoraModule } from './modules/bitacora/bitacora.module';
-import { TaskModule } from './modules/tasks/task.module';
+import { ClientsModule } from './modules/clients/clients.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '../../.env' }),
-    TenantModule,
+    TenantsModule,
     AuthModule,
-    ClientModule,
-    SystemModule,
-    InventoryModule,
-    BitacoraModule,
-    TaskModule,
+    ClientsModule,
+    DashboardModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TenantResolveMiddleware)
+      .forRoutes('*');
+  }
+}

@@ -22,9 +22,5 @@
       "@shared/*": ["../../packages/shared/src/*"]
     }
   },
-  "include": ["src/**/*"],
-  "references": [
-    { "path": "../../packages/database" },
-    { "path": "../../packages/shared" }
-  ]
+  "include": ["src/**/*"]
 }

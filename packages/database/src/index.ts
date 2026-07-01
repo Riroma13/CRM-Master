@@ -13,7 +13,7 @@ export function createPrismaClient(tenantId?: string) {
   return client.$extends({
     query: {
       $allModels: {
-        async $allOperations({ model, operation, args, query }) {
+        async $allOperations({ model, operation, args, query }: any) {
           const scopedModels = [
             'User', 'Cliente', 'Sistema', 'ItemInventario',
             'EventoBitacora', 'Tarea',
@@ -23,7 +23,7 @@ export function createPrismaClient(tenantId?: string) {
 
           // Inject tenantId filter for read operations
           if (['findUnique', 'findFirst', 'findMany', 'count', 'aggregate'].includes(operation)) {
-            args.where = { ...args.where, tenantId };
+            args.where = { ...(args.where || {}), tenantId };
           }
 
           // Inject tenantId for create
