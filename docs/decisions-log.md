@@ -6,6 +6,7 @@
 |-----|--------|--------|-------|
 | [ADR-0001](./architecture/adr/0001-multi-tenancy-strategy.md) | Estrategia de multi-tenancy y acceso por subdominio | accepted | 2026-06-30 |
 | [SPEC-0001](../specs/SPEC-0001-tenant-onboarding.md) | Tenant onboarding — alta, invitación y aprovisionamiento | proposed | 2026-07-01 |
+| [SPEC-0002](../specs/SPEC-0002-multi-tenant-isolation-auth.md) | Aislamiento multi-tenant y autenticación con Better-Auth | proposed | 2026-07-01 |
 
 ---
 
