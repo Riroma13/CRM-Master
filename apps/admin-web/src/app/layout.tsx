@@ -1,17 +1,15 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "CRM-Master | Mission Control",
-  description: "Panel de supervisión multi-tenant",
+  title: 'Mission Control | CRM-Master',
+  description: 'Panel de supervisión multi-tenant',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
