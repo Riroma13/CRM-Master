@@ -84,7 +84,7 @@ export class TenantsService {
     ]);
 
     return {
-      data: tenants.map((t) => ({
+      data: tenants.map((t: any) => ({
         id: t.id,
         slug: t.slug,
         name: t.name,
