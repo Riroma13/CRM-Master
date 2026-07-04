@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
@@ -19,8 +25,18 @@ export class TenantScopeGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
 
-    // Admin requests (Mission Control) no requieren tenant scope
+    // Admin requests (Mission Control) requieren auth verificada primero
     if ((request as any).isAdminRequest) {
+      if (!request.user) {
+        throw new UnauthorizedException(
+          'Acceso denegado: autenticación requerida para rutas de administración',
+        );
+      }
+      if (request.user.role !== 'superadmin') {
+        throw new ForbiddenException(
+          'Acceso denegado: se requiere rol de superadmin',
+        );
+      }
       return true;
     }
 

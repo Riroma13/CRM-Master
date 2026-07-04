@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TenantScopeGuard } from './tenant-scope.guard';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -18,7 +18,7 @@ describe('TenantScopeGuard', () => {
     isPublic?: boolean;
     isAdminRequest?: boolean;
     tenantId?: string;
-    user?: { tenantId?: string };
+    user?: { id?: string; email?: string; name?: string | null; role?: string; tenantId?: string };
   }) {
     const isPublic = overrides?.isPublic ?? false;
     const isAdminRequest = overrides?.isAdminRequest ?? false;
@@ -56,9 +56,28 @@ describe('TenantScopeGuard', () => {
     });
   });
 
-  describe('isAdminRequest bypass', () => {
-    it('should allow request when isAdminRequest is true', () => {
-      const context = createContext({ isAdminRequest: true });
+  describe('isAdminRequest with auth', () => {
+    it('should throw UnauthorizedException when isAdminRequest is true but user not authenticated', () => {
+      const context = createContext({ isAdminRequest: true, user: undefined });
+
+      expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+    });
+
+    it('should throw ForbiddenException when isAdminRequest is true but user role is not superadmin', () => {
+      const context = createContext({
+        isAdminRequest: true,
+        user: { id: 'user-1', email: 'admin@test.com', name: 'Admin', role: 'admin', tenantId: 'tenant-1' },
+      });
+
+      expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+    });
+
+    it('should allow request when isAdminRequest is true and user has superadmin role', () => {
+      const context = createContext({
+        isAdminRequest: true,
+        user: { id: 'user-1', email: 'super@admin.com', name: 'Super', role: 'superadmin', tenantId: 'tenant-1' },
+      });
+
       expect(guard.canActivate(context)).toBe(true);
     });
   });
@@ -108,13 +127,7 @@ describe('TenantScopeGuard', () => {
 
   describe('guard ordering', () => {
     it('should check @Public() before isAdminRequest', () => {
-      // Even with isAdminRequest, @Public() path is checked first
       const context = createContext({ isPublic: true, isAdminRequest: true });
-      expect(guard.canActivate(context)).toBe(true);
-    });
-
-    it('should check @Public() and isAdminRequest before tenantId check', () => {
-      const context = createContext({ isAdminRequest: true });
       expect(guard.canActivate(context)).toBe(true);
     });
   });

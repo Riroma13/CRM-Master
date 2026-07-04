@@ -7,6 +7,7 @@ import { ClientsModule } from './modules/clients/clients.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
 import { TenantScopeGuard } from './common/guards/tenant-scope.guard';
+import { AdminAuthGuard } from './common/guards/admin-auth.guard';
 import { PrismaService } from './common/prisma.service';
 
 @Module({
@@ -20,6 +21,10 @@ import { PrismaService } from './common/prisma.service';
   providers: [
     PrismaService,
     TenantResolveMiddleware,
+    {
+      provide: APP_GUARD,
+      useClass: AdminAuthGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: TenantScopeGuard,
