@@ -40,9 +40,15 @@ export function createPrismaClient(tenantId?: string) {
 
           // Inject tenantId filter for read operations
           if (
-            ['findUnique', 'findFirst', 'findMany', 'count', 'aggregate'].includes(
-              operation,
-            )
+            [
+              'findUnique',
+              'findFirst',
+              'findMany',
+              'count',
+              'aggregate',
+              'findUniqueOrThrow',
+              'findFirstOrThrow',
+            ].includes(operation)
           ) {
             args.where = { ...(args.where || {}), tenantId };
           }

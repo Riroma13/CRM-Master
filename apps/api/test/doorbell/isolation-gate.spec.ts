@@ -30,6 +30,13 @@ if (dbAvailable) {
     beforeAll(async () => {
       prismaAdmin = createPrismaClient(); // sin scope = admin
 
+      // Limpieza defensiva: remover datos residuales de ejecuciones
+      // interrumpidas (Ctrl+C, crash, etc.) que el afterAll no alcanzó
+      // a limpiar. Esto evita falsos positivos en test 1.
+      await prismaAdmin.cliente.deleteMany({
+        where: { tenantId: { in: [TENANT_A_ID, TENANT_B_ID] } },
+      });
+
       // Seed: crear tenants si no existen
       const upsertTenant = async (id: string, slug: string, name: string) => {
         await prismaAdmin.tenant.upsert({
@@ -47,6 +54,14 @@ if (dbAvailable) {
     });
 
     afterAll(async () => {
+      // Cleanup: remover TODOS los datos de prueba para que la
+      // próxima ejecución empiece limpia — crítico para no contaminar
+      // el test 1 que espera tenant B vacío.
+      if (prismaAdmin) {
+        await prismaAdmin.cliente.deleteMany({
+          where: { tenantId: { in: [TENANT_A_ID, TENANT_B_ID] } },
+        });
+      }
       await prismaAdmin.$disconnect();
     });
 
@@ -135,6 +150,28 @@ if (dbAvailable) {
         where: { id: clienteA.id },
       });
       expect(exists).toBeDefined();
+    });
+
+    // ─── Test 6: findUniqueOrThrow bloqueado por scoping ──────────────
+
+    it('MUST throw P2025 when findUniqueOrThrow from another tenant', async () => {
+      // Arrange: existe un cliente creado en tenant A
+      const [clienteA] = await prismaA.cliente.findMany({ take: 1 });
+      expect(clienteA).toBeDefined();
+
+      // Act & Assert: findUniqueOrThrow desde tenant B NO debe encontrar
+      // el registro porque el filtro tenantId=B + id={clienteA.id} no matchea.
+      // Debe lanzar PrismaClientKnownRequestError con código P2025.
+      try {
+        await prismaB.cliente.findUniqueOrThrow({
+          where: { id: clienteA.id },
+        });
+        // Si no hay error, el test falla
+        expect('no-error').toBe('should-have-thrown');
+      } catch (e: any) {
+        expect(e.name).toBe('PrismaClientKnownRequestError');
+        expect(e.code).toBe('P2025');
+      }
     });
   });
 } else {

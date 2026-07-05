@@ -30,3 +30,4 @@ packages/database/src/generated/
 
 # Testing
 coverage/
+.env
