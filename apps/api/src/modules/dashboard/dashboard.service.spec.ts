@@ -17,20 +17,23 @@ async function createTestModule() {
   return { moduleRef, service, prisma };
 }
 
-async function destroyModule(
-  moduleRef: TestingModule,
-  prisma: PrismaService,
-  tenantIds: string[],
-) {
-  await prisma.admin.tarea.deleteMany({
-    where: { tenantId: { in: tenantIds } },
-  });
-  await prisma.admin.cliente.deleteMany({
-    where: { tenantId: { in: tenantIds } },
-  });
-  await prisma.admin.tenant.deleteMany({
-    where: { id: { in: tenantIds } },
-  });
+/**
+ * Hard reset: remove ALL data from the 3 tables used by dashboard metrics.
+ *
+ * This is safe because we're on a test database. The reset guarantees that
+ * each test suite starts with a clean slate — no contamination from other
+ * suites (clients.service.spec, doorbell E2E, etc.) regardless of execution
+ * order. Each suite's beforeAll / afterAll calls this to own its data lifecycle.
+ */
+async function resetTestData(prisma: PrismaService) {
+  // Order matters: delete FK children before parents
+  await prisma.admin.tarea.deleteMany({});
+  await prisma.admin.cliente.deleteMany({});
+  await prisma.admin.tenant.deleteMany({});
+}
+
+async function destroyModule(moduleRef: TestingModule, prisma: PrismaService) {
+  await resetTestData(prisma);
   await moduleRef.close();
 }
 
@@ -42,10 +45,14 @@ describe('DashboardService — with seed data', () => {
   const TENANT_A_ID = 'd1000000-0000-4000-8000-000000000001';
   const TENANT_B_ID = 'd1000000-0000-4000-8000-000000000002';
   const TENANT_C_ID = 'd1000000-0000-4000-8000-000000000003';
-  const ALL_IDS = [TENANT_A_ID, TENANT_B_ID, TENANT_C_ID];
 
   beforeAll(async () => {
     ({ moduleRef, service, prisma } = await createTestModule());
+
+    // Hard reset: limpia cualquier dato residual de otras suites o
+    // ejecuciones interrumpidas. Esto asegura que getMetrics() cuente
+    // EXACTAMENTE los registros que seedeamos abajo, nada más.
+    await resetTestData(prisma);
 
     // Seed tenants: A (active), B (active), C (inactive)
     await prisma.admin.tenant.createMany({
@@ -87,7 +94,7 @@ describe('DashboardService — with seed data', () => {
   });
 
   afterAll(async () => {
-    await destroyModule(moduleRef, prisma, ALL_IDS);
+    await destroyModule(moduleRef, prisma);
   });
 
   it('should return totalClientes counting all clients across all tenants', async () => {
@@ -146,10 +153,12 @@ describe('DashboardService — zero-count edge case', () => {
 
   const TENANT_A_ID = 'd1000000-0000-4000-8000-000000000010';
   const TENANT_B_ID = 'd1000000-0000-4000-8000-000000000011';
-  const ALL_IDS = [TENANT_A_ID, TENANT_B_ID];
 
   beforeAll(async () => {
     ({ moduleRef, service, prisma } = await createTestModule());
+
+    // Hard reset: limpia cualquier dato residual
+    await resetTestData(prisma);
 
     // Seed only tenants (with no clients or tareas)
     await prisma.admin.tenant.createMany({
@@ -161,7 +170,7 @@ describe('DashboardService — zero-count edge case', () => {
   });
 
   afterAll(async () => {
-    await destroyModule(moduleRef, prisma, ALL_IDS);
+    await destroyModule(moduleRef, prisma);
   });
 
   it('should return zero for client and tarea counts when no data exists', async () => {

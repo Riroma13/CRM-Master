@@ -22,20 +22,23 @@ describe('Scoped Prisma client — raw SQL blocking', () => {
     ).rejects.toThrow(/raw (SQL|query).*not allowed/i);
   });
 
-  it('MUST NOT throw on raw SQL for unscoped admin client', async () => {
-    // Admin client should still allow raw queries
+  it('MUST NOT block raw SQL on unscoped admin client', async () => {
+    // Admin client (no tenantId) should NOT have the raw SQL blocker.
+    // With a DB available: query succeeds (caught = undefined).
+    // Without a DB: throws Prisma connection error (caught = defined).
+    // In BOTH cases, the error must NOT be the raw-SQL-blocker message.
     const adminClient = createPrismaClient();
-    // We cannot actually query without DB, but calling the method should
-    // not throw the "raw SQL not allowed" error. It will throw a
-    // Prisma connection error instead, which proves the override is NOT active.
     let caught: any;
     try {
       await adminClient.$queryRawUnsafe('SELECT 1');
     } catch (e) {
       caught = e;
     }
-    expect(caught).toBeDefined();
-    expect(caught?.message).not.toMatch(/raw (SQL|query).*not allowed/i);
+    // If an error was thrown, assert it's NOT the raw SQL blocker
+    if (caught) {
+      expect(caught.message).not.toMatch(/raw (SQL|query).*not allowed/i);
+    }
+    // If no error was thrown, the raw SQL call succeeded — even better
   });
 });
 
