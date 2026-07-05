@@ -34,11 +34,11 @@ Chain strategy: feature-branch-chain
 
 ## Phase 2: Frontend — Infrastructure
 
-- [ ] 2.1 Add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` to admin-web devDependencies; create vitest setup with jest-dom matchers
-- [ ] 2.2 Create `lib/api.ts`: typed fetch wrapper with `Authorization: Bearer` from env, error normalization (NetworkError, ApiError)
-- [ ] 2.3 Create `lib/api-types.ts`: `DashboardMetrics`, `ClienteListItem`, `ClientListResponse`, `PaginationMeta`, `ClientFilters`
-- [ ] 2.4 Create `hooks/use-dashboard-metrics.ts`: returns `{ data, isLoading, isError, error, refetch }` from `GET /api/v1/admin/dashboard`
-- [ ] 2.5 Create `hooks/use-clients.ts`: accepts `ClientFilters`, returns `{ data, pagination, isLoading, isError, error, refetch }` with 300ms debounce on search, page reset on filter change
+- [x] 2.1 Add `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` to admin-web devDependencies; create vitest setup with jest-dom matchers
+- [x] 2.2 Create `lib/api.ts`: typed fetch wrapper with `Authorization: Bearer` from env, error normalization (NetworkError, ApiError)
+- [x] 2.3 Create `lib/api-types.ts`: `DashboardMetrics`, `ClienteListItem`, `ClientListResponse`, `PaginationMeta`, `ClientFilters`
+- [x] 2.4 Create `hooks/use-dashboard-metrics.ts`: returns `{ data, isLoading, isError, error, refetch }` from `GET /api/v1/admin/dashboard`
+- [x] 2.5 Create `hooks/use-clients.ts`: accepts `ClientFilters`, returns `{ data, pagination, isLoading, isError, error, refetch }` with 300ms debounce on search, page reset on filter change
 
 ## Phase 3: Frontend — Components
 
