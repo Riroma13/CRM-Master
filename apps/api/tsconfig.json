@@ -19,8 +19,9 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@database/*": ["../../packages/database/src/*"],
-      "@shared/*": ["../../packages/shared/src/*"]
+      "@shared/*": ["../../packages/shared/src/*"],
+      "@crm-master/database": ["../../packages/database/src"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "test/**/*"]
 }

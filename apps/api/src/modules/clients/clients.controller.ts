@@ -5,9 +5,12 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ClientsService } from './clients.service';
 import { CreateClienteDto, UpdateClienteDto, ClienteListQuery } from './dto';
+import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
+import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard';
 
 @ApiTags('Admin - Clients')
 @ApiBearerAuth()
+@UseGuards(AdminAuthGuard, TenantScopeGuard)
 @Controller('api/v1/admin/clientes')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}

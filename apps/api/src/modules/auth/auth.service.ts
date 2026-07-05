@@ -5,8 +5,8 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { PrismaService } from '../../common/prisma.service';
+import { SessionService } from './session.service';
 import { LoginDto, AuthResponseDto, MeDto } from './dto';
-import { randomBytes } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +14,7 @@ export class AuthService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly sessionService: SessionService,
     @Inject(REQUEST) private readonly req: Request,
   ) {}
 
@@ -48,8 +49,16 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // Generar token de sesión
-    const token = `sess_${randomBytes(32).toString('hex')}`;
+    // Crear sesión en el store en memoria
+    const token = this.sessionService.createSession({
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      tenantId: tenant.id,
+      role: user.role,
+    });
+
+    // Calcular expiresAt para la respuesta (7 días desde ahora)
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     this.logger.log(`Login exitoso: ${user.email} en ${tenant.slug}`);

@@ -1,12 +1,15 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { createPrismaClient, ScopedPrismaClient } from '../../../../packages/database/src';
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(PrismaService.name);
   private client: ScopedPrismaClient;
 
   constructor() {
     this.client = createPrismaClient();
+    // createPrismaClient() emits a warning when called without tenantId
+    // in non-test environments (see packages/database/src/index.ts)
   }
 
   async onModuleInit() {
@@ -17,7 +20,11 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     await this.client.$disconnect();
   }
 
-  /** Obtener cliente scopeado por tenant */
+  /**
+   * Creates a tenant-scoped Prisma client for the given tenant.
+   * All queries on the returned client are automatically filtered by tenantId.
+   * Raw SQL methods ($queryRaw, $queryRawUnsafe, $executeRaw) are blocked.
+   */
   forTenant(tenantId: string) {
     return createPrismaClient(tenantId);
   }
