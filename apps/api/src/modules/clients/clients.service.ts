@@ -40,6 +40,20 @@ export class ClientsService {
       this.prisma.admin.cliente.count({ where }),
     ]);
 
+    // Batch-load tareasPendientes counts per clienteId to avoid N+1
+    const clienteIds = data.map((c: any) => c.id);
+    let countMap: Record<string, number> = {};
+    if (clienteIds.length > 0) {
+      const tareaCounts = await this.prisma.admin.tarea.groupBy({
+        by: ['clienteId'],
+        where: { clienteId: { in: clienteIds }, estado: { not: 'Hecho' } },
+        _count: { id: true },
+      });
+      countMap = Object.fromEntries(
+        tareaCounts.map((t: any) => [t.clienteId, t._count.id]),
+      );
+    }
+
     return {
       data: data.map((c: any) => ({
         id: c.id,
@@ -50,13 +64,14 @@ export class ClientsService {
         tags: c.tags,
         sistemas: c.sistemas,
         ultimaActividad: c.updatedAt.toISOString(),
+        tareasPendientes: countMap[c.id] ?? 0,
         createdAt: c.createdAt.toISOString(),
       })),
       pagination: {
-        page: query.page,
-        limit: query.limit,
+        page: parsed.page,
+        limit: parsed.limit,
         total,
-        totalPages: Math.ceil(total / query.limit),
+        totalPages: Math.ceil(total / parsed.limit),
       },
     };
   }

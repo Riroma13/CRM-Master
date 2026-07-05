@@ -26,11 +26,11 @@ Chain strategy: feature-branch-chain
 
 ## Phase 1: Backend — tareasPendientes & Tests
 
-- [ ] 1.1 Add batch-load `tareasPendientes` count to `clients.service.ts findAll()` using Prisma `groupBy` to avoid N+1
-- [ ] 1.2 Write unit tests for `DashboardService.getMetrics()`: correct counts with seed data, zero-count edge case
-- [ ] 1.3 Write unit tests for `ClientsService.findAll()`: pagination, search (case-insensitive), salud/tag/estado filters, filter composition, `tareasPendientes` count per client
-- [ ] 1.4 Write integration tests for `GET /api/v1/admin/dashboard`: 200 superadmin, 401 no auth, 403 tenant-admin (no data leak)
-- [ ] 1.5 Write integration tests for `GET /api/v1/admin/clientes`: pagination, search, salud/tag filters, filter composition, `tenantId` injection ignored, 403 tenant-admin, 401 no auth
+- [x] 1.1 Add batch-load `tareasPendientes` count to `clients.service.ts findAll()` using Prisma `groupBy` to avoid N+1
+- [x] 1.2 Write unit tests for `DashboardService.getMetrics()`: correct counts with seed data, zero-count edge case
+- [x] 1.3 Write unit tests for `ClientsService.findAll()`: pagination, search (case-insensitive), salud/tag/estado filters, filter composition, `tareasPendientes` count per client
+- [x] 1.4 Write integration tests for `GET /api/v1/admin/dashboard`: 200 superadmin, 401 no auth, 403 tenant-admin (no data leak)
+- [x] 1.5 Write integration tests for `GET /api/v1/admin/clientes`: pagination, search, salud/tag filters, filter composition, `tenantId` injection ignored, 403 tenant-admin, 401 no auth
 
 ## Phase 2: Frontend — Infrastructure
 
