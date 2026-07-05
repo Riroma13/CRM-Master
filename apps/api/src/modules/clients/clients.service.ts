@@ -15,13 +15,14 @@ export class ClientsService {
   }
 
   async findAll(query: z.infer<typeof ClienteListQuery>) {
+    const parsed = ClienteListQuery.parse(query);
     const where: any = {};
-    if (query.search) {
-      where.nombre = { contains: query.search, mode: 'insensitive' };
+    if (parsed.search) {
+      where.nombre = { contains: parsed.search, mode: 'insensitive' };
     }
-    if (query.salud) where.saludGeneral = query.salud;
-    if (query.estado) where.estadoRelacion = query.estado;
-    if (query.tag) where.tags = { has: query.tag };
+    if (parsed.salud) where.saludGeneral = parsed.salud;
+    if (parsed.estado) where.estadoRelacion = parsed.estado;
+    if (parsed.tag) where.tags = { has: parsed.tag };
 
     const [data, total] = await Promise.all([
       this.prisma.admin.cliente.findMany({
@@ -33,8 +34,8 @@ export class ClientsService {
           },
         },
         orderBy: { updatedAt: 'desc' },
-        skip: (query.page - 1) * query.limit,
-        take: query.limit,
+        skip: (parsed.page - 1) * parsed.limit,
+        take: parsed.limit,
       }),
       this.prisma.admin.cliente.count({ where }),
     ]);
