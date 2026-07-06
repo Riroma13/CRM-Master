@@ -5,6 +5,8 @@ import { TenantsModule } from './modules/tenants/tenant.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { EventosModule } from './modules/eventos/eventos.module';
+import { TareasModule } from './modules/tareas/tareas.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
 import { TenantScopeGuard } from './common/guards/tenant-scope.guard';
 import { AdminAuthGuard } from './common/guards/admin-auth.guard';
@@ -17,6 +19,8 @@ import { PrismaService } from './common/prisma.service';
     AuthModule,
     ClientsModule,
     DashboardModule,
+    EventosModule,
+    TareasModule,
   ],
   providers: [
     PrismaService,
