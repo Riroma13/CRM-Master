@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
-import { z } from '../../../node_modules/zod';
+import { z } from 'zod';
 import { CreateClienteDto, UpdateClienteDto, ClienteCardDto, ClienteListQuery } from './dto';
 
 @Injectable()
