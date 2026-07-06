@@ -42,18 +42,18 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3: Frontend — Components
 
-- [ ] 3.1 Create `components/dashboard/health-badge.tsx`: 🟢🟡🔴 shadcn Badge with Stitch color tokens `success`/`warning`/`critical`
-- [ ] 3.2 Create `components/dashboard/kpi-card.tsx`: presentational card receiving icon, label, value, subtitle as props
-- [ ] 3.3 Create `components/dashboard/metrics-bar.tsx`: `"use client"` — 4 KPI grid with loading (skeleton), error (retry), empty (zeroes) states
-- [ ] 3.4 Create `components/dashboard/client-card.tsx`: `"use client"` — name, HealthBadge, tenant, tags, systems, `tareasPendientes`, last activity
-- [ ] 3.5 Create `components/dashboard/client-grid.tsx`: `"use client"` — responsive grid `grid-cols-1 sm:2 lg:3 xl:4` with loading/error/empty states
-- [ ] 3.6 Create `components/dashboard/dashboard-filters.tsx`: `"use client"` — search input (debounced 300ms) + filter chips (salud, tag), emits `ClientFilters`
-- [ ] 3.7 Create `components/dashboard/pagination.tsx`: `"use client"` — prev/next + page indicator, receives `PaginationMeta`, emits page change
+- [x] 3.1 Create `components/dashboard/health-badge.tsx`: 🟢🟡🔴 shadcn Badge with Stitch color tokens `success`/`warning`/`critical`
+- [x] 3.2 Create `components/dashboard/kpi-card.tsx`: presentational card receiving icon, label, value, subtitle as props
+- [x] 3.3 Create `components/dashboard/metrics-bar.tsx`: `"use client"` — 4 KPI grid with loading (skeleton), error (retry), empty (zeroes) states
+- [x] 3.4 Create `components/dashboard/client-card.tsx`: `"use client"` — name, HealthBadge, tenant, tags, systems, `tareasPendientes`, last activity
+- [x] 3.5 Create `components/dashboard/client-grid.tsx`: `"use client"` — responsive grid `grid-cols-1 sm:2 lg:3 xl:4` with loading/error/empty states
+- [x] 3.6 Create `components/dashboard/dashboard-filters.tsx`: `"use client"` — search input (debounced 300ms) + filter chips (salud, tag), emits `ClientFilters`
+- [x] 3.7 Create `components/dashboard/pagination.tsx`: `"use client"` — prev/next + page indicator, receives `PaginationMeta`, emits page change
 
 ## Phase 4: Frontend — Page Refactor & Tests
 
-- [ ] 4.1 Refactor `app/dashboard/page.tsx`: convert to async server component, compose `MetricsBar` + `DashboardFilters` + `ClientGrid`, remove mock arrays and inline components
-- [ ] 4.2 Write unit tests for `api.ts`: URL construction correct, 200/401/403/500 handling, error normalization
-- [ ] 4.3 Write hook tests: loading→data→error state transitions, refetch on filter change
-- [ ] 4.4 Write component tests: render states (normal, loading, error, empty) for each component, prop forwarding, Stitch token usage
-- [ ] 4.5 Write integration test: full page render with mocked fetch, filter interaction chain, pagination click
+- [x] 4.1 Refactor `app/dashboard/page.tsx`: convert to `"use client"` composed page, compose `MetricsBar` + `DashboardFilters` + `ClientGrid`, remove mock arrays and inline components
+- [x] 4.2 Write unit tests for `api.ts`: URL construction correct, 200/401/403/500 handling, error normalization
+- [x] 4.3 Write hook tests: loading→data→error state transitions, refetch on filter change
+- [x] 4.4 Write component tests: render states (normal, loading, error, empty) for each component, prop forwarding, Stitch token usage
+- [x] 4.5 Write integration test: full page render with mocked fetch, filter interaction chain, pagination click
