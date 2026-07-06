@@ -30,15 +30,16 @@ export class ClientsController {
   @Get(':id')
   @ApiOperation({ summary: 'Detalle completo del cliente' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.clientsService.findOne(id);
+    return this.clientsService.findOneOrFail(id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar datos del cliente' })
-  update(
+  async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateClienteDto,
   ) {
+    await this.clientsService.findOneOrFail(id);
     return this.clientsService.update(id, dto);
   }
 }
