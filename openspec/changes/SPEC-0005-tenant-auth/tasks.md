@@ -25,29 +25,29 @@ Chain strategy: feature-branch-chain
 
 ## Phase 2: Modelo de datos y linking (PR 1)
 
-- [ ] 2.1 Agregar campo `betterAuthUserId` a `User`, `betterAuthOrganizationId` a `Tenant`
-- [ ] 2.2 Crear `auth-client.provider.ts` — factory provider que instancia Better-Auth con PrismaService
-- [ ] 2.3 Script de backfill: crear ba_organization por cada Tenant existente
-- [ ] 2.4 Script de backfill: crear ba_user + ba_member por cada User existente
+- [x] 2.1 Agregar campo `betterAuthUserId` a `User`, `betterAuthOrganizationId` a `Tenant`
+- [x] 2.2 Crear `auth-client.provider.ts` — factory provider que instancia Better-Auth con PrismaService
+- [x] 2.3 Script de backfill: crear ba_organization por cada Tenant existente
+- [x] 2.4 Script de backfill: crear ba_user + ba_member por cada User existente
 
 ## Phase 3: Guard y reemplazo de auth (PR 2)
 
-- [ ] 3.1 Implementar `BetterAuthGuard` (reemplaza AdminAuthGuard) con mismo contrato request.user
-- [ ] 3.2 Decidir y documentar manejo de superadmin en rutas /tenant/* (design.md punto 4)
-- [ ] 3.3 Actualizar TenantScopeGuard si necesita ajustes
-- [ ] 3.4 Eliminar SessionService y AdminAuthGuard viejos SOLO después de que BetterAuthGuard esté verde
-- [ ] 3.5 Actualizar AuthService.login() para usar auth.api.signInEmail()
-- [ ] 3.6 Registrar BetterAuthGuard como APP_GUARD en app.module.ts
+- [x] 3.1 Implementar `BetterAuthGuard` (reemplaza AdminAuthGuard) con mismo contrato request.user
+- [x] 3.2 Decidir y documentar manejo de superadmin en rutas /tenant/* (design.md punto 4)
+- [x] 3.3 Actualizar TenantScopeGuard si necesita ajustes
+- [x] 3.4 Eliminar SessionService y AdminAuthGuard viejos SOLO después de que BetterAuthGuard esté verde
+- [x] 3.5 Actualizar AuthService.login() para usar auth.api.signInEmail()
+- [x] 3.6 Registrar BetterAuthGuard como APP_GUARD en app.module.ts
 
 ## Phase 4: Tests — red de seguridad (PR 3)
 
-- [ ] 4.1 Actualizar isolation-http.spec.ts: seed ba_organizations + ba_users + ba_members, usar signInEmail real
-- [ ] 4.2 Actualizar isolation-gate.spec.ts: extender seed con ba_organizations vinculados
-- [ ] 4.3 Correr TODA la suite (pnpm test + jest-e2e --runInBand) y confirmar 0 regresiones
-- [ ] 4.4 Agregar test nuevo: login real vía Better-Auth (happy path) para superadmin y tenant-admin
+- [x] 4.1 Actualizar isolation-http.spec.ts: seed ba_organizations + ba_users + ba_members, usar signInEmail real
+- [x] 4.2 Actualizar isolation-gate.spec.ts: extender seed con ba_organizations vinculados
+- [x] 4.3 Correr TODA la suite (pnpm test + jest-e2e --runInBand) y confirmar 0 regresiones
+- [x] 4.4 Agregar test nuevo: login real vía Better-Auth (happy path) para superadmin y tenant-admin
 
 ## Phase 5: Cleanup y documentación (PR 3)
 
-- [ ] 5.1 Actualizar STACK.md si algo difiere del plan original
-- [ ] 5.2 Documentar en docs/architecture/adr/ la decisión de migración
-- [ ] 5.3 Verificar que no queden referencias residuales a SessionService/AdminAuthGuard (grep -rn)
+- [x] 5.1 Actualizar STACK.md si algo difiere del plan original
+- [x] 5.2 Documentar en docs/architecture/adr/ la decisión de migración
+- [x] 5.3 Verificar que no queden referencias residuales a SessionService/AdminAuthGuard (grep -rn)

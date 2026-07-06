@@ -1,11 +1,12 @@
 {
-  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleFileExtensions": ["js", "json", "ts", "mjs"],
   "rootDir": ".",
   "testRegex": "test/(doorbell|e2e)/.*spec\\.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.([jt]s|mjs)$": ["ts-jest", { "diagnostics": false }]
   },
   "testEnvironment": "node",
+  "transformIgnorePatterns": [],
   "moduleNameMapper": {
     "^@crm-master/database$": "<rootDir>/../../packages/database/src"
   }

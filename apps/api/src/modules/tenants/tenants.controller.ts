@@ -5,12 +5,11 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { TenantsService } from './tenants.service';
 import { CreateTenantDto, TenantListDto } from './dto';
-import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
 import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard';
 
 @ApiTags('Admin - Tenants')
 @ApiBearerAuth()
-@UseGuards(AdminAuthGuard, TenantScopeGuard)
+@UseGuards(TenantScopeGuard)
 @Controller('api/v1/admin/tenants')
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}

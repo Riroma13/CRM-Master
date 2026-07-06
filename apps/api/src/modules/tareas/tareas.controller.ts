@@ -5,12 +5,11 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TareasService } from './tareas.service';
 import { CreateTareaRapidaSchema, TareaListQuery, CreateTareaDto } from './dto';
-import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
 import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard';
 
 @ApiTags('Admin - Tareas')
 @ApiBearerAuth()
-@UseGuards(AdminAuthGuard, TenantScopeGuard)
+@UseGuards(TenantScopeGuard)
 @Controller('api/v1/admin/clientes/:clienteId/tareas')
 export class TareasController {
   constructor(private readonly tareasService: TareasService) {}

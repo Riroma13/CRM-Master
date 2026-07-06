@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, Module, NestModule, MiddlewareConsumer, Injectable, NestMiddleware } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import * as request from 'supertest';
 import { DashboardModule } from '../../src/modules/dashboard/dashboard.module';
 import { ClientsModule } from '../../src/modules/clients/clients.module';
 import { AuthModule } from '../../src/modules/auth/auth.module';
 import { PrismaService } from '../../src/common/prisma.service';
-import { SessionService } from '../../src/modules/auth/session.service';
+import { BetterAuthGuard } from '../../src/common/guards/better-auth.guard';
 import { Request, Response, NextFunction } from 'express';
 
 @Injectable()
@@ -21,7 +22,14 @@ class MockTenantMiddleware implements NestMiddleware {
 
 @Module({
   imports: [DashboardModule, ClientsModule, AuthModule],
-  providers: [MockTenantMiddleware],
+  providers: [
+    MockTenantMiddleware,
+    PrismaService,
+    {
+      provide: APP_GUARD,
+      useClass: BetterAuthGuard,
+    },
+  ],
 })
 class ClientsE2ETestModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
@@ -31,7 +39,6 @@ class ClientsE2ETestModule implements NestModule {
 
 describe('GET /api/v1/admin/clientes (E2E)', () => {
   let app: INestApplication;
-  let sessionService: SessionService;
   let prisma: PrismaService;
 
   const TENANT_A_ID = 'd4000000-0000-4000-8000-000000000001';
@@ -50,35 +57,24 @@ describe('GET /api/v1/admin/clientes (E2E)', () => {
   let superadminToken: string;
   let tenantAdminToken: string;
 
+  async function createBaSession(baUserId: string, token: string): Promise<void> {
+    const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_sessions (id, user_id, token, expires_at, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4::timestamp, NOW(), NOW())`,
+      crypto.randomUUID(), baUserId, token, futureDate.toISOString(),
+    );
+  }
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ClientsE2ETestModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    sessionService = moduleFixture.get(SessionService);
     prisma = moduleFixture.get(PrismaService);
     await app.init();
 
-    // Create sessions
-    superadminToken = sessionService.createSession({
-      userId: 'e2e-client-super',
-      email: 'super@admin.com',
-      name: 'Super Admin',
-      tenantId: 'e2e-tenant-clients',
-      role: 'superadmin',
-    });
-
-    tenantAdminToken = sessionService.createSession({
-      userId: 'e2e-client-admin',
-      email: 'admin@tenant.com',
-      name: 'Tenant Admin',
-      tenantId: TENANT_A_ID,
-      role: 'admin',
-    });
-
-    // Clean only test-specific data — never deleteAll to avoid
-    // breaking other test suites (doorbell) running in same process.
+    // Clean only test-specific data
     const ALL_CLIENT_IDS = Object.values(CLIENT_IDS);
     await prisma.admin.tarea.deleteMany({});
     await prisma.admin.cliente.deleteMany({
@@ -107,10 +103,70 @@ describe('GET /api/v1/admin/clientes (E2E)', () => {
         { id: CLIENT_IDS.fernandez, tenantId: TENANT_A_ID, nombre: 'Fernandez Global', saludGeneral: '🟢', estadoRelacion: 'Cerrado', tags: ['fiscal'] },
       ],
     });
+
+    // Seed Better-Auth data for superadmin
+    const superBaUserId = crypto.randomUUID();
+    const adminBaUserId = crypto.randomUUID();
+
+    await prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_users (id, email, "emailVerified", name, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+      superBaUserId, 'e2e-client-super@test.com', true, 'Super Admin',
+    );
+    await prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_users (id, email, "emailVerified", name, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+      adminBaUserId, 'e2e-client-admin@test.com', true, 'Tenant Admin',
+    );
+
+    // Create legacy users with betterAuthUserId linking
+    await prisma.admin.user.upsert({
+      where: { email: 'e2e-client-super@test.com' },
+      create: {
+        id: 'e2e-client-super-uuid',
+        tenantId: TENANT_A_ID,
+        email: 'e2e-client-super@test.com',
+        name: 'Super Admin',
+        role: 'superadmin',
+        betterAuthUserId: superBaUserId,
+      },
+      update: {},
+    });
+    await prisma.admin.user.upsert({
+      where: { email: 'e2e-client-admin@test.com' },
+      create: {
+        id: 'e2e-client-admin-uuid',
+        tenantId: TENANT_A_ID,
+        email: 'e2e-client-admin@test.com',
+        name: 'Tenant Admin',
+        role: 'admin',
+        betterAuthUserId: adminBaUserId,
+      },
+      update: {},
+    });
+
+    // Create sessions in ba_sessions
+    superadminToken = 'sess_e2e_clients_super_token';
+    tenantAdminToken = 'sess_e2e_clients_admin_token';
+    await createBaSession(superBaUserId, superadminToken);
+    await createBaSession(adminBaUserId, tenantAdminToken);
   });
 
   afterAll(async () => {
     if (prisma) {
+      // Cleanup ba data
+      for (const email of ['e2e-client-super@test.com', 'e2e-client-admin@test.com']) {
+        await prisma.admin.$executeRawUnsafe(
+          `DELETE FROM ba_sessions WHERE user_id IN (SELECT id FROM ba_users WHERE email = $1)`, email,
+        );
+        await prisma.admin.$executeRawUnsafe(
+          `DELETE FROM ba_users WHERE email = $1`, email,
+        );
+        await prisma.admin.$executeRawUnsafe(
+          `UPDATE users SET better_auth_user_id = NULL WHERE email = $1`, email,
+        );
+      }
+      await prisma.admin.user.deleteMany({
+        where: { id: { in: ['e2e-client-super-uuid', 'e2e-client-admin-uuid'] } },
+      });
       const ALL_CLIENT_IDS = Object.values(CLIENT_IDS);
       await prisma.admin.tarea.deleteMany({});
       await prisma.admin.cliente.deleteMany({

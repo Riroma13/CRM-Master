@@ -1,7 +1,6 @@
-import { Module, Global, forwardRef } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { SessionService } from './session.service';
 import { PrismaService } from '../../common/prisma.service';
 import { authClientProvider } from '../../common/auth-client.provider';
 
@@ -10,10 +9,9 @@ import { authClientProvider } from '../../common/auth-client.provider';
   controllers: [AuthController],
   providers: [
     AuthService,
-    SessionService,
     PrismaService,
     authClientProvider,
   ],
-  exports: [AuthService, SessionService, authClientProvider],
+  exports: [AuthService, authClientProvider],
 })
 export class AuthModule {}

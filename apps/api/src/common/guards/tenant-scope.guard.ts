@@ -26,7 +26,7 @@ export class TenantScopeGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
 
     // Admin requests (Mission Control) requieren auth verificada primero
-    // Also allow if AdminAuthGuard already verified superadmin role
+    // BetterAuthGuard already verified superadmin role for admin routes
     if ((request as any).isAdminRequest || request.user?.role === 'superadmin') {
       if (!request.user) {
         throw new UnauthorizedException(

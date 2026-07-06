@@ -4,12 +4,9 @@ import {
   ExecutionContext,
   UnauthorizedException,
   ForbiddenException,
-  Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../common/prisma.service';
-import { AUTH_CLIENT } from '../auth-client.provider';
-import { Auth } from '../auth';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 const ADMIN_ROUTE_PREFIX = '/api/v1/admin';
@@ -18,7 +15,6 @@ const ADMIN_ROUTE_PREFIX = '/api/v1/admin';
 export class BetterAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    @Inject(AUTH_CLIENT) private readonly auth: Auth,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -33,7 +29,7 @@ export class BetterAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const path: string = request.path ?? request.originalUrl ?? '';
 
-    // Only enforce on admin routes (same boundary as AdminAuthGuard)
+    // Only enforce on admin routes (replaces AdminAuthGuard boundary)
     if (!path.startsWith(ADMIN_ROUTE_PREFIX)) return true;
 
     // Extract Bearer token
@@ -44,19 +40,30 @@ export class BetterAuthGuard implements CanActivate {
       );
     }
 
-    // Validate session via Better-Auth
-    const headers = new Headers();
-    headers.set('Authorization', authHeader);
-    const session = await this.auth.api.getSession({ headers });
+    const token = authHeader.slice(7);
 
-    if (!session) {
+    // Validate session against ba_sessions directly via raw SQL.
+    // We bypass auth.api.getSession() because Better-Auth v1's getSession
+    // requires HMAC-signed cookies (via the bearer plugin) and the Prisma
+    // model name collision (model user vs model User) prevents the adapter
+    // from functioning correctly on ba_users.
+    const rows = await (this.prisma.admin as any).$queryRawUnsafe(
+      `SELECT s.user_id as "userId", u.email, u.name
+       FROM ba_sessions s
+       JOIN ba_users u ON s.user_id = u.id
+       WHERE s.token = $1 AND s.expires_at > NOW()`,
+      token,
+    );
+
+    if (!rows || rows.length === 0) {
       throw new UnauthorizedException('Token inválido o expirado');
     }
 
-    // Look up legacy User by betterAuthUserId
-    const baUserId = session.user.id;
+    const sessionUser = rows[0];
+
+    // Look up legacy User by betterAuthUserId (which stores the ba_users.id)
     const legacyUser = await this.prisma.admin.user.findFirst({
-      where: { betterAuthUserId: baUserId },
+      where: { betterAuthUserId: sessionUser.userId },
       include: { tenant: true },
     });
 
@@ -71,16 +78,16 @@ export class BetterAuthGuard implements CanActivate {
     // Superadmin has no org membership — allowed on admin routes
     if (legacyUser.role === 'superadmin') {
       (request as any).user = {
-        id: baUserId,
-        email: session.user.email,
-        name: session.user.name,
+        id: sessionUser.userId,
+        email: sessionUser.email,
+        name: sessionUser.name,
         role: 'superadmin',
         tenantId: legacyUser.tenantId,
       };
       return true;
     }
 
-    // Non-superadmin on admin routes → 403 (same as AdminAuthGuard)
+    // Non-superadmin on admin routes → 403 (replaces AdminAuthGuard)
     throw new ForbiddenException(
       'Acceso denegado: se requiere rol de superadmin',
     );
