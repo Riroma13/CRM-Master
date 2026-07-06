@@ -26,20 +26,20 @@ Chain strategy: feature-branch-chain
 
 ## Phase 1: Foundation — DTOs / Types
 
-- [ ] 1.1 Create `eventos/dto.ts`: CreateEventoSchema (Zod), EventoListQuery
-- [ ] 1.2 Create `tareas/dto.ts`: CreateTareaRapidaSchema (Zod), TareaListQuery
-- [ ] 1.3 Extend `api-types.ts`: ClienteDetail, SistemaDetail, EventoItem, TareaItem, CreateEventoInput, CreateTareaInput
+- [x] 1.1 Create `eventos/dto.ts`: CreateEventoSchema (Zod), EventoListQuery
+- [x] 1.2 Create `tareas/dto.ts`: CreateTareaRapidaSchema (Zod), TareaListQuery
+- [x] 1.3 Extend `api-types.ts`: ClienteDetail, SistemaDetail, EventoItem, TareaItem, CreateEventoInput, CreateTareaInput
 
 ## Phase 2: Backend — EventosModule + TareasModule
 
-- [ ] 2.1 Create `eventos/eventos.module.ts`
-- [ ] 2.2 Create `eventos/eventos.service.ts`: query by clienteId, FK validation (sistemaId belongs to cliente)
-- [ ] 2.3 Create `eventos/eventos.controller.ts`: GET/POST under /clientes/:clienteId/eventos
-- [ ] 2.4 Create `tareas/tareas.module.ts`
-- [ ] 2.5 Create `tareas/tareas.service.ts`: query by clienteId, create with defaults
-- [ ] 2.6 Create `tareas/tareas.controller.ts`: GET/POST under /clientes/:clienteId/tareas
-- [ ] 2.7 Modify `clients.service.ts`: findOne() include sistemas.items, add findOneOrFail()
-- [ ] 2.8 Modify `app.module.ts`: import EventosModule, TareasModule
+- [x] 2.1 Create `eventos/eventos.module.ts`
+- [x] 2.2 Create `eventos/eventos.service.ts`: query by clienteId, FK validation (sistemaId belongs to cliente)
+- [x] 2.3 Create `eventos/eventos.controller.ts`: GET/POST under /clientes/:clienteId/eventos
+- [x] 2.4 Create `tareas/tareas.module.ts`
+- [x] 2.5 Create `tareas/tareas.service.ts`: query by clienteId, create with defaults
+- [x] 2.6 Create `tareas/tareas.controller.ts`: GET/POST under /clientes/:clienteId/tareas
+- [x] 2.7 Modify `clients.service.ts`: findOne() include sistemas.items, add findOneOrFail()
+- [x] 2.8 Modify `app.module.ts`: import EventosModule, TareasModule
 
 ## Phase 3: Frontend — Page + Components
 

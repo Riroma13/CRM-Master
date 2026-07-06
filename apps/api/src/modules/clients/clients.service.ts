@@ -67,13 +67,28 @@ export class ClientsService {
         tenant: { select: { id: true, slug: true, name: true } },
         sistemas: {
           include: {
-            items: true,
-            eventos: { orderBy: { fecha: 'desc' as any }, take: 5 },
+            items: {
+              select: {
+                id: true,
+                categoria: true,
+                nombre: true,
+                estado: true,
+                responsable: true,
+              },
+            },
           },
         },
       },
     });
     return cliente;
+  }
+
+  async findOneOrFail(id: string) {
+    const cliente = await this.findOne(id);
+    if (!cliente) {
+      throw new NotFoundException(`Cliente ${id} no encontrado`);
+    }
+    return cliente as any;
   }
 
   async update(id: string, dto: UpdateClienteDto) {
