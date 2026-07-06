@@ -57,10 +57,16 @@ y bitácora de cada tenant — modelo de datos completo en docs/DESIGN.md.
 ## Entidades core (detalle completo en docs/DESIGN.md)
 Tenant (Cliente) → Sistema(s) → Inventario / Bitácora / Tareas
 
-## Delegación de código
-Al delegar tareas vía coding-agent, usar modelo
-`opencode-go/kimi-k2.7-code` para implementación. Reservar
-`opencode-go/deepseek-v4-flash` para conversación/planificación.
+## Asignación de modelos por tipo de tarea
+El modelo a usar depende del tipo de implementación:
+
+| Contexto | Modelo | Razón |
+|---|---|---|
+| `sdd-apply` código general (CRUD, endpoints, DTOs, servicios estándar) | `deepseek-v4-flash` | Barato, rápido, suficiente |
+| `sdd-apply` aislamiento/seguridad (guards, scoping de tenant, auth, permisos, raw SQL, validación de frontera) | `kimi-k2.7-code` o `deepseek-v4-pro` | Precisión crítica, revisión adversarial |
+| Conversación, planificación, revisión | `deepseek-v4-flash` | Razonamiento general suficiente |
+
+**Regla**: si el cambio toca `tenant_id`, guards, auth, o validación de frontera entre tenants, usar modelo de precisión. Si es lógica de negocio estándar sin implicación de aislamiento, flash es suficiente.
 
 ## Antes de marcar una tarea como hecha
 - [ ] Tests pasan (`pnpm test`)

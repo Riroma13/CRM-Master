@@ -59,5 +59,38 @@ parámetro de URL ni por dato de body sin verificar contra la sesión.
 - Migración a aislamiento más fuerte (schema/DB per tenant) queda abierta
  como evolución por-cliente, no como cambio arquitectónico global.
 
+## Addendum 2026-07-05 — Superadmin Bypass de Tenant Scoping
+
+### Decisión
+El rol `superadmin` (titular Ricardo) **bypasea intencionalmente** el tenant
+scoping tanto a nivel de Prisma Client Extension como de TenantScopeGuard.
+Es un requisito de producto para Mission Control: el operador de la plataforma
+debe poder ver, crear y gestionar datos de cualquier tenant desde una única
+interfaz de supervisión.
+
+### Mecanismo
+- **AdminAuthGuard** (`common/guards/admin-auth.guard.ts`): verifica que el
+  token pertenece a un usuario con `role === 'superadmin'`. Es la primera
+  barrera — sin superadmin, ni siquiera se llega a TenantScopeGuard en rutas
+  `/api/v1/admin/*`.
+- **TenantScopeGuard** (`common/guards/tenant-scope.guard.ts`): cuando
+  `request.user.role === 'superadmin'`, retorna `true` inmediatamente sin
+  validar `tenantId` contra el token. Esto permite que Ricardo acceda a datos
+  de cualquier tenant desde cualquier subdominio.
+- **PrismaService** (`common/prisma.service.ts`): expone un `prismaAdmin`
+  (sin filtro de tenant) para operaciones de superadmin que necesitan
+  visibilidad global.
+
+### Implicaciones de seguridad
+- El bypass está **protegido por dos capas**: AdminAuthGuard exige superadmin,
+  TenantScopeGuard confirma superadmin. No hay ruta en `/api/v1/admin/*`
+  que permita acceso sin pasar por ambos guards.
+- Los tests de unidad (`admin-auth.guard.spec.ts`, `tenant-scope.guard.spec.ts`)
+  cubren explícitamente los casos de rechazo a roles no-superadmin.
+- Si en el futuro se introducen rutas no-admin con datos sensibles, deberán
+  implementar su propio scoping explícito (el bypass solo aplica a admin routes).
+- La creación de usuarios superadmin debe ser un proceso controlado y auditado
+  (idealmente solo Ricardo en v1).
+
 ## Fecha
 2026-06-30

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
-import { z } from '../../../node_modules/zod';
+import { z } from 'zod';
 import { CreateClienteDto, UpdateClienteDto, ClienteCardDto, ClienteListQuery } from './dto';
 
 @Injectable()
@@ -15,13 +15,14 @@ export class ClientsService {
   }
 
   async findAll(query: z.infer<typeof ClienteListQuery>) {
+    const parsed = ClienteListQuery.parse(query);
     const where: any = {};
-    if (query.search) {
-      where.nombre = { contains: query.search, mode: 'insensitive' };
+    if (parsed.search) {
+      where.nombre = { contains: parsed.search, mode: 'insensitive' };
     }
-    if (query.salud) where.saludGeneral = query.salud;
-    if (query.estado) where.estadoRelacion = query.estado;
-    if (query.tag) where.tags = { has: query.tag };
+    if (parsed.salud) where.saludGeneral = parsed.salud;
+    if (parsed.estado) where.estadoRelacion = parsed.estado;
+    if (parsed.tag) where.tags = { has: parsed.tag };
 
     const [data, total] = await Promise.all([
       this.prisma.admin.cliente.findMany({
@@ -33,11 +34,25 @@ export class ClientsService {
           },
         },
         orderBy: { updatedAt: 'desc' },
-        skip: (query.page - 1) * query.limit,
-        take: query.limit,
+        skip: (parsed.page - 1) * parsed.limit,
+        take: parsed.limit,
       }),
       this.prisma.admin.cliente.count({ where }),
     ]);
+
+    // Batch-load tareasPendientes counts per clienteId to avoid N+1
+    const clienteIds = data.map((c: any) => c.id);
+    let countMap: Record<string, number> = {};
+    if (clienteIds.length > 0) {
+      const tareaCounts = await this.prisma.admin.tarea.groupBy({
+        by: ['clienteId'],
+        where: { clienteId: { in: clienteIds }, estado: { not: 'Hecho' } },
+        _count: { id: true },
+      });
+      countMap = Object.fromEntries(
+        tareaCounts.map((t: any) => [t.clienteId, t._count.id]),
+      );
+    }
 
     return {
       data: data.map((c: any) => ({
@@ -49,13 +64,14 @@ export class ClientsService {
         tags: c.tags,
         sistemas: c.sistemas,
         ultimaActividad: c.updatedAt.toISOString(),
+        tareasPendientes: countMap[c.id] ?? 0,
         createdAt: c.createdAt.toISOString(),
       })),
       pagination: {
-        page: query.page,
-        limit: query.limit,
+        page: parsed.page,
+        limit: parsed.limit,
         total,
-        totalPages: Math.ceil(total / query.limit),
+        totalPages: Math.ceil(total / parsed.limit),
       },
     };
   }
