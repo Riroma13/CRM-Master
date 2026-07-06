@@ -55,15 +55,15 @@ Chain strategy: feature-branch-chain
 
 ## Phase 4: Tests — Backend
 
-- [ ] 4.1 Unit: Zod schema validation (partial update, empty title reject, default priority)
-- [ ] 4.2 Unit: EventosService + TareasService mocked (query filters, FK validation, errors)
-- [ ] 4.3 Integration: GET /:id (200 + datos, 404), PATCH /:id (200 + updated, 404)
-- [ ] 4.4 Integration: GET/POST /:id/eventos (200 paginated, 201 created, 400 invalid)
-- [ ] 4.5 Integration: GET/POST /:id/tareas (200 filtered, 201 created, 400 invalid)
-- [ ] 4.6 Security: tenant admin 403 on all endpoints, evento tenant_id matches cliente tenant
+- [x] 4.1 Unit: Zod schema validation — CreateEventoSchema rejects empty title, accepts valid payload; CreateTareaRapidaSchema assigns default priority "Media"
+- [x] 4.2 Unit: EventosService + TareasService mocked — verify query filters (findAll by clienteId), FK validation (sistemaId belongs to clienteId), error paths (404 for non-existent cliente)
+- [x] 4.3 Integration: GET /:id → 200 + ClienteDetail shape, 404 for non-existent; PATCH /:id → 200 + updated fields, 404 for non-existent
+- [x] 4.4 Integration: GET /:id/eventos → 200 paginated list, POST → 201 created + 400 for invalid payload
+- [x] 4.5 Integration: GET /:id/tareas → 200 filtered list, POST → 201 created + 400 for invalid payload
+- [x] 4.6 Security: tenant admin 403 on all 6 endpoints; verify POST evento sets correct tenant_id via cliente FK chain
 
 ## Phase 5: Tests — Frontend
 
-- [ ] 5.1 Component: loading/error/empty/data states for each component
-- [ ] 5.2 Component: EventoForm modal lifecycle (open, submit valid/invalid, close)
-- [ ] 5.3 Integration: full page render with mocked fetch, tab switching, event creation flow
+- [x] 5.1 Component: loading/error/empty/data states for each component + page
+- [x] 5.2 Component: EventoForm modal lifecycle (open, submit valid/invalid, close)
+- [x] 5.3 Integration: full page render with mocked fetch, tab switching via URL, event creation flow
