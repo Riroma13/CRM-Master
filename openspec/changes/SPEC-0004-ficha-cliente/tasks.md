@@ -43,15 +43,15 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3: Frontend — Page + Components
 
-- [ ] 3.1 Create `app/clientes/[id]/page.tsx`: fetch client, render header + tabs
-- [ ] 3.2 Create `components/ClientHeader.tsx`: name, salud, tags, edit
-- [ ] 3.3 Create `components/ClientTabs.tsx`: tab nav with ?tab= persistence
-- [ ] 3.4 Create `components/TabResumen.tsx`: notas + últimos eventos + indicadores
-- [ ] 3.5 Create `components/TabSistemas.tsx`: sistemas list with estado, tipo, acceso link
-- [ ] 3.6 Create `components/TabInventario.tsx`: items grouped by categoria, filter by estado
-- [ ] 3.7 Create `components/TabBitacora.tsx`: vertical timeline, fetch from /eventos
-- [ ] 3.8 Create `components/TabTareas.tsx`: task list + create button
-- [ ] 3.9 Create `components/EventoForm.tsx`: modal form with sistema select, tipo, titulo, descripcion
+- [x] 3.1 Create `app/clientes/[id]/page.tsx`: fetch client, render header + tabs
+- [x] 3.2 Create `components/ClientHeader.tsx`: name, salud, tags, edit
+- [x] 3.3 Create `components/ClientTabs.tsx`: tab nav with ?tab= persistence
+- [x] 3.4 Create `components/TabResumen.tsx`: notas + últimos eventos + indicadores
+- [x] 3.5 Create `components/TabSistemas.tsx`: sistemas list with estado, tipo, acceso link
+- [x] 3.6 Create `components/TabInventario.tsx`: items grouped by categoria, filter by estado
+- [x] 3.7 Create `components/TabBitacora.tsx`: vertical timeline, fetch from /eventos
+- [x] 3.8 Create `components/TabTareas.tsx`: task list + create button
+- [x] 3.9 Create `components/EventoForm.tsx`: modal form with sistema select, tipo, titulo, descripcion
 
 ## Phase 4: Tests — Backend
 
