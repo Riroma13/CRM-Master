@@ -47,10 +47,12 @@ describe('ClientsService', () => {
     prisma = moduleRef.get(PrismaService);
     await moduleRef.init();
 
-    // Only clean our own test data, not everything
-    await prisma.admin.tarea.deleteMany({ where: { id: { in: ALL_IDS.tareas } } });
-    await prisma.admin.cliente.deleteMany({ where: { id: { in: ALL_IDS.clients } } });
-    await prisma.admin.tenant.deleteMany({ where: { id: { in: ALL_IDS.tenants } } });
+    // Hard reset: limpia cualquier dato residual de otras suites o
+    // ejecuciones interrumpidas. Esto asegura que findAll() cuente
+    // EXACTAMENTE los registros que seedeamos abajo.
+    await prisma.admin.tarea.deleteMany({});
+    await prisma.admin.cliente.deleteMany({});
+    await prisma.admin.tenant.deleteMany({});
 
     // Seed tenants
     await prisma.admin.tenant.createMany({
@@ -90,9 +92,9 @@ describe('ClientsService', () => {
 
   afterAll(async () => {
     if (moduleRef) {
-      await prisma.admin.tarea.deleteMany({ where: { id: { in: ALL_IDS.tareas } } });
-      await prisma.admin.cliente.deleteMany({ where: { id: { in: ALL_IDS.clients } } });
-      await prisma.admin.tenant.deleteMany({ where: { id: { in: ALL_IDS.tenants } } });
+      await prisma.admin.tarea.deleteMany({});
+      await prisma.admin.cliente.deleteMany({});
+      await prisma.admin.tenant.deleteMany({});
       await moduleRef.close();
     }
   });
