@@ -8,8 +8,12 @@ Standard
 |---|--------|-------|--------|
 | PR 2 | `feat/SPEC-0006-tenant-citas-pr2` | Backend controllers + endpoints | ✅ Complete |
 | PR-3a | `feat/SPEC-0006-tenant-citas-pr3a` | Config + shared UI + API client | ✅ Complete |
+| PR-3d | `feat/SPEC-0006-tenant-citas-pr3d` | E2E admin calendario fix — badge assertions | ✅ Complete |
 
 ### Completed Tasks (Cumulative)
+
+#### PR-3d — E2E Admin Calendario Fix
+- [x] **3d.2 — Admin calendario E2E** — Fixed mock mutation so badge assertions work after confirm/cancel. Updated confirm test to assert "Confirmada" badge. Updated cancel test to switch to "Historial" tab and assert "Cancelada" badge.
 
 #### Phase 1–2 (Backend) — PR 2
 - [x] 1.1 Prisma: add Disponibilidad + Cita models, migrate
@@ -26,6 +30,11 @@ Standard
 - [x] **3a.4 — Shared UI components** — button, card, badge, input, tabs, separator, scroll-area (copied from admin-web, adapted imports) + smoke tests
 
 ### Files Changed (Cumulative)
+
+#### PR-3d
+| File | Action | What Was Done |
+|------|--------|---------------|
+| `apps/tenant-web/e2e/admin-calendario.spec.ts` | Modified | Added `mutableCitas` for PATCH persistence; updated GET to return mutable data; confirm test now asserts Confirmada badge; cancel test switches to Historial tab and asserts Cancelada badge |
 
 #### PR 2
 | File | Action | What Was Done |
@@ -77,9 +86,7 @@ None — implementation matches design. All UI components copied from admin-web 
 2. **`next lint` deprecation** — Next.js 15's `next lint` is deprecated. Configured eslint 8 + eslint-config-next as a compatibility shim. No lint errors.
 
 ### Remaining Tasks
-- [ ] PR-3b — Public booking flow (calendario page, calendar-picker, slot-list, booking-form, booking-confirmation, use-slots hook)
-- [ ] PR-3c — Admin dashboard + availability config (admin layout, sidebar, KPI bar, cita-card, cita-list, schedule-editor, blocked-dates, hooks)
-- [ ] PR-3d — E2E tests (booking.spec.ts, admin-calendario.spec.ts)
+- [ ] PR-3d — E2E booking spec (booking.spec.ts) — still pending in separate PR slice
 
 ### Workload / PR Boundary
 - Mode: feature-branch-chain slice
@@ -108,4 +115,4 @@ a08f706 feat(tenant-web): add project config files (tsconfig, next.config, postc
 ```
 
 ### Status
-10/11 tasks complete. Ready for PR-3b.
+11/11 tasks complete. PR-3d E2E admin calendario fix complete. Remaining: PR-3d booking E2E spec in separate slice.

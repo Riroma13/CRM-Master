@@ -59,6 +59,9 @@ const mockCitas = {
   total: 3,
 };
 
+// Mutable copy that PATCH handlers update so GET refetches reflect the new estado
+let mutableCitas: typeof mockCitas;
+
 const initialDisponibilidad = {
   timezone: 'Europe/Madrid',
   slotDuration: 30,
@@ -87,6 +90,7 @@ let savedDisponibilidad = { ...initialDisponibilidad };
 async function setupAdminMocks(page: Page): Promise<void> {
   // Reset saved state for each test
   savedDisponibilidad = JSON.parse(JSON.stringify(initialDisponibilidad));
+  mutableCitas = JSON.parse(JSON.stringify(mockCitas));
 
   // Single handler for all /calendario/citas* routes (list + PATCH by id)
   await page.route('**/api/v1/tenant/calendario/citas**', async (route) => {
@@ -96,9 +100,12 @@ async function setupAdminMocks(page: Page): Promise<void> {
     // PATCH /calendario/citas/:id — confirm or cancel
     if (method === 'PATCH') {
       const isConfirm = url.includes('cita-pendiente-1');
-      const updatedCita = isConfirm
-        ? { ...mockCitas.citas[0], estado: 'confirmada' }
-        : { ...mockCitas.citas[1], estado: 'cancelada' };
+      if (isConfirm) {
+        mutableCitas.citas[0] = { ...mutableCitas.citas[0], estado: 'confirmada' };
+      } else {
+        mutableCitas.citas[1] = { ...mutableCitas.citas[1], estado: 'cancelada' };
+      }
+      const updatedCita = mutableCitas.citas[isConfirm ? 0 : 1];
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -112,7 +119,7 @@ async function setupAdminMocks(page: Page): Promise<void> {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(mockCitas),
+        body: JSON.stringify(mutableCitas),
       });
       return;
     }
@@ -207,9 +214,9 @@ test.describe('Admin calendario view', () => {
     // Click Confirmar button
     await card.locator('button:has-text("Confirmar")').click();
 
-    // After refetch, the mock returns the original data (unchanged),
-    // but the PATCH request was made. Verify the card still renders.
-    await expect(card).toBeVisible();
+    // After refetch, verify badge changed to Confirmada
+    await expect(card.locator('text=Confirmada')).toBeVisible();
+    await expect(card.locator('text=Pendiente')).not.toBeVisible();
   });
 
   test('cancel a cita triggers PATCH and refetch', async ({ page }) => {
@@ -224,8 +231,13 @@ test.describe('Admin calendario view', () => {
     // Click Cancelar button
     await card.locator('button:has-text("Cancelar")').click();
 
-    // Card still renders after refetch
+    // After refetch, the cita moves to Historial tab with "Cancelada" badge.
+    // Switch to Historial tab to verify.
+    await page.locator('button:has-text("Historial")').click();
+
+    // Card should now show Cancelada badge
     await expect(card).toBeVisible();
+    await expect(card.locator('text=Cancelada')).toBeVisible();
   });
 
   test('edit schedule: add an hour row and save', async ({ page }) => {
