@@ -78,9 +78,10 @@ describe('GET /api/v1/admin/dashboard (E2E)', () => {
     prisma = moduleFixture.get(PrismaService);
     await app.init();
 
-    // Clean all known E2E test tenant data
+    // Clean all known E2E test data — FK order: children before parents
     await prisma.admin.tarea.deleteMany({});
     await prisma.admin.cliente.deleteMany({});
+    await prisma.admin.user.deleteMany({});
     await prisma.admin.tenant.deleteMany({});
 
     // Seed data: tenants, clients, tareas
