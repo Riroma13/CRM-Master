@@ -80,6 +80,9 @@ describe('GET /api/v1/admin/clientes (E2E)', () => {
     await prisma.admin.cliente.deleteMany({
       where: { id: { in: ALL_CLIENT_IDS } },
     });
+    await prisma.admin.user.deleteMany({
+      where: { tenantId: { in: ALL_TENANT_IDS } },
+    });
     await prisma.admin.tenant.deleteMany({
       where: { id: { in: ALL_TENANT_IDS } },
     });

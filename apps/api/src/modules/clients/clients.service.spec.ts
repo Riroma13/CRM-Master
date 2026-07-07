@@ -52,6 +52,7 @@ describe('ClientsService', () => {
     // EXACTAMENTE los registros que seedeamos abajo.
     await prisma.admin.tarea.deleteMany({});
     await prisma.admin.cliente.deleteMany({});
+    await prisma.admin.user.deleteMany({});
     await prisma.admin.tenant.deleteMany({});
 
     // Seed tenants
