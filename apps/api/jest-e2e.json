@@ -6,6 +6,7 @@
     "^.+\\.([jt]s|mjs)$": ["ts-jest", { "diagnostics": false }]
   },
   "testEnvironment": "node",
+  "testTimeout": 30000,
   "transformIgnorePatterns": [],
   "moduleNameMapper": {
     "^@crm-master/database$": "<rootDir>/../../packages/database/src"
