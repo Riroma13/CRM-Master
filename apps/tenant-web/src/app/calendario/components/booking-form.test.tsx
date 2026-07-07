@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BookingForm } from './booking-form';
-import type { BookCitaInput } from '@/lib/api-types';
 
 describe('BookingForm', () => {
   it('renders all form fields', () => {
@@ -69,7 +68,7 @@ describe('BookingForm', () => {
       expect(handleSubmit).toHaveBeenCalledTimes(1);
     });
 
-    const submittedData: BookCitaInput = handleSubmit.mock.calls[0][0];
+    const submittedData = handleSubmit.mock.calls[0][0] as { clienteNombre: string; clienteEmail: string; clienteTelefono?: string; descripcion?: string };
     expect(submittedData.clienteNombre).toBe('Juan Pérez');
     expect(submittedData.clienteEmail).toBe('juan@email.com');
     expect(submittedData.clienteTelefono).toBe('+34600123456');

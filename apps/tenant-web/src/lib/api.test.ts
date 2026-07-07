@@ -67,13 +67,22 @@ describe('api.get()', () => {
     await expect(api.get('/test')).rejects.toThrow(ApiError);
   });
 
-  it('includes auth token when present', async () => {
+  it('includes auth token when opt-in', async () => {
+    vi.stubEnv('NEXT_PUBLIC_API_TOKEN', 'my-token');
+    mockFetch({});
+
+    await api.get('/test', undefined, { auth: true });
+    const callInit = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1];
+    expect(callInit.headers['Authorization']).toBe('Bearer my-token');
+  });
+
+  it('skips auth header by default', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_TOKEN', 'my-token');
     mockFetch({});
 
     await api.get('/test');
     const callInit = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1];
-    expect(callInit.headers['Authorization']).toBe('Bearer my-token');
+    expect(callInit.headers['Authorization']).toBeUndefined();
   });
 });
 

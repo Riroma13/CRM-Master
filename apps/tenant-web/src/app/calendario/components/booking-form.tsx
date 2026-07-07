@@ -5,10 +5,16 @@ import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { BookCitaInput } from '@/lib/api-types';
+/** Form data without fecha — the page adds fecha before submitting to the API. */
+interface BookingFormData {
+  clienteNombre: string;
+  clienteEmail: string;
+  clienteTelefono?: string;
+  descripcion?: string;
+}
 
 interface BookingFormProps {
-  onSubmit: (data: BookCitaInput) => void;
+  onSubmit: (data: BookingFormData) => void;
   isLoading?: boolean;
 }
 

@@ -25,6 +25,11 @@ export class ApiError extends Error {
 
 type Params = Record<string, string | number | boolean | undefined | null>;
 
+interface RequestOpts {
+  /** Send Authorization header with NEXT_PUBLIC_API_TOKEN (default: false). */
+  auth?: boolean;
+}
+
 function buildUrl(path: string, params?: Params): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
   const url = new URL(path, baseUrl || 'http://localhost');
@@ -69,6 +74,7 @@ async function request<T>(
   path: string,
   params?: Params,
   body?: unknown,
+  opts?: RequestOpts,
 ): Promise<T> {
   const token = process.env.NEXT_PUBLIC_API_TOKEN;
 
@@ -76,7 +82,7 @@ async function request<T>(
     'Content-Type': 'application/json',
   };
 
-  if (token) {
+  if (token && opts?.auth) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
@@ -105,25 +111,26 @@ async function request<T>(
 // ─── API client ───────────────────────────────────────────────
 
 export const api = {
-  get<T>(path: string, params?: Params): Promise<T> {
-    return request<T>('GET', path, params);
+  get<T>(path: string, params?: Params, opts?: RequestOpts): Promise<T> {
+    return request<T>('GET', path, params, undefined, opts);
   },
 
-  post<T>(path: string, body?: unknown): Promise<T> {
-    return request<T>('POST', path, undefined, body);
+  post<T>(path: string, body?: unknown, opts?: RequestOpts): Promise<T> {
+    return request<T>('POST', path, undefined, body, opts);
   },
 
-  patch<T>(path: string, body?: unknown): Promise<T> {
-    return request<T>('PATCH', path, undefined, body);
+  patch<T>(path: string, body?: unknown, opts?: RequestOpts): Promise<T> {
+    return request<T>('PATCH', path, undefined, body, opts);
   },
 
-  put<T>(path: string, body?: unknown): Promise<T> {
-    return request<T>('PUT', path, undefined, body);
+  put<T>(path: string, body?: unknown, opts?: RequestOpts): Promise<T> {
+    return request<T>('PUT', path, undefined, body, opts);
   },
 };
 
 // ─── Type helpers ─────────────────────────────────────────────
 
+export type { RequestOpts };
 export type ApiGet = typeof api.get;
 export type ApiPost = typeof api.post;
 export type ApiPatch = typeof api.patch;

@@ -2,7 +2,8 @@
 
 import { useCallback, useState } from 'react';
 import { api } from '@/lib/api';
-import type { BookCitaInput, Cita, Slot } from '@/lib/api-types';
+import { cn } from '@/lib/utils';
+import type { Cita, Slot } from '@/lib/api-types';
 import { useSlots } from '@/hooks/use-slots';
 import { CalendarPicker } from './components/calendar-picker';
 import { SlotList } from './components/slot-list';
@@ -32,12 +33,16 @@ export default function CalendarioPage() {
     setStep('form');
   }, []);
 
-  const handleBookingSubmit = useCallback(async (data: BookCitaInput) => {
+  const handleBookingSubmit = useCallback(async (data: {
+    clienteNombre: string;
+    clienteEmail: string;
+    clienteTelefono?: string;
+    descripcion?: string;
+  }) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
-      // Use selectedSlot's start time combined with the form data
       const cita = await api.post<Cita>('/api/v1/tenant/calendario/citas', {
         ...data,
         fecha: selectedSlot?.start,
@@ -163,6 +168,4 @@ function getStepIndex(step: Step): number {
   }
 }
 
-function cn(...classes: (string | boolean | undefined | null)[]): string {
-  return classes.filter(Boolean).join(' ');
-}
+
