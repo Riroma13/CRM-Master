@@ -1,13 +1,13 @@
 'use client';
 
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import type { Cita, CitaEstado } from '@/lib/api-types';
 
-const statusConfig: Record<CitaEstado, { label: string; className: string }> = {
-  pendiente: { label: 'Pendiente', className: 'bg-[#FEF3C7] text-[#92400E]' },
-  confirmada: { label: 'Confirmada', className: 'bg-[#D1FAE5] text-[#065F46]' },
-  cancelada: { label: 'Cancelada', className: 'bg-[#FEE2E2] text-[#991B1B]' },
-  completada: { label: 'Completada', className: 'bg-[#E2E8F0] text-[#475569]' },
+const statusConfig: Record<CitaEstado, { label: string; variant: 'warning' | 'success' | 'critical' | 'default' }> = {
+  pendiente: { label: 'Pendiente', variant: 'warning' },
+  confirmada: { label: 'Confirmada', variant: 'success' },
+  cancelada: { label: 'Cancelada', variant: 'critical' },
+  completada: { label: 'Completada', variant: 'default' },
 };
 
 interface CitaCardProps {
@@ -46,14 +46,7 @@ export function CitaCard({ cita, onConfirm, onCancel }: CitaCardProps) {
             <p className="mt-1 text-[13px] text-[#45464D]">{cita.descripcion}</p>
           )}
         </div>
-        <span
-          className={cn(
-            'rounded-[0.25rem] px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.05em]',
-            status.className,
-          )}
-        >
-          {status.label}
-        </span>
+        <Badge variant={status.variant}>{status.label}</Badge>
       </div>
 
       {cita.estado === 'pendiente' && (onConfirm || onCancel) && (
