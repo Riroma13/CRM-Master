@@ -26,7 +26,7 @@ export class ApiError extends Error {
 type Params = Record<string, string | number | boolean | undefined | null>;
 
 interface RequestOpts {
-  /** Send Authorization header with NEXT_PUBLIC_API_TOKEN (default: false). */
+  /** Send credentials: 'include' for session cookie auth (default: false). */
   auth?: boolean;
 }
 
@@ -76,19 +76,17 @@ async function request<T>(
   body?: unknown,
   opts?: RequestOpts,
 ): Promise<T> {
-  const token = process.env.NEXT_PUBLIC_API_TOKEN;
-
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
-  if (token && opts?.auth) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const url = buildUrl(path, params);
 
   const init: RequestInit = { method, headers };
+
+  if (opts?.auth) {
+    init.credentials = 'include';
+  }
 
   if (body !== undefined && method !== 'GET') {
     init.body = JSON.stringify(body);
