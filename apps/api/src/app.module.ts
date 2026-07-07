@@ -9,8 +9,9 @@ import { EventosModule } from './modules/eventos/eventos.module';
 import { TareasModule } from './modules/tareas/tareas.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
 import { TenantScopeGuard } from './common/guards/tenant-scope.guard';
-import { AdminAuthGuard } from './common/guards/admin-auth.guard';
+import { BetterAuthGuard } from './common/guards/better-auth.guard';
 import { PrismaService } from './common/prisma.service';
+import { authClientProvider } from './common/auth-client.provider';
 
 @Module({
   imports: [
@@ -24,10 +25,11 @@ import { PrismaService } from './common/prisma.service';
   ],
   providers: [
     PrismaService,
+    authClientProvider,
     TenantResolveMiddleware,
     {
       provide: APP_GUARD,
-      useClass: AdminAuthGuard,
+      useClass: BetterAuthGuard,
     },
     {
       provide: APP_GUARD,

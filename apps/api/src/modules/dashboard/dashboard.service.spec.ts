@@ -29,6 +29,7 @@ async function resetTestData(prisma: PrismaService) {
   // Order matters: delete FK children before parents
   await prisma.admin.tarea.deleteMany({});
   await prisma.admin.cliente.deleteMany({});
+  await prisma.admin.user.deleteMany({});
   await prisma.admin.tenant.deleteMany({});
 }
 
