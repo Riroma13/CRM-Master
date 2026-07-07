@@ -2,12 +2,13 @@
 
 Decision needed before apply: Yes
 Chained PRs recommended: Yes
-Chain strategy: pending
+Chain strategy: feature-branch-chain
+PR slice: 1/3 (models + provider)
 400-line budget risk: High
 
 ## Phase 1: Modelo + Provider
-- [ ] 1.1 Prisma: add Disponibilidad + Cita models, migrate
-- [ ] 1.2 Create CalendarProvider interface + LocalCalendarProvider
+- [x] 1.1 Prisma: add Disponibilidad + Cita models, migrate
+- [x] 1.2 Create CalendarProvider interface + LocalCalendarProvider
 
 ## Phase 2: Backend API
 - [ ] 2.1 DisponibilidadService: CRUD disponibilidad, slot generation

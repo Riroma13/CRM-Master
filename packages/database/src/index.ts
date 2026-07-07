@@ -34,6 +34,8 @@ export function createPrismaClient(tenantId?: string) {
             'ItemInventario',
             'EventoBitacora',
             'Tarea',
+            'Disponibilidad',
+            'Cita',
           ];
 
           if (!scopedModels.includes(model)) return query(args);

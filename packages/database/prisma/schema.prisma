@@ -26,6 +26,8 @@ model Tenant {
   items    ItemInventario[]
   eventos  EventoBitacora[]
   tareas   Tarea[]
+  disponibilidad Disponibilidad?
+  citas    Cita[]
 
   @@map("tenants")
 }
@@ -274,4 +276,47 @@ model Tarea {
   @@index([clienteId])
   @@index([sistemaId])
   @@map("tareas")
+}
+
+// ─── Citas / Disponibilidad ──────────────────────────────────────────
+
+model Disponibilidad {
+  id            String   @id @default(uuid())
+  tenantId      String   @unique @map("tenant_id")
+  timezone      String   @default("Europe/Madrid")
+  slotDuration  Int      @default(30) @map("slot_duration")
+  minNotice     Int      @default(240) @map("min_notice")
+  maxDays       Int      @default(30) @map("max_days")
+  dailySchedule Json     @default("[{\"day\":1,\"start\":\"09:00\",\"end\":\"14:00\"},{\"day\":1,\"start\":\"16:00\",\"end\":\"19:00\"},{\"day\":2,\"start\":\"09:00\",\"end\":\"14:00\"},{\"day\":3,\"start\":\"09:00\",\"end\":\"14:00\"},{\"day\":4,\"start\":\"09:00\",\"end\":\"14:00\"},{\"day\":5,\"start\":\"09:00\",\"end\":\"14:00\"}]") @map("daily_schedule")
+  blockedDates  Json?    @default("[]") @map("blocked_dates")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("disponibilidad")
+}
+
+model Cita {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  clienteId       String?  @map("cliente_id")
+  titulo          String   @default("Consulta")
+  descripcion     String?
+  fecha           DateTime
+  duracion        Int      @default(30)
+  estado          String   @default("pendiente")
+  clienteNombre   String?  @map("cliente_nombre")
+  clienteEmail    String?  @map("cliente_email")
+  clienteTelefono String?  @map("cliente_telefono")
+  notasInternas   String?  @map("notas_internas")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([fecha])
+  @@index([tenantId, estado])
+  @@map("citas")
 }
