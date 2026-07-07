@@ -29,7 +29,7 @@ function formatTime(isoString: string): string {
 
 export function BookingConfirmation({ cita, onReset }: BookingConfirmationProps) {
   return (
-    <Card className="max-w-md mx-auto text-center">
+    <Card className="max-w-md mx-auto text-center" data-testid="booking-confirmation">
       <CardContent className="pt-8 pb-6 space-y-4">
         {/* Success icon */}
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[--color-success]/10">

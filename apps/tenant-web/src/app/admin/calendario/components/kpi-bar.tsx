@@ -20,7 +20,7 @@ const kpiItems: { key: keyof KPIs; label: string; color: string }[] = [
 
 export function KpiBar({ kpis }: KpiBarProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="kpi-bar">
       {kpiItems.map((item) => (
         <div
           key={item.key}

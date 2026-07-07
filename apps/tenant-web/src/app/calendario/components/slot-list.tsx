@@ -41,6 +41,7 @@ export function SlotList({ slots, onSelect, selectedSlot, isLoading }: SlotListP
       role="listbox"
       aria-label="Horarios disponibles"
       className="grid grid-cols-2 gap-2 sm:grid-cols-3"
+      data-testid="slot-list"
     >
       {slots.map((slot) => {
         const isSelected = selectedSlot?.start === slot.start;
@@ -51,6 +52,7 @@ export function SlotList({ slots, onSelect, selectedSlot, isLoading }: SlotListP
             key={slot.start}
             type="button"
             role="option"
+            data-testid={`slot-${slot.start}`}
             aria-selected={isSelected || undefined}
             aria-disabled={isDisabled || undefined}
             disabled={isDisabled}

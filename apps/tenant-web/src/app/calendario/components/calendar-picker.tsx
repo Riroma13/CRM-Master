@@ -110,7 +110,7 @@ export function CalendarPicker({ onSelect, initialDate }: CalendarPickerProps) {
   );
 
   return (
-    <div className="w-full max-w-xs">
+    <div className="w-full max-w-xs" data-testid="calendar-picker">
       {/* Header with month navigation */}
       <div className="flex items-center justify-between mb-3">
         <Button

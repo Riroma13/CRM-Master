@@ -37,7 +37,7 @@ export function ScheduleEditor({ schedule, onChange }: ScheduleEditorProps) {
   const daysWithSchedule = [...new Set(weekdaySchedule.map((s) => s.day))].sort();
 
   return (
-    <div>
+    <div data-testid="schedule-editor">
       <h3 className="mb-3 text-[16px] font-semibold text-[#1B1B1D]">
         Horario semanal
       </h3>

@@ -62,7 +62,7 @@ export default function AdminCalendarioPage() {
   const hasChanges = localSchedule !== null || localBlockedDates !== null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="admin-calendario-page">
       <div className="flex items-center justify-between">
         <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Calendario</h1>
         <button
@@ -114,12 +114,13 @@ export default function AdminCalendarioPage() {
 
             <div className="flex justify-end pt-2">
               <button
-                onClick={handleSave}
-                disabled={!hasChanges || saving}
-                className="rounded-[0.25rem] bg-[#131B2E] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.05em] text-white transition-colors hover:bg-[#0F172A] disabled:opacity-50"
-              >
-                {saving ? 'Guardando...' : 'Guardar cambios'}
-              </button>
+                  onClick={handleSave}
+                  disabled={!hasChanges || saving}
+                  data-testid="save-config"
+                  className="rounded-[0.25rem] bg-[#131B2E] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.05em] text-white transition-colors hover:bg-[#0F172A] disabled:opacity-50"
+                >
+                  {saving ? 'Guardando...' : 'Guardar cambios'}
+                </button>
             </div>
           </>
         )}

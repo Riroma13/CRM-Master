@@ -22,7 +22,7 @@ export function BlockedDates({ dates, onChange }: BlockedDatesProps) {
   };
 
   return (
-    <div>
+    <div data-testid="blocked-dates">
       <h3 className="mb-3 text-[16px] font-semibold text-[#1B1B1D]">
         Fechas bloqueadas
       </h3>
