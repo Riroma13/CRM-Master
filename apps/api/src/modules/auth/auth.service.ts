@@ -2,10 +2,10 @@ import {
   Injectable, UnauthorizedException, NotFoundException,
   Logger, Inject,
 } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { PrismaService } from '../../common/prisma.service';
-import { SessionService } from './session.service';
 import { LoginDto, AuthResponseDto, MeDto } from './dto';
 
 @Injectable()
@@ -14,7 +14,6 @@ export class AuthService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly sessionService: SessionService,
     @Inject(REQUEST) private readonly req: Request,
   ) {}
 
@@ -49,17 +48,38 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // Crear sesión en el store en memoria
-    const token = this.sessionService.createSession({
-      userId: user.id,
-      email: user.email,
-      name: user.name,
-      tenantId: tenant.id,
-      role: user.role,
-    });
-
-    // Calcular expiresAt para la respuesta (7 días desde ahora)
+    // Crear sesión en ba_sessions (Better-Auth sessions table)
+    const token = `sess_${randomBytes(32).toString('hex')}`;
+    const sessionId = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    // Buscar o crear ba_user
+    let baUserId = user.betterAuthUserId;
+    if (!baUserId) {
+      const existing = await (this.prisma.admin as any).$queryRawUnsafe(
+        'SELECT id FROM ba_users WHERE email = $1',
+        user.email,
+      );
+      if (existing?.length) {
+        baUserId = existing[0].id;
+      } else {
+        baUserId = crypto.randomUUID();
+        await this.prisma.admin.$executeRawUnsafe(
+          `INSERT INTO ba_users (id, email, "emailVerified", name, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+          baUserId, user.email, true, user.name,
+        );
+      }
+      await this.prisma.admin.user.update({
+        where: { id: user.id },
+        data: { betterAuthUserId: baUserId },
+      });
+    }
+
+    // Create session in ba_sessions
+    await this.prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_sessions (id, user_id, token, expires_at, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4::timestamp, NOW(), NOW())`,
+      sessionId, baUserId, token, expiresAt.toISOString(),
+    );
 
     this.logger.log(`Login exitoso: ${user.email} en ${tenant.slug}`);
 

@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, Module, NestModule, MiddlewareConsumer, Injectable, NestMiddleware } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import * as request from 'supertest';
 import { DashboardModule } from '../../src/modules/dashboard/dashboard.module';
 import { ClientsModule } from '../../src/modules/clients/clients.module';
 import { AuthModule } from '../../src/modules/auth/auth.module';
 import { PrismaService } from '../../src/common/prisma.service';
-import { SessionService } from '../../src/modules/auth/session.service';
+import { BetterAuthGuard } from '../../src/common/guards/better-auth.guard';
 import { Request, Response, NextFunction } from 'express';
 
 /**
@@ -25,7 +26,14 @@ class MockTenantMiddleware implements NestMiddleware {
 
 @Module({
   imports: [DashboardModule, ClientsModule, AuthModule],
-  providers: [MockTenantMiddleware],
+  providers: [
+    MockTenantMiddleware,
+    PrismaService,
+    {
+      provide: APP_GUARD,
+      useClass: BetterAuthGuard,
+    },
+  ],
 })
 class DashboardE2ETestModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
@@ -35,7 +43,6 @@ class DashboardE2ETestModule implements NestModule {
 
 describe('GET /api/v1/admin/dashboard (E2E)', () => {
   let app: INestApplication;
-  let sessionService: SessionService;
   let prisma: PrismaService;
 
   const TENANT_A_ID = 'd3000000-0000-4000-8000-000000000001';
@@ -56,6 +63,9 @@ describe('GET /api/v1/admin/dashboard (E2E)', () => {
     'd3t00004-0000-4000-8000-000000000001',
   ];
 
+  const SUPER_BA_USER_ID = crypto.randomUUID();
+  const ADMIN_BA_USER_ID = crypto.randomUUID();
+
   let superadminToken: string;
   let tenantAdminToken: string;
 
@@ -65,32 +75,13 @@ describe('GET /api/v1/admin/dashboard (E2E)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    sessionService = moduleFixture.get(SessionService);
     prisma = moduleFixture.get(PrismaService);
     await app.init();
 
-    // Create sessions
-    superadminToken = sessionService.createSession({
-      userId: 'e2e-dash-super',
-      email: 'super@admin.com',
-      name: 'Super Admin',
-      tenantId: 'e2e-tenant',
-      role: 'superadmin',
-    });
-
-    tenantAdminToken = sessionService.createSession({
-      userId: 'e2e-dash-admin',
-      email: 'admin@tenant.com',
-      name: 'Tenant Admin',
-      tenantId: TENANT_A_ID,
-      role: 'admin',
-    });
-
-    // Clean all known E2E test tenant data — safe in test DB, no production risk.
-    // This is required because parallel test suites (doorbell) create tenants
-    // that would skew aggregate counts in dashboard metrics.
+    // Clean all known E2E test data — FK order: children before parents
     await prisma.admin.tarea.deleteMany({});
     await prisma.admin.cliente.deleteMany({});
+    await prisma.admin.user.deleteMany({});
     await prisma.admin.tenant.deleteMany({});
 
     // Seed data: tenants, clients, tareas
@@ -118,10 +109,74 @@ describe('GET /api/v1/admin/dashboard (E2E)', () => {
         { id: TAREA_IDS[3], tenantId: TENANT_B_ID, clienteId: CLIENT_IDS[3], titulo: 'Tarea Pendiente 3', estado: 'Pendiente' },
       ],
     });
+
+    // Seed Better-Auth users
+    await prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_users (id, email, "emailVerified", name, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+      SUPER_BA_USER_ID, 'e2e-dash-super@test.com', true, 'Super Admin',
+    );
+    await prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_users (id, email, "emailVerified", name, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+      ADMIN_BA_USER_ID, 'e2e-dash-admin@test.com', true, 'Tenant Admin',
+    );
+
+    // Create legacy users with betterAuthUserId linking
+    await prisma.admin.user.upsert({
+      where: { email: 'e2e-dash-super@test.com' },
+      create: {
+        id: 'e2e-dash-super-uuid',
+        tenantId: TENANT_A_ID,
+        email: 'e2e-dash-super@test.com',
+        name: 'Super Admin',
+        role: 'superadmin',
+        betterAuthUserId: SUPER_BA_USER_ID,
+      },
+      update: {},
+    });
+    await prisma.admin.user.upsert({
+      where: { email: 'e2e-dash-admin@test.com' },
+      create: {
+        id: 'e2e-dash-admin-uuid',
+        tenantId: TENANT_A_ID,
+        email: 'e2e-dash-admin@test.com',
+        name: 'Tenant Admin',
+        role: 'admin',
+        betterAuthUserId: ADMIN_BA_USER_ID,
+      },
+      update: {},
+    });
+
+    // Create sessions in ba_sessions
+    const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    superadminToken = 'sess_e2e_dash_super_token';
+    tenantAdminToken = 'sess_e2e_dash_admin_token';
+    await prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_sessions (id, user_id, token, expires_at, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4::timestamp, NOW(), NOW())`,
+      crypto.randomUUID(), SUPER_BA_USER_ID, superadminToken, futureDate.toISOString(),
+    );
+    await prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_sessions (id, user_id, token, expires_at, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4::timestamp, NOW(), NOW())`,
+      crypto.randomUUID(), ADMIN_BA_USER_ID, tenantAdminToken, futureDate.toISOString(),
+    );
   });
 
   afterAll(async () => {
     if (prisma) {
+      // Cleanup ba data first
+      for (const email of ['e2e-dash-super@test.com', 'e2e-dash-admin@test.com']) {
+        await prisma.admin.$executeRawUnsafe(
+          `DELETE FROM ba_sessions WHERE user_id IN (SELECT id FROM ba_users WHERE email = $1)`, email,
+        );
+        await prisma.admin.$executeRawUnsafe(
+          `DELETE FROM ba_users WHERE email = $1`, email,
+        );
+        await prisma.admin.$executeRawUnsafe(
+          `UPDATE users SET better_auth_user_id = NULL WHERE email = $1`, email,
+        );
+      }
+      await prisma.admin.user.deleteMany({
+        where: { id: { in: ['e2e-dash-super-uuid', 'e2e-dash-admin-uuid'] } },
+      });
       await prisma.admin.tarea.deleteMany({
         where: { id: { in: TAREA_IDS } },
       });

@@ -5,13 +5,12 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { EventosService } from './eventos.service';
 import { CreateEventoSchema, EventoListQuery, CreateEventoDto } from './dto';
-import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
 import { TenantScopeGuard } from '../../common/guards/tenant-scope.guard';
 import { z } from 'zod';
 
 @ApiTags('Admin - Eventos')
 @ApiBearerAuth()
-@UseGuards(AdminAuthGuard, TenantScopeGuard)
+@UseGuards(TenantScopeGuard)
 @Controller('api/v1/admin/clientes/:clienteId/eventos')
 export class EventosController {
   constructor(private readonly eventosService: EventosService) {}

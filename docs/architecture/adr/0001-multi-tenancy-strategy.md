@@ -69,10 +69,10 @@ debe poder ver, crear y gestionar datos de cualquier tenant desde una única
 interfaz de supervisión.
 
 ### Mecanismo
-- **AdminAuthGuard** (`common/guards/admin-auth.guard.ts`): verifica que el
-  token pertenece a un usuario con `role === 'superadmin'`. Es la primera
-  barrera — sin superadmin, ni siquiera se llega a TenantScopeGuard en rutas
-  `/api/v1/admin/*`.
+- **BetterAuthGuard** (`common/guards/better-auth.guard.ts`): reemplaza a
+  `AdminAuthGuard`. Valida sesiones contra `ba_sessions` (Better-Auth sessions
+  table) y verifica que el token corresponde a un usuario con `role === 'superadmin'`.
+  Es la primera barrera — sin superadmin, no se accede a `/api/v1/admin/*`.
 - **TenantScopeGuard** (`common/guards/tenant-scope.guard.ts`): cuando
   `request.user.role === 'superadmin'`, retorna `true` inmediatamente sin
   validar `tenantId` contra el token. Esto permite que Ricardo acceda a datos
@@ -82,10 +82,10 @@ interfaz de supervisión.
   visibilidad global.
 
 ### Implicaciones de seguridad
-- El bypass está **protegido por dos capas**: AdminAuthGuard exige superadmin,
+- El bypass está **protegido por dos capas**: BetterAuthGuard exige superadmin,
   TenantScopeGuard confirma superadmin. No hay ruta en `/api/v1/admin/*`
   que permita acceso sin pasar por ambos guards.
-- Los tests de unidad (`admin-auth.guard.spec.ts`, `tenant-scope.guard.spec.ts`)
+- Los tests de unidad (`better-auth.guard.spec.ts`, `tenant-scope.guard.spec.ts`)
   cubren explícitamente los casos de rechazo a roles no-superadmin.
 - Si en el futuro se introducen rutas no-admin con datos sensibles, deberán
   implementar su propio scoping explícito (el bypass solo aplica a admin routes).
