@@ -14,14 +14,16 @@ vi.mock('lucide-react', () => ({
 }));
 
 describe('SidebarLayout', () => {
-  it('renders sidebar and children', () => {
+  it('renders sidebar (desktop + drawer) and children', () => {
     render(
       <SidebarLayout>
         <div data-testid="content">Main Content</div>
       </SidebarLayout>,
     );
 
-    expect(screen.getByTestId('sidebar')).toBeInTheDocument();
+    // Sidebar is rendered twice: desktop sidebar + mobile drawer sidebar
+    const sidebars = screen.getAllByTestId('sidebar');
+    expect(sidebars).toHaveLength(2);
     expect(screen.getByTestId('content')).toBeInTheDocument();
     expect(screen.getByText('Main Content')).toBeInTheDocument();
   });
@@ -44,7 +46,7 @@ describe('SidebarLayout', () => {
     );
 
     // No overlay before opening
-    expect(screen.queryByRole('presentation')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('drawer-overlay')).not.toBeInTheDocument();
 
     const hamburger = screen.getByLabelText('Abrir menú');
     fireEvent.click(hamburger);
@@ -53,7 +55,7 @@ describe('SidebarLayout', () => {
     const sidebars = screen.getAllByTestId('sidebar');
     expect(sidebars).toHaveLength(2);
     // Overlay should appear
-    expect(screen.getByRole('presentation')).toBeInTheDocument();
+    expect(screen.getByTestId('drawer-overlay')).toBeInTheDocument();
   });
 
   it('closes drawer when overlay is clicked', () => {
@@ -65,10 +67,10 @@ describe('SidebarLayout', () => {
 
     // Open drawer
     fireEvent.click(screen.getByLabelText('Abrir menú'));
-    expect(screen.getByRole('presentation')).toBeInTheDocument();
+    expect(screen.getByTestId('drawer-overlay')).toBeInTheDocument();
 
     // Close drawer by clicking overlay
-    fireEvent.click(screen.getByRole('presentation'));
-    expect(screen.queryByRole('presentation')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('drawer-overlay'));
+    expect(screen.queryByTestId('drawer-overlay')).not.toBeInTheDocument();
   });
 });

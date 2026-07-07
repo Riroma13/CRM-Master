@@ -46,6 +46,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile drawer overlay */}
       {drawerOpen && (
         <div
+          data-testid="drawer-overlay"
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={() => setDrawerOpen(false)}
           aria-hidden="true"
