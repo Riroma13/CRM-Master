@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnprocessableEntityException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import {
   CalendarProvider,
@@ -133,6 +138,21 @@ export class LocalCalendarProvider implements CalendarProvider {
       typeof input.fecha === 'string' ? new Date(input.fecha) : input.fecha;
     const duracion = input.duracion ?? 30;
     const slotEnd = new Date(fecha.getTime() + duracion * 60 * 1000);
+
+    // Validate minNotice — fecha must be at least minNotice minutes from now
+    const disp = await this.prisma.admin.disponibilidad.findUnique({
+      where: { tenantId },
+    });
+
+    if (disp) {
+      const minNoticeMs = disp.minNotice * 60 * 1000;
+      const now = new Date();
+      if (fecha.getTime() < now.getTime() + minNoticeMs) {
+        throw new UnprocessableEntityException(
+          `La fecha debe tener al menos ${disp.minNotice} minutos de antelación`,
+        );
+      }
+    }
 
     return this.prisma.admin.$transaction(async (tx: any) => {
       // Find all active citas whose start falls within a widened window.
