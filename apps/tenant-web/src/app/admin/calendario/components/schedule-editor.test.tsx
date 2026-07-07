@@ -48,4 +48,36 @@ describe('ScheduleEditor', () => {
       screen.getByText('No hay horarios configurados. Haz clic en un día para añadir horario.'),
     ).toBeInTheDocument();
   });
+
+  it('filters out weekend days (Sat=6, Sun=0) from display', () => {
+    const mixedSchedule: DaySchedule[] = [
+      { day: 1, start: '09:00', end: '14:00' },
+      { day: 6, start: '10:00', end: '13:00' }, // Saturday — should be filtered
+      { day: 0, start: '11:00', end: '15:00' }, // Sunday — should be filtered
+    ];
+    const onChange = vi.fn();
+    render(<ScheduleEditor schedule={mixedSchedule} onChange={onChange} />);
+
+    // Only Monday (day 1) should have a row
+    expect(screen.getByText('Lun')).toBeInTheDocument();
+    expect(screen.queryByText('Sáb')).not.toBeInTheDocument();
+    expect(screen.queryByText('Dom')).not.toBeInTheDocument();
+    // onChange is NOT called on mount — weekends are silently dropped from display
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('only shows quick-add buttons for Mon–Fri', () => {
+    render(<ScheduleEditor schedule={[]} onChange={vi.fn()} />);
+
+    // Mon–Fri buttons should be shown
+    expect(screen.getByText('+ Lun')).toBeInTheDocument();
+    expect(screen.getByText('+ Mar')).toBeInTheDocument();
+    expect(screen.getByText('+ Mié')).toBeInTheDocument();
+    expect(screen.getByText('+ Jue')).toBeInTheDocument();
+    expect(screen.getByText('+ Vie')).toBeInTheDocument();
+
+    // Weekend buttons should NOT be shown
+    expect(screen.queryByText('+ Sáb')).not.toBeInTheDocument();
+    expect(screen.queryByText('+ Dom')).not.toBeInTheDocument();
+  });
 });

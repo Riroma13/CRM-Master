@@ -3,6 +3,7 @@
 import type { DaySchedule } from '@/lib/api-types';
 
 const DAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const WEEKDAYS_ONLY = [1, 2, 3, 4, 5]; // Mon–Fri
 
 interface ScheduleEditorProps {
   schedule: DaySchedule[];
@@ -10,23 +11,30 @@ interface ScheduleEditorProps {
 }
 
 export function ScheduleEditor({ schedule, onChange }: ScheduleEditorProps) {
+  // Filter to Mon–Fri only; silently drop Sat/Sun entries
+  const weekdaySchedule = schedule.filter((s) => WEEKDAYS_ONLY.includes(s.day));
+
+  // Keep onChange consistent by propagating only Mon–Fri
+  const handleChange = (updated: DaySchedule[]) => {
+    onChange(updated.filter((s) => WEEKDAYS_ONLY.includes(s.day)));
+  };
   const addDay = (day: number) => {
-    onChange([...schedule, { day, start: '09:00', end: '14:00' }]);
+    handleChange([...weekdaySchedule, { day, start: '09:00', end: '14:00' }]);
   };
 
   const addRow = (day: number) => {
-    onChange([...schedule, { day, start: '09:00', end: '14:00' }]);
+    handleChange([...weekdaySchedule, { day, start: '09:00', end: '14:00' }]);
   };
 
   const removeRow = (index: number) => {
-    onChange(schedule.filter((_, i) => i !== index));
+    handleChange(weekdaySchedule.filter((_, i) => i !== index));
   };
 
   const updateRow = (index: number, field: 'start' | 'end', value: string) => {
-    onChange(schedule.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+    handleChange(weekdaySchedule.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
   };
 
-  const daysWithSchedule = [...new Set(schedule.map((s) => s.day))].sort();
+  const daysWithSchedule = [...new Set(weekdaySchedule.map((s) => s.day))].sort();
 
   return (
     <div>
@@ -34,24 +42,24 @@ export function ScheduleEditor({ schedule, onChange }: ScheduleEditorProps) {
         Horario semanal
       </h3>
 
-      {/* Quick-add day buttons */}
+      {/* Quick-add day buttons (Mon–Fri only) */}
       <div className="mb-3 flex flex-wrap gap-1">
-        {DAY_LABELS.map((label, day) =>
+        {WEEKDAYS_ONLY.map((day) =>
           daysWithSchedule.includes(day) ? null : (
             <button
               key={day}
               onClick={() => addDay(day)}
               className="rounded-[0.25rem] border border-[#E2E8F0] px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.05em] text-[#45464D] hover:bg-[#F0EDEF]"
             >
-              + {label}
+              + {DAY_LABELS[day]}
             </button>
           ),
         )}
       </div>
 
       {daysWithSchedule.map((day) => {
-        const dayRows = schedule.filter((s) => s.day === day);
-        const firstIndex = schedule.findIndex((s) => s.day === day);
+        const dayRows = weekdaySchedule.filter((s) => s.day === day);
+        const firstIndex = weekdaySchedule.findIndex((s) => s.day === day);
 
         return (
           <div
