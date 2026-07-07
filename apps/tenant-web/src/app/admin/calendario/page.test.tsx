@@ -8,7 +8,7 @@ const mockCitas = [
     tenantId: 't1',
     fecha: new Date().toISOString(),
     duracion: 30,
-    estado: 'pendiente',
+    estado: 'pendiente' as const,
     titulo: 'Consulta',
     clienteNombre: 'Juan Pérez',
     createdAt: new Date().toISOString(),
@@ -82,5 +82,30 @@ describe('AdminCalendarioPage', () => {
     render(<AdminCalendarioPage />);
     const saveBtn = screen.getByText('Guardar cambios');
     expect(saveBtn).toBeDisabled();
+  });
+
+  it('shows error when save fails', async () => {
+    vi.mocked(useDisponibilidad).mockReturnValue({
+      config: mockConfig,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+      updateConfig: vi.fn().mockRejectedValue(new Error('Network error')),
+    });
+
+    render(<AdminCalendarioPage />);
+
+    // Make a change first so save button is enabled
+    const scheduleEditor = screen.getByText('Horario semanal');
+    expect(scheduleEditor).toBeInTheDocument();
+
+    // Trigger a save by clicking the button (we need a change first)
+    // Simulate a schedule change
+    const addButtons = screen.getAllByText('+ Añadir horario');
+    fireEvent.click(addButtons[0]);
+    fireEvent.click(screen.getByText('Guardar cambios'));
+
+    expect(await screen.findByText('Network error')).toBeInTheDocument();
   });
 });

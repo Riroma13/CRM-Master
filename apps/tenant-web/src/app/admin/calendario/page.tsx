@@ -14,6 +14,7 @@ export default function AdminCalendarioPage() {
     useCitas();
   const { config, isLoading: configLoading, updateConfig } = useDisponibilidad();
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Compute KPIs from citas
   const kpis = useMemo(() => {
@@ -40,6 +41,7 @@ export default function AdminCalendarioPage() {
   const handleSave = async () => {
     if (!config) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await updateConfig({
         ...config,
@@ -48,6 +50,10 @@ export default function AdminCalendarioPage() {
       });
       setLocalSchedule(null);
       setLocalBlockedDates(null);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Error al guardar la configuración';
+      setSaveError(message);
     } finally {
       setSaving(false);
     }
@@ -99,6 +105,12 @@ export default function AdminCalendarioPage() {
               dates={blockedDates}
               onChange={(d) => setLocalBlockedDates(d)}
             />
+
+            {saveError && (
+              <div className="mb-3 rounded-[0.5rem] border-2 border-[#EF4444] bg-[#FEF2F2] p-3">
+                <p className="text-[13px] font-medium text-[#991B1B]">{saveError}</p>
+              </div>
+            )}
 
             <div className="flex justify-end pt-2">
               <button
