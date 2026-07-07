@@ -12,8 +12,9 @@ Standard
 
 ### Completed Tasks (Cumulative)
 
-#### PR-3d — E2E Admin Calendario Fix
-- [x] **3d.2 — Admin calendario E2E** — Fixed mock mutation so badge assertions work after confirm/cancel. Updated confirm test to assert "Confirmada" badge. Updated cancel test to switch to "Historial" tab and assert "Cancelada" badge.
+#### PR-3d — E2E Tests
+- [x] **3d.1 — Public booking E2E** — Replaced placeholder smoke tests with full public booking flow: calendar → slots → form → confirmation.
+- [x] **3d.2 — Admin calendario E2E** — Full admin flow: sidebar, KPIs, cita list, confirm/cancel badge assertions, schedule editor, block/unblock dates.
 
 #### Phase 1–2 (Backend) — PR 2
 - [x] 1.1 Prisma: add Disponibilidad + Cita models, migrate
@@ -86,33 +87,27 @@ None — implementation matches design. All UI components copied from admin-web 
 2. **`next lint` deprecation** — Next.js 15's `next lint` is deprecated. Configured eslint 8 + eslint-config-next as a compatibility shim. No lint errors.
 
 ### Remaining Tasks
-- [ ] PR-3d — E2E booking spec (booking.spec.ts) — still pending in separate PR slice
+None — all frontend tasks for SPEC-0006 are complete.
 
 ### Workload / PR Boundary
-- Mode: feature-branch-chain slice
-- Current work unit: PR-3a (Config + shared UI + API client)
-- Repository: `feat/SPEC-0006-tenant-citas-pr3a` (branch), targets `feat/SPEC-0006-tenant-citas-pr3` (tracker)
-- Review budget impact: ~946 source lines + ~2400 lockfile changes
+- Mode: feature-branch-chain
+- Tracker branch: `feat/SPEC-0006-tenant-citas-pr3`
+- Slices:
+  - PR-3a `feat/SPEC-0006-tenant-citas-pr3a` — Config + shared UI + API client (~946 source lines, size:exception accepted)
+  - PR-3b `feat/SPEC-0006-tenant-citas-pr3b` — Public booking flow (~1,558 source lines, size:exception accepted)
+  - PR-3c `feat/SPEC-0006-tenant-citas-pr3c` — Admin dashboard + availability config (~1,650 source lines, size:exception accepted)
+  - PR-3d `feat/SPEC-0006-tenant-citas-pr3d` — E2E tests (~487 source lines, size:exception accepted)
 
 ### Verification Results
 ```bash
 cd apps/tenant-web
 npx tsc --noEmit          # ✅ Pass
-npx vitest run src/lib/ src/components/ui/  # ✅ 9 files, 32 tests passed
+npx vitest run            # ✅ 121 tests passed (e2e/ excluded)
+npx playwright test --list # ✅ 9 tests discovered
 
 # From root:
 pnpm lint --filter tenant-web  # ✅ No ESLint warnings or errors
 ```
 
-### Git Log
-```
-a5bb769 chore: update pnpm-lock.yaml with tenant-web dependencies
-72ef863 chore(tenant-web): add radix UI, testing-library deps and ESLint config
-78264d3 feat(tenant-web): add shared UI components (button, card, badge, input, tabs, separator, scroll-area) with smoke tests
-fa46a0a feat(tenant-web): add lib utilities (cn, api client, api types) with tests
-4b5b1a3 feat(tenant-web): add theme tokens and Inter font to layout
-a08f706 feat(tenant-web): add project config files (tsconfig, next.config, postcss, vitest, next-env, test-setup)
-```
-
 ### Status
-11/11 tasks complete. PR-3d E2E admin calendario fix complete. Remaining: PR-3d booking E2E spec in separate slice.
+All 17 frontend tasks (3a.1–3d.2) complete. Ready for merge review.

@@ -230,7 +230,7 @@ git rm -r src/app/admin/ src/hooks/use-citas.ts src/hooks/use-disponibilidad.ts 
 
 ### Tasks
 
-- [ ] **3d.1 — Public booking E2E** (~100 lines)
+- [x] **3d.1 — Public booking E2E** (~100 lines)
   - **Files:**
     - `apps/tenant-web/e2e/booking.setup.ts` — Modify: update storage state setup for fully implemented pages
     - `apps/tenant-web/e2e/booking.spec.ts` — Replace placeholder smoke tests with full flow:
