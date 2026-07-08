@@ -82,7 +82,7 @@ export function BookingForm({ onSubmit, isLoading }: BookingFormProps) {
     errors[field] ? `${field}-error` : undefined;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate data-testid="booking-form">
       <div>
         <label
           htmlFor="clienteNombre"

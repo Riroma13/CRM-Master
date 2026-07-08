@@ -30,7 +30,7 @@ export function CitaCard({ cita, onConfirm, onCancel }: CitaCardProps) {
   });
 
   return (
-    <div className="rounded-[0.5rem] border border-[#E2E8F0] bg-white p-4 shadow-ambient">
+    <div className="rounded-[0.5rem] border border-[#E2E8F0] bg-white p-4 shadow-ambient" data-testid={`cita-card-${cita.id}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <h3 className="text-[16px] font-semibold text-[#1B1B1D]">

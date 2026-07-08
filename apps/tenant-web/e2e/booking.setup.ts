@@ -6,19 +6,16 @@ const AUTH_FILE = path.join(__dirname, '.auth', 'tenant-admin.json');
 /**
  * Setup file for the calendario/booking Playwright tests.
  *
- * Navigates to the tenant calendario page to establish a baseline session.
- * For the public booking flow (no auth required), this saves a minimal
- * storage state so the test project has one to load.
+ * Since the public booking flow requires no authentication, this setup
+ * simply navigates to a known-working page and saves an empty storage
+ * state so the test project has one to load.
  */
-setup('navigate to tenant calendario page', async ({ page }) => {
-  // Navigate to the public calendario page
-  // The page may not be fully implemented yet — this setup ensures
-  // the test runner has a valid storage state file.
+setup('create empty storage state', async ({ page }) => {
+  // Navigate to a page that exists to prime the storage state
   await page.goto('/calendario', { waitUntil: 'networkidle' }).catch(() => {
-    // If the page doesn't exist yet (Phase 3 frontend pending),
-    // create an empty storage state so the test project can still run.
+    // If the page isn't reachable yet, create an empty state anyway
   });
 
-  // Save storage state for downstream tests
+  // Ensure the .auth directory exists by saving storage state
   await page.context().storageState({ path: AUTH_FILE });
 });

@@ -31,7 +31,7 @@ export function CitaList({
       : citas.filter((c) => c.estado === 'cancelada' || c.estado === 'completada');
 
   return (
-    <div>
+    <div data-testid="cita-list">
       {/* Tabs */}
       <div className="mb-4 flex gap-1 rounded-[0.375rem] bg-[#F0EDEF] p-1">
         {(['proximas', 'historial'] as const).map((tab) => (
