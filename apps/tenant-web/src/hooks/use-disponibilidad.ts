@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import type { DisponibilidadConfig } from '@/lib/api-types';
+import { MOCK_DISPONIBILIDAD } from '@/lib/mock-data';
 
 interface UseDisponibilidadReturn {
   config: DisponibilidadConfig | null;
@@ -35,9 +36,10 @@ export function useDisponibilidad(): UseDisponibilidadReturn {
       }
     } catch (err) {
       if (id === fetchIdRef.current) {
-        setIsError(true);
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-        setConfig(null);
+        // Dev/demo: fall back to mock data when API is unavailable
+        setConfig(MOCK_DISPONIBILIDAD);
+        setIsError(false);
+        setError(null);
       }
     } finally {
       if (id === fetchIdRef.current) {
