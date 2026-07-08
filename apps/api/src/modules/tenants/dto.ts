@@ -1,4 +1,4 @@
-import { z } from '../../../node_modules/zod';
+import { z } from 'zod';
 
 const RESERVED_SLUGS = [
   'www', 'api', 'admin', 'app', 'mail', 'ftp',
