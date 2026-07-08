@@ -11,6 +11,12 @@ vi.mock('./sidebar', () => ({
 vi.mock('lucide-react', () => ({
   Menu: () => <span data-testid="icon-menu">Menu</span>,
   X: () => <span data-testid="icon-x">X</span>,
+  Bell: () => <span data-testid="icon-bell">Bell</span>,
+}));
+
+// Mock notification bell hook
+vi.mock('@/hooks/use-notificaciones', () => ({
+  useNotificaciones: () => ({ notificaciones: [], noLeidas: 0, refetch: vi.fn(), isLoading: false }),
 }));
 
 describe('SidebarLayout', () => {

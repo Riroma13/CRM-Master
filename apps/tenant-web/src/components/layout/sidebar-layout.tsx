@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Sidebar } from './sidebar';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -26,16 +27,24 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile wrapper */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Mobile header with hamburger */}
-        <div className="flex items-center gap-2 border-b border-[#E2E8F0] bg-white px-4 py-3 md:hidden">
-          <button
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Abrir menú"
-            className="rounded-[0.25rem] p-1.5 text-[#45464D] hover:bg-[#F0EDEF]"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <span className="text-[15px] font-semibold text-[#1B1B1D]">Mi Portal</span>
+        {/* Mobile header with hamburger + notifications */}
+        <div className="flex items-center justify-between border-b border-[#E2E8F0] bg-white px-4 py-3 md:hidden">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Abrir menú"
+              className="rounded-[0.25rem] p-1.5 text-[#45464D] hover:bg-[#F0EDEF]"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <span className="text-[15px] font-semibold text-[#1B1B1D]">Mi Portal</span>
+          </div>
+          <NotificationBell />
+        </div>
+
+        {/* Desktop notification bell — fixed position */}
+        <div className="hidden md:flex md:absolute md:right-6 md:top-4 md:z-10">
+          <NotificationBell />
         </div>
 
         <main className="flex-1 overflow-y-auto">
