@@ -71,16 +71,17 @@ describe('useDisponibilidad', () => {
     expect(result.current.config).toEqual(mockConfig);
   });
 
-  it('transitions to error state on failed fetch', async () => {
+  it('falls back to mock data on failed fetch', async () => {
     vi.mocked(api.get).mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useDisponibilidad());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.isError).toBe(true);
-    expect(result.current.error).toBeInstanceOf(Error);
-    expect(result.current.config).toBeNull();
+    // Dev/demo: shows mock data instead of error
+    expect(result.current.isError).toBe(false);
+    expect(result.current.error).toBeNull();
+    expect(result.current.config).not.toBeNull();
   });
 
   it('updateConfig puts and refetches', async () => {
