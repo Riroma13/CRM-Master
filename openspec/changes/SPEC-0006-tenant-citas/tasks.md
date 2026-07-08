@@ -160,7 +160,7 @@ git rm -r src/app/calendario/ src/hooks/use-slots.ts
 
 ### Tasks
 
-- [ ] **3c.1 — Admin layout + sidebar** (~90 lines)
+- [x] **3c.1 — Admin layout + sidebar** (~90 lines)
   - **Files:**
     - `apps/tenant-web/src/components/layout/sidebar-layout.tsx` — Create: flex layout with 260px sidebar + main content area, responsive: sidebar→drawer `<768px`
     - `apps/tenant-web/src/components/layout/sidebar.tsx` — Create: nav items for tenant admin: Dashboard, Documentos, Calendario. Uses same visual tokens as admin-web sidebar pattern
@@ -171,7 +171,7 @@ git rm -r src/app/calendario/ src/hooks/use-slots.ts
     - `apps/tenant-web/src/components/layout/sidebar-layout.test.tsx` — RTL: renders sidebar + children
   - **Verification:** `npx vitest run src/components/layout/`
 
-- [ ] **3c.2 — useCitas + useDisponibilidad hooks** (~110 lines)
+- [x] **3c.2 — useCitas + useDisponibilidad hooks** (~110 lines)
   - **Files:**
     - `apps/tenant-web/src/hooks/use-citas.ts` — Create: `useCitas(): { citas, isLoading, isError, error, refetch, confirmCita(id), cancelCita(id) }`. GET + PATCH via api.
     - `apps/tenant-web/src/hooks/use-disponibilidad.ts` — Create: `useDisponibilidad(): { config, isLoading, isError, error, refetch, updateConfig(data) }`. GET + PUT via api.
@@ -181,7 +181,7 @@ git rm -r src/app/calendario/ src/hooks/use-slots.ts
     - `apps/tenant-web/src/hooks/use-disponibilidad.test.ts` — Mock fetch, assert load/update
   - **Verification:** `npx vitest run src/hooks/use-citas.test.ts src/hooks/use-disponibilidad.test.ts`
 
-- [ ] **3c.3 — KPI bar + CitaCard + CitaList** (~190 lines)
+- [x] **3c.3 — KPI bar + CitaCard + CitaList** (~190 lines)
   - **Files:**
     - `apps/tenant-web/src/app/admin/calendario/components/kpi-bar.tsx` — Create: KPI cards showing "Citas hoy", "Pendientes", "Esta semana" counts. Props: `kpis: { hoy, pendientes, semana }`. Responsive: 3→2→1 cols.
     - `apps/tenant-web/src/app/admin/calendario/components/cita-card.tsx` — Create: Cita card with client name, date/time, status badge (pendiente=warning, confirmada=success, cancelada=critical, completada=default), confirm/cancel action buttons. Props: `cita: Cita`, `onConfirm(id)`, `onCancel(id)`
@@ -193,7 +193,7 @@ git rm -r src/app/calendario/ src/hooks/use-slots.ts
     - CitaList tests: renders Tabs, empty state, loading state, card grid
   - **Verification:** `npx vitest run src/app/admin/calendario/components/kpi-bar.test.tsx src/app/admin/calendario/components/cita-card.test.tsx src/app/admin/calendario/components/cita-list.test.tsx`
 
-- [ ] **3c.4 — ScheduleEditor + BlockedDates** (~140 lines)
+- [x] **3c.4 — ScheduleEditor + BlockedDates** (~140 lines)
   - **Files:**
     - `apps/tenant-web/src/app/admin/calendario/components/schedule-editor.tsx` — Create: Day-of-week schedule grid (Mon–Fri), each row: day label + start time input + end time input + remove button + add row. Props: `schedule: DaySchedule[]`, `onChange(schedule)`
     - `apps/tenant-web/src/app/admin/calendario/components/blocked-dates.tsx` — Create: List of blocked dates (vacations/holidays), each with date display + remove button, "Añadir fecha" input (date picker or text). Props: `dates: string[]`, `onChange(dates)`
@@ -203,7 +203,7 @@ git rm -r src/app/calendario/ src/hooks/use-slots.ts
     - BlockedDates tests: renders date list, adds/removes date
   - **Verification:** `npx vitest run src/app/admin/calendario/components/schedule-editor.test.tsx src/app/admin/calendario/components/blocked-dates.test.tsx`
 
-- [ ] **3c.5 — Admin calendario page** (~60 lines)
+- [x] **3c.5 — Admin calendario page** (~60 lines)
   - **File:** `apps/tenant-web/src/app/admin/calendario/page.tsx` — Create
   - **Behaviour:** Orchestrates admin view: KpiBar at top (data from useCitas), CitaList below (with confirm/cancel wired to useCitas), ScheduleEditor + BlockedDates in config section (wired to useDisponibilidad with save button)
   - **Dependencies:** 3c.1–3c.4 (all admin components + hooks + layout)

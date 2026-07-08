@@ -67,22 +67,21 @@ describe('api.get()', () => {
     await expect(api.get('/test')).rejects.toThrow(ApiError);
   });
 
-  it('includes auth token when opt-in', async () => {
-    vi.stubEnv('NEXT_PUBLIC_API_TOKEN', 'my-token');
+  it('includes credentials when auth opt-in', async () => {
     mockFetch({});
 
     await api.get('/test', undefined, { auth: true });
     const callInit = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1];
-    expect(callInit.headers['Authorization']).toBe('Bearer my-token');
+    expect(callInit.credentials).toBe('include');
+    expect(callInit.headers?.['Authorization']).toBeUndefined();
   });
 
-  it('skips auth header by default', async () => {
-    vi.stubEnv('NEXT_PUBLIC_API_TOKEN', 'my-token');
+  it('skips credentials by default', async () => {
     mockFetch({});
 
     await api.get('/test');
     const callInit = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1];
-    expect(callInit.headers['Authorization']).toBeUndefined();
+    expect(callInit.credentials).toBeUndefined();
   });
 });
 
