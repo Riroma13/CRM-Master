@@ -78,3 +78,28 @@ export interface TenantDashboardResponse {
   sistemasActivos: number;
   eventosRecientes: EventoItem[];
 }
+
+// ─── Documento types ──────────────────────────────────────────
+
+export type DocumentCategory = 'contrato' | 'factura' | 'informe' | 'modelo' | 'otro';
+
+export interface DocumentDto {
+  id: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  category: string;
+  description?: string;
+  createdAt: string;
+  shareLinks?: ShareLinkDto[];
+}
+
+export interface ShareLinkDto {
+  id: string;
+  token: string;
+  url: string;
+  expiresAt?: string;
+  maxDownloads?: number;
+  downloadCount: number;
+  createdAt: string;
+}

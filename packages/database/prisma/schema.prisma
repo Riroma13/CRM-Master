@@ -28,6 +28,7 @@ model Tenant {
   tareas   Tarea[]
   disponibilidad Disponibilidad?
   citas    Cita[]
+  documentos Documento[]
 
   @@map("tenants")
 }
@@ -276,6 +277,47 @@ model Tarea {
   @@index([clienteId])
   @@index([sistemaId])
   @@map("tareas")
+}
+
+// ─── Documentos ──────────────────────────────────────────────────────
+
+model Documento {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  clienteId   String?  @map("cliente_id")
+  filename    String
+  storageKey  String   @unique @map("storage_key")
+  mimeType    String   @map("mime_type")
+  sizeBytes   Int      @map("size_bytes")
+  category    String   @default("general")
+  description String?
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+  uploadedBy  String   @map("uploaded_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant    @relation(fields: [tenantId], references: [id])
+  shares ShareLink[]
+
+  @@index([tenantId])
+  @@index([category])
+  @@map("documentos")
+}
+
+model ShareLink {
+  id            String   @id @default(uuid())
+  documentoId   String   @map("documento_id")
+  token         String   @unique
+  expiresAt     DateTime @map("expires_at")
+  maxDownloads  Int?     @map("max_downloads")
+  downloadCount Int      @default(0) @map("download_count")
+  createdBy     String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("share_links")
 }
 
 // ─── Citas / Disponibilidad ──────────────────────────────────────────
