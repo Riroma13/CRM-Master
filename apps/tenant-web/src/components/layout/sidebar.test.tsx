@@ -13,6 +13,7 @@ vi.mock('lucide-react', () => ({
   FileText: () => <span data-testid="icon-filetext">Ft</span>,
   LayoutDashboard: () => <span data-testid="icon-dashboard">Db</span>,
   Users: () => <span data-testid="icon-users">Us</span>,
+  ClipboardList: () => <span data-testid="icon-tasks">Tk</span>,
 }));
 
 describe('Sidebar', () => {
@@ -27,6 +28,7 @@ describe('Sidebar', () => {
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Clientes')).toBeInTheDocument();
     expect(screen.getByText('Documentos')).toBeInTheDocument();
+    expect(screen.getByText('Tareas')).toBeInTheDocument();
     expect(screen.getByText('Calendario')).toBeInTheDocument();
   });
 
