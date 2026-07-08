@@ -30,6 +30,18 @@ export class TenantResolveMiddleware implements NestMiddleware {
 
     // Sin slug → request a admin-web (Mission Control)
     if (!slug || RESERVED_SLUGS.has(slug)) {
+      // En desarrollo, las rutas de tenant usan el primer tenant por defecto
+      const path = req.originalUrl || req.path || '';
+      if (process.env.NODE_ENV === 'development' && path.includes('/tenant/')) {
+        const devTenant = await this.prisma.admin.tenant.findFirst({
+          orderBy: { createdAt: 'asc' },
+        });
+        if (devTenant) {
+          (req as any).tenantId = devTenant.id;
+          (req as any).tenantSlug = devTenant.slug;
+          return next();
+        }
+      }
       (req as any).isAdminRequest = true;
       return next();
     }

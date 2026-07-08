@@ -7,7 +7,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.setGlobalPrefix('api');
+  // Controllers include full path (api/v1/...) — no global prefix needed
+  // app.setGlobalPrefix('api');
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
   app.useGlobalPipes(
     new ValidationPipe({
@@ -16,7 +17,8 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  app.enableCors({ origin: process.env.CORS_ORIGIN || '*', credentials: true });
+  const corsOrigins = (process.env.CORS_ORIGIN || '*').split(',').map(s => s.trim());
+  app.enableCors({ origin: corsOrigins, credentials: true });
   app.use(helmet());
 
   const config = new DocumentBuilder()
@@ -26,7 +28,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('/api/v1/docs', app, document);
 
   const port = process.env.PORT || 4000;
   await app.listen(port);
