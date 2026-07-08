@@ -9,6 +9,7 @@ import { EventosModule } from './modules/eventos/eventos.module';
 import { TareasModule } from './modules/tareas/tareas.module';
 import { CitasModule } from './modules/citas/citas.module';
 import { TenantDashboardModule } from './modules/tenant-dashboard/tenant-dashboard.module';
+import { TenantClientesModule } from './modules/tenant-clientes/tenant-clientes.module';
 import { DocumentosModule } from './modules/documentos/documentos.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
 import { TenantScopeGuard } from './common/guards/tenant-scope.guard';
@@ -27,6 +28,7 @@ import { authClientProvider } from './common/auth-client.provider';
     TareasModule,
     CitasModule,
     TenantDashboardModule,
+    TenantClientesModule,
     DocumentosModule,
   ],
   providers: [

@@ -12,6 +12,7 @@ vi.mock('lucide-react', () => ({
   Calendar: () => <span data-testid="icon-calendar">Cal</span>,
   FileText: () => <span data-testid="icon-filetext">Ft</span>,
   LayoutDashboard: () => <span data-testid="icon-dashboard">Db</span>,
+  Users: () => <span data-testid="icon-users">Us</span>,
 }));
 
 describe('Sidebar', () => {
@@ -24,6 +25,7 @@ describe('Sidebar', () => {
   it('renders navigation items', () => {
     render(<Sidebar />);
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Clientes')).toBeInTheDocument();
     expect(screen.getByText('Documentos')).toBeInTheDocument();
     expect(screen.getByText('Calendario')).toBeInTheDocument();
   });
