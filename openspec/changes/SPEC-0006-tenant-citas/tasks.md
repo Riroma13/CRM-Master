@@ -21,6 +21,6 @@ PR slice: 1/3 (models + provider)
 - [ ] 3.2 Admin: ScheduleEditor, BlockedDates, CitaList
 
 ## Phase 4: Tests
-- [ ] 4.1 Unit: slot generation, booking validation, disponibilidad schema
-- [ ] 4.2 Integration: all 6 endpoints
-- [ ] 4.3 Playwright E2E: booking flow + admin flow
+- [x] 4.1 Unit: slot generation, booking validation, disponibilidad schema
+- [x] 4.2 Integration: all 6 endpoints
+- [x] 4.3 Playwright E2E: booking flow + admin flow

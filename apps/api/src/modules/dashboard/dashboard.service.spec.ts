@@ -27,6 +27,8 @@ async function createTestModule() {
  */
 async function resetTestData(prisma: PrismaService) {
   // Order matters: delete FK children before parents
+  await prisma.admin.cita.deleteMany({});
+  await prisma.admin.disponibilidad.deleteMany({});
   await prisma.admin.tarea.deleteMany({});
   await prisma.admin.cliente.deleteMany({});
   await prisma.admin.user.deleteMany({});

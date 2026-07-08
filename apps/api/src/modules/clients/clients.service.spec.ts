@@ -50,6 +50,8 @@ describe('ClientsService', () => {
     // Hard reset: limpia cualquier dato residual de otras suites o
     // ejecuciones interrumpidas. Esto asegura que findAll() cuente
     // EXACTAMENTE los registros que seedeamos abajo.
+    await prisma.admin.cita.deleteMany({});
+    await prisma.admin.disponibilidad.deleteMany({});
     await prisma.admin.tarea.deleteMany({});
     await prisma.admin.cliente.deleteMany({});
     await prisma.admin.user.deleteMany({});
@@ -93,6 +95,8 @@ describe('ClientsService', () => {
 
   afterAll(async () => {
     if (moduleRef) {
+      await prisma.admin.cita.deleteMany({});
+      await prisma.admin.disponibilidad.deleteMany({});
       await prisma.admin.tarea.deleteMany({});
       await prisma.admin.cliente.deleteMany({});
       await prisma.admin.tenant.deleteMany({});

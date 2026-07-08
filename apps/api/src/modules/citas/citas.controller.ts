@@ -11,6 +11,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { z } from 'zod';
 import { CitasService } from './citas.service';
 import { DisponibilidadService } from './disponibilidad.service';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
@@ -20,6 +21,20 @@ import {
   DisponibilidadSchema,
 } from './dto';
 import type { BookCitaDto, UpdateCitaDto, DisponibilidadDto } from './dto';
+
+/** Helper: validates input with a Zod schema and throws BadRequestException on failure. */
+function validateOrThrow<T extends z.ZodTypeAny>(
+  schema: T,
+  data: unknown,
+): z.output<T> {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    throw new BadRequestException(
+      result.error.issues[0]?.message || 'Validation failed',
+    );
+  }
+  return result.data;
+}
 
 @ApiTags('Tenant - Calendario')
 @Controller('api/v1/tenant/calendario')
@@ -68,7 +83,7 @@ export class CitasController {
     @TenantId() tenantId: string,
     @Body() body: BookCitaDto,
   ) {
-    const parsed = BookCitaSchema.parse(body);
+    const parsed = validateOrThrow(BookCitaSchema, body);
     return this.citasService.bookSlot(tenantId, {
       fecha: new Date(parsed.fecha),
       duracion: 30,
@@ -106,7 +121,7 @@ export class CitasController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateCitaDto,
   ) {
-    const parsed = UpdateCitaSchema.parse(body);
+    const parsed = validateOrThrow(UpdateCitaSchema, body);
 
     switch (parsed.estado) {
       case 'confirmada':
@@ -144,7 +159,7 @@ export class CitasController {
     @TenantId() tenantId: string,
     @Body() body: DisponibilidadDto,
   ) {
-    const parsed = DisponibilidadSchema.parse(body);
+    const parsed = validateOrThrow(DisponibilidadSchema, body);
     return this.disponibilidadService.upsertDisponibilidad(tenantId, parsed);
   }
 }
