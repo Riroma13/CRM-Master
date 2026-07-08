@@ -11,10 +11,10 @@ PR slice: 1/3 (models + provider)
 - [x] 1.2 Create CalendarProvider interface + LocalCalendarProvider
 
 ## Phase 2: Backend API
-- [ ] 2.1 DisponibilidadService: CRUD disponibilidad, slot generation
-- [ ] 2.2 CitasService: booking con doble reserva prevention
-- [ ] 2.3 CitasController: 6 endpoints (público + admin)
-- [ ] 2.4 CitasModule + app.module.ts registration
+- [x] 2.1 DisponibilidadService: CRUD disponibilidad, slot generation
+- [x] 2.2 CitasService: booking con doble reserva prevention
+- [x] 2.3 CitasController: 6 endpoints (público + admin)
+- [x] 2.4 CitasModule + app.module.ts registration
 
 ## Phase 3: Frontend tenant-web
 - [ ] 3.1 CalendarPicker, SlotList, BookingForm, BookingConfirmation

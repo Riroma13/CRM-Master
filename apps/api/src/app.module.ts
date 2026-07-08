@@ -7,6 +7,7 @@ import { ClientsModule } from './modules/clients/clients.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { EventosModule } from './modules/eventos/eventos.module';
 import { TareasModule } from './modules/tareas/tareas.module';
+import { CitasModule } from './modules/citas/citas.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
 import { TenantScopeGuard } from './common/guards/tenant-scope.guard';
 import { BetterAuthGuard } from './common/guards/better-auth.guard';
@@ -22,6 +23,7 @@ import { authClientProvider } from './common/auth-client.provider';
     DashboardModule,
     EventosModule,
     TareasModule,
+    CitasModule,
   ],
   providers: [
     PrismaService,
