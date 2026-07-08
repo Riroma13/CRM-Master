@@ -14,6 +14,7 @@ vi.mock('lucide-react', () => ({
   LayoutDashboard: () => <span data-testid="icon-dashboard">Db</span>,
   Users: () => <span data-testid="icon-users">Us</span>,
   ClipboardList: () => <span data-testid="icon-tasks">Tk</span>,
+  Settings: () => <span data-testid="icon-settings">St</span>,
 }));
 
 describe('Sidebar', () => {
@@ -30,6 +31,7 @@ describe('Sidebar', () => {
     expect(screen.getByText('Documentos')).toBeInTheDocument();
     expect(screen.getByText('Tareas')).toBeInTheDocument();
     expect(screen.getByText('Calendario')).toBeInTheDocument();
+    expect(screen.getByText('Perfil')).toBeInTheDocument();
   });
 
   it('highlights the active route', () => {

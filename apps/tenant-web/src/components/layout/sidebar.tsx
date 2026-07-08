@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Calendar, FileText, LayoutDashboard, Users, ClipboardList } from 'lucide-react';
+import { Calendar, FileText, LayoutDashboard, Users, ClipboardList, Settings } from 'lucide-react';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -11,6 +11,7 @@ const navItems = [
   { href: '/admin/documentos', label: 'Documentos', icon: FileText },
   { href: '/admin/tareas', label: 'Tareas', icon: ClipboardList },
   { href: '/admin/calendario', label: 'Calendario', icon: Calendar },
+  { href: '/admin/perfil', label: 'Perfil', icon: Settings },
 ];
 
 export function Sidebar() {
