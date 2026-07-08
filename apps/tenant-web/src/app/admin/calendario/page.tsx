@@ -5,16 +5,23 @@ import { KpiBar } from './components/kpi-bar';
 import { CitaList } from './components/cita-list';
 import { ScheduleEditor } from './components/schedule-editor';
 import { BlockedDates } from './components/blocked-dates';
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/toast';
+import { CitaForm } from '@/components/forms/cita-form';
 import { useCitas } from '@/hooks/use-citas';
 import { useDisponibilidad } from '@/hooks/use-disponibilidad';
 import type { DaySchedule } from '@/lib/api-types';
+import { Plus } from 'lucide-react';
 
 export default function AdminCalendarioPage() {
+  const { toast } = useToast();
   const { citas, isLoading, isError, error, confirmCita, cancelCita, refetch } =
     useCitas();
   const { config, isLoading: configLoading, updateConfig } = useDisponibilidad();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [showCitaForm, setShowCitaForm] = useState(false);
 
   // Compute KPIs from citas
   const kpis = useMemo(() => {
@@ -65,12 +72,17 @@ export default function AdminCalendarioPage() {
     <div className="space-y-6" data-testid="admin-calendario-page">
       <div className="flex items-center justify-between">
         <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Calendario</h1>
-        <button
-          onClick={refetch}
-          className="rounded-[0.25rem] border border-[#E2E8F0] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.05em] text-[#45464D] hover:bg-[#F0EDEF]"
-        >
-          Refrescar
-        </button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" className="gap-1.5 bg-[#131B2E] text-xs text-white" onClick={() => setShowCitaForm(true)}>
+            <Plus className="h-3.5 w-3.5" /> Nueva cita
+          </Button>
+          <button
+            onClick={refetch}
+            className="rounded-[0.25rem] border border-[#E2E8F0] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.05em] text-[#45464D] hover:bg-[#F0EDEF]"
+          >
+            Refrescar
+          </button>
+        </div>
       </div>
 
       <KpiBar kpis={kpis} />
@@ -125,6 +137,13 @@ export default function AdminCalendarioPage() {
           </>
         )}
       </div>
+      {/* Create cita dialog */}
+      <Dialog open={showCitaForm} onClose={() => setShowCitaForm(false)} title="Nueva cita">
+        <CitaForm
+          onSuccess={() => { setShowCitaForm(false); refetch(); toast('success', 'Cita creada correctamente'); }}
+          onCancel={() => setShowCitaForm(false)}
+        />
+      </Dialog>
     </div>
   );
 }

@@ -181,6 +181,7 @@ export class LocalCalendarProvider implements CalendarProvider {
           tenantId,
           fecha,
           duracion,
+          titulo: input.titulo ?? 'Consulta',
           clienteNombre: input.clienteNombre ?? null,
           clienteEmail: input.clienteEmail ?? null,
           clienteTelefono: input.clienteTelefono ?? null,

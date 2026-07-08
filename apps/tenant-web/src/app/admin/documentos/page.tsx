@@ -1,12 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import { Upload, FileText, RefreshCw, AlertCircle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Upload, FileText, RefreshCw, AlertCircle, Search } from 'lucide-react';
 import { useDocumentos } from '@/hooks/use-documentos';
 import { DocumentCard } from './components/document-card';
 import { UploadDialog } from './components/upload-dialog';
 import { ShareDialog } from './components/share-dialog';
+import { Input } from '@/components/ui/input';
 import type { DocumentDto } from '@/lib/api-types';
+
+const CATEGORIES = ['contrato', 'factura', 'informe', 'modelo', 'otro'];
+const CATEGORY_LABELS: Record<string, string> = {
+  contrato: 'Contrato', factura: 'Factura', informe: 'Informe', modelo: 'Modelo', otro: 'Otro',
+};
 
 export default function AdminDocumentosPage() {
   const {
@@ -22,6 +28,24 @@ export default function AdminDocumentosPage() {
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [shareDocumento, setShareDocumento] = useState<DocumentDto | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+
+  const filteredDocumentos = useMemo(() => {
+    let result = documentos;
+    if (categoryFilter) {
+      result = result.filter((d) => d.category === categoryFilter);
+    }
+    if (searchTerm.trim()) {
+      const q = searchTerm.trim().toLowerCase();
+      result = result.filter(
+        (d) =>
+          d.filename.toLowerCase().includes(q) ||
+          (d.description?.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [documentos, searchTerm, categoryFilter]);
 
   const handleUpload = async (file: File, category: string, description?: string) => {
     await uploadDocumento(file, category, description);
@@ -61,6 +85,36 @@ export default function AdminDocumentosPage() {
           </button>
         </div>
       </div>
+
+      {/* Search + filter */}
+      {!isLoading && !isError && (
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#45464D]" />
+            <Input
+              placeholder="Buscar documentos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="rounded-[0.25rem] border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] text-[#1B1B1D]"
+          >
+            <option value="">Todas las categorías</option>
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+            ))}
+          </select>
+          {documentos.length > 0 && (
+            <span className="text-[13px] text-[#45464D] whitespace-nowrap">
+              {filteredDocumentos.length} de {documentos.length}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Loading state */}
       {isLoading && (
@@ -124,10 +178,19 @@ export default function AdminDocumentosPage() {
         </div>
       )}
 
+      {/* Filtered empty state */}
+      {!isLoading && !isError && documentos.length > 0 && filteredDocumentos.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-[0.5rem] border-2 border-dashed border-[#C6C6CD] bg-white p-12">
+          <Search className="h-10 w-10 text-[#45464D] mb-3" />
+          <p className="text-sm font-semibold text-[#45464D]">Sin resultados</p>
+          <p className="mt-1 text-xs text-[#45464D]">Prueba con otros términos de búsqueda</p>
+        </div>
+      )}
+
       {/* Document grid */}
-      {!isLoading && !isError && documentos.length > 0 && (
+      {!isLoading && !isError && filteredDocumentos.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="documentos-grid">
-          {documentos.map((doc) => (
+          {filteredDocumentos.map((doc) => (
             <DocumentCard
               key={doc.id}
               documento={doc}

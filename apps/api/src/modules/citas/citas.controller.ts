@@ -100,6 +100,27 @@ export class CitasController {
   // @ApiBearerAuth() documents the intent for when tenant-admin auth is wired.
   // ──────────────────────────────────────────────
 
+  @Post('citas/admin')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Crear cita desde el panel de administración',
+    description: 'Endpoint para administradores. Crea una cita sin restricción de antelación.',
+  })
+  async createCitaAdmin(
+    @TenantId() tenantId: string,
+    @Body() body: any,
+  ) {
+    return this.citasService.bookSlot(tenantId, {
+      fecha: new Date(body.fecha),
+      duracion: body.duracion ?? 30,
+      titulo: body.titulo ?? 'Consulta',
+      clienteNombre: body.clienteNombre,
+      clienteEmail: body.clienteEmail,
+      clienteTelefono: body.clienteTelefono,
+      descripcion: body.descripcion,
+    });
+  }
+
   @Get('citas')
   @ApiBearerAuth()
   @ApiOperation({

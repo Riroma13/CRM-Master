@@ -7,6 +7,7 @@ export interface Slot {
 export interface BookSlotInput {
   fecha: Date;
   duracion: number;
+  titulo?: string;
   clienteNombre?: string;
   clienteEmail?: string;
   clienteTelefono?: string;
