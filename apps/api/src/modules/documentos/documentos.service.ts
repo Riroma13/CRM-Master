@@ -44,9 +44,11 @@ export class DocumentosService {
     return this.toDocumentDto(doc);
   }
 
-  async findAll(tenantId: string): Promise<DocumentDto[]> {
+  async findAll(tenantId: string, clienteId?: string): Promise<DocumentDto[]> {
+    const where: any = { isDeleted: false };
+    if (clienteId) where.clienteId = clienteId;
     const docs = await this.prisma.forTenant(tenantId).documento.findMany({
-      where: { isDeleted: false },
+      where,
       orderBy: { createdAt: 'desc' },
     });
 

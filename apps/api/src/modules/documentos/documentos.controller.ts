@@ -8,6 +8,7 @@ import {
   Param,
   Req,
   Res,
+  Query,
   UploadedFile,
   ParseUUIDPipe,
   BadRequestException,
@@ -113,8 +114,11 @@ export class DocumentosController {
 
   @Get()
   @ApiOperation({ summary: 'Listar documentos del tenant' })
-  async findAll(@TenantId() tenantId: string) {
-    return this.documentosService.findAll(tenantId);
+  async findAll(
+    @TenantId() tenantId: string,
+    @Query('clienteId') clienteId?: string,
+  ) {
+    return this.documentosService.findAll(tenantId, clienteId);
   }
 
   @Get(':id')

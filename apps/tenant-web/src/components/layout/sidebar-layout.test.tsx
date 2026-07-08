@@ -2,6 +2,14 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SidebarLayout } from './sidebar-layout';
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/admin/clientes',
+}));
+
+vi.mock('next/link', () => ({
+  default: ({ children, href }: any) => <a href={href}>{children}</a>,
+}));
+
 // Mock the Sidebar component
 vi.mock('./sidebar', () => ({
   Sidebar: () => <div data-testid="sidebar">Sidebar</div>,
@@ -12,11 +20,18 @@ vi.mock('lucide-react', () => ({
   Menu: () => <span data-testid="icon-menu">Menu</span>,
   X: () => <span data-testid="icon-x">X</span>,
   Bell: () => <span data-testid="icon-bell">Bell</span>,
+  ChevronRight: () => <span data-testid="icon-chevron">&gt;</span>,
 }));
 
 // Mock notification bell hook
 vi.mock('@/hooks/use-notificaciones', () => ({
   useNotificaciones: () => ({ notificaciones: [], noLeidas: 0, refetch: vi.fn(), isLoading: false }),
+}));
+
+// Mock toast
+vi.mock('@/components/ui/toast', () => ({
+  ToastProvider: ({ children }: any) => <>{children}</>,
+  useToast: () => ({ toast: vi.fn() }),
 }));
 
 describe('SidebarLayout', () => {

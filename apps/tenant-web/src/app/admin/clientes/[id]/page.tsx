@@ -1,16 +1,17 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/toast';
 import { ClienteForm } from '@/components/forms/cliente-form';
 import { TareaForm } from '@/components/forms/tarea-form';
 import { SistemaForm } from '@/components/forms/sistema-form';
-import { ArrowLeft, Users, HardDrive, ClipboardList, Trash2, Edit3, Plus } from 'lucide-react';
+import { ArrowLeft, Users, HardDrive, ClipboardList, FileText, Trash2, Edit3, Plus } from 'lucide-react';
 
 const SALUD_COLORS: Record<string, string> = {
   '🟢': 'bg-[#D1FAE5] text-[#10B981]',
@@ -39,6 +40,7 @@ interface ClienteDetail {
 export default function ClienteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { toast } = useToast();
   const [cliente, setCliente] = useState<ClienteDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -46,6 +48,18 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
   const [showForm, setShowForm] = useState(false);
   const [showNewSistema, setShowNewSistema] = useState(false);
   const [showNewTarea, setShowNewTarea] = useState(false);
+  const [documentos, setDocumentos] = useState<Array<{ id: string; filename: string; category: string }>>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+
+  const fetchDocs = useCallback(async () => {
+    setDocsLoading(true);
+    try {
+      const data = await api.get<any[]>(`/api/v1/tenant/documentos?clienteId=${id}`, undefined, { auth: true });
+      setDocumentos(data);
+    } catch { /* ignore */ } finally {
+      setDocsLoading(false);
+    }
+  }, [id]);
 
   const fetch = async () => {
     setIsLoading(true);
@@ -62,13 +76,15 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
   };
 
   useEffect(() => { fetch(); }, [id]);
+  useEffect(() => { if (cliente) fetchDocs(); }, [cliente?.id]);
 
   const handleDelete = async () => {
     if (!confirm('¿Eliminar este cliente? Esta acción no se puede deshacer.')) return;
     try {
       await api.delete(`/api/v1/tenant/clientes/${id}`, { auth: true });
+      toast('success', 'Cliente eliminado');
       router.push('/admin/clientes');
-    } catch { /* ignore */ }
+    } catch { toast('error', 'Error al eliminar cliente'); }
   };
 
   if (isLoading) {
@@ -215,6 +231,33 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
         </CardContent>
       </Card>
 
+      {/* Documentos */}
+      <Card className="bg-white">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="h-4 w-4 text-[#45464D]" />
+            <h2 className="text-[16px] font-semibold text-[#1B1B1D]">Documentos ({documentos.length})</h2>
+          </div>
+          {docsLoading ? (
+            <div className="h-12 animate-pulse rounded bg-[#F0EDEF]" />
+          ) : documentos.length === 0 ? (
+            <p className="py-3 text-center text-[13px] text-[#45464D]">Sin documentos vinculados</p>
+          ) : (
+            <div className="space-y-2">
+              {documentos.map((d) => (
+                <div key={d.id} className="flex items-center justify-between rounded-[0.25rem] border border-[#E2E8F0] bg-white p-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-[#45464D]" />
+                    <p className="text-[13px] font-medium text-[#1B1B1D]">{d.filename}</p>
+                  </div>
+                  <Badge variant="outline" className="text-[10px]">{d.category}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Edit dialog */}
       <Dialog open={showForm} onClose={() => setShowForm(false)} title="Editar cliente">
         <ClienteForm
@@ -226,7 +269,7 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
             saludGeneral: cliente.saludGeneral,
             tags: cliente.tags.join(', '),
           }}
-          onSuccess={() => { setShowForm(false); fetch(); }}
+          onSuccess={() => { setShowForm(false); fetch(); toast('success', 'Cliente actualizado'); }}
           onCancel={() => setShowForm(false)}
         />
       </Dialog>
@@ -235,7 +278,7 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
       <Dialog open={showNewSistema} onClose={() => setShowNewSistema(false)} title="Nuevo sistema">
         <SistemaForm
           initial={{ clienteId: cliente.id, nombreSistema: '', tipo: '', entorno: 'Producción', version: '' }}
-          onSuccess={() => { setShowNewSistema(false); fetch(); }}
+          onSuccess={() => { setShowNewSistema(false); fetch(); toast('success', 'Sistema creado'); }}
           onCancel={() => setShowNewSistema(false)}
         />
       </Dialog>
@@ -244,7 +287,7 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
       <Dialog open={showNewTarea} onClose={() => setShowNewTarea(false)} title="Nueva tarea">
         <TareaForm
           clienteId={cliente.id}
-          onSuccess={() => { setShowNewTarea(false); fetch(); }}
+          onSuccess={() => { setShowNewTarea(false); fetch(); toast('success', 'Tarea creada'); }}
           onCancel={() => setShowNewTarea(false)}
         />
       </Dialog>

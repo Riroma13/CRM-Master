@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/toast';
 import { SistemaForm } from '@/components/forms/sistema-form';
 import { HardDrive, Activity, Plus } from 'lucide-react';
 
@@ -19,6 +20,7 @@ const ESTADO_COLORS: Record<string, string> = {
 
 export default function SistemasPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const { sistemas, isLoading, isError, error, refetch } = useSistemas();
 
@@ -102,7 +104,7 @@ export default function SistemasPage() {
       {/* Create dialog */}
       <Dialog open={showForm} onClose={() => setShowForm(false)} title="Nuevo sistema">
         <SistemaForm
-          onSuccess={() => { setShowForm(false); refetch(); }}
+          onSuccess={() => { setShowForm(false); refetch(); toast('success', 'Sistema creado correctamente'); }}
           onCancel={() => setShowForm(false)}
         />
       </Dialog>

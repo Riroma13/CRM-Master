@@ -64,6 +64,7 @@ describe('DocumentosController', () => {
         sizeBytes: 1024,
         category: 'contrato',
         description: 'Test document',
+        storageKey: 'tenants/test-tenant/documentos/uuid/documento.pdf',
         createdAt: new Date().toISOString(),
       });
 
@@ -113,6 +114,7 @@ describe('DocumentosController', () => {
           mimeType: 'application/pdf',
           sizeBytes: 1024,
           category: 'factura',
+          storageKey: 'tenants/test-tenant/documentos/uuid/doc1.pdf',
           createdAt: new Date().toISOString(),
         },
       ];
@@ -121,7 +123,7 @@ describe('DocumentosController', () => {
 
       const result = await controller.findAll('tenant-id-1');
       expect(result).toEqual(mockDocs);
-      expect(documentosService.findAll).toHaveBeenCalledWith('tenant-id-1');
+      expect(documentosService.findAll).toHaveBeenCalledWith('tenant-id-1', undefined);
     });
   });
 });

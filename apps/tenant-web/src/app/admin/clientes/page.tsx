@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/toast';
 import { ClienteForm } from '@/components/forms/cliente-form';
 import { Plus, Search, Users } from 'lucide-react';
 
@@ -26,6 +27,7 @@ const ESTADO_COLORS: Record<string, string> = {
 
 export default function ClientesPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<{ search?: string }>({});
   const [showForm, setShowForm] = useState(false);
@@ -140,7 +142,16 @@ export default function ClientesPage() {
                 {cliente.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     {cliente.tags.map((tag) => (
-                      <Badge key={tag} variant="default" className="text-[10px]">{tag}</Badge>
+                      <Badge
+                        key={tag}
+                        variant="default"
+                        className={`text-[10px] cursor-pointer transition-colors ${
+                          filters.search === tag ? 'ring-2 ring-[#131B2E]' : 'hover:ring-1 hover:ring-[#131B2E]'
+                        }`}
+                        onClick={(e) => { e.stopPropagation(); setSearch(tag); setFilters({ search: tag }); }}
+                      >
+                        {tag}
+                      </Badge>
                     ))}
                   </div>
                 )}
@@ -156,7 +167,7 @@ export default function ClientesPage() {
       {/* Create dialog */}
       <Dialog open={showForm} onClose={() => setShowForm(false)} title="Nuevo cliente">
         <ClienteForm
-          onSuccess={() => { setShowForm(false); refetch(); }}
+          onSuccess={() => { setShowForm(false); refetch(); toast('success', 'Cliente creado correctamente'); }}
           onCancel={() => setShowForm(false)}
         />
       </Dialog>

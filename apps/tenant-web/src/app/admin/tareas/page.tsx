@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/toast';
 import { TareaForm } from '@/components/forms/tarea-form';
 import { Plus, ClipboardList } from 'lucide-react';
 
@@ -54,6 +55,7 @@ function TareaCard({ tarea, onEdit, onAvanzar, onRetroceder }: {
 }
 
 export default function TareasPage() {
+  const { toast } = useToast();
   const { tareas, isLoading, isError, error, refetch, updateTarea, deleteTarea } = useTareas();
   const [showForm, setShowForm] = useState(false);
   const [editingTarea, setEditingTarea] = useState<TareaItem | null>(null);
@@ -76,10 +78,11 @@ export default function TareasPage() {
     setEditingTarea(tarea);
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (action: 'creada' | 'actualizada' | 'eliminada' = 'actualizada') => {
     setShowForm(false);
     setEditingTarea(null);
     refetch();
+    toast('success', `Tarea ${action} correctamente`);
   };
 
   if (isLoading) {
@@ -166,7 +169,7 @@ export default function TareasPage() {
 
       {/* Create dialog */}
       <Dialog open={showForm} onClose={() => setShowForm(false)} title="Nueva tarea">
-        <TareaForm onSuccess={handleFormSuccess} onCancel={() => setShowForm(false)} />
+        <TareaForm onSuccess={() => handleFormSuccess('creada')} onCancel={() => setShowForm(false)} />
       </Dialog>
 
       {/* Edit dialog */}

@@ -1,11 +1,54 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { Menu, X, ChevronRight } from 'lucide-react';
 import { Sidebar } from './sidebar';
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { ToastProvider } from '@/components/ui/toast';
+
+const BREADCRUMB_LABELS: Record<string, string> = {
+  admin: 'Dashboard',
+  clientes: 'Clientes',
+  documentos: 'Documentos',
+  tareas: 'Tareas',
+  calendario: 'Calendario',
+  sistemas: 'Sistemas',
+  perfil: 'Perfil',
+};
+
+function Breadcrumbs({ pathname }: { pathname: string }) {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length <= 1) return null;
+
+  const crumbs = segments.map((seg, i) => {
+    const href = '/' + segments.slice(0, i + 1).join('/');
+    const label = BREADCRUMB_LABELS[seg] ?? seg;
+    const isLast = i === segments.length - 1;
+    return { href, label, isLast };
+  });
+
+  return (
+    <nav className="flex items-center gap-1.5 text-[12px] text-[#45464D] mb-4" aria-label="Breadcrumb">
+      {crumbs.map((c, i) => (
+        <span key={c.href} className="flex items-center gap-1.5">
+          {i > 0 && <ChevronRight className="h-3 w-3 text-[#C6C6CD]" />}
+          {c.isLast ? (
+            <span className="font-medium text-[#1B1B1D]">{c.label}</span>
+          ) : (
+            <Link href={c.href} className="hover:text-[#1B1B1D] transition-colors">
+              {c.label}
+            </Link>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
 
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Close drawer on Escape key
@@ -48,7 +91,10 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1440px] px-6 py-6">{children}</div>
+          <div className="mx-auto w-full max-w-[1440px] px-6 py-6">
+            <Breadcrumbs pathname={pathname} />
+            <ToastProvider>{children}</ToastProvider>
+          </div>
         </main>
       </div>
 
