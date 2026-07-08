@@ -7,9 +7,9 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Controllers include full path (api/v1/...) — no global prefix needed
+  // Controllers include full path (api/v1/...) — no global prefix or versioning needed
   // app.setGlobalPrefix('api');
-  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+  // app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
