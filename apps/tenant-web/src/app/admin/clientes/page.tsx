@@ -7,6 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog } from '@/components/ui/dialog';
+import { ClienteForm } from '@/components/forms/cliente-form';
 import { Plus, Search, Users } from 'lucide-react';
 
 const SALUD_LABELS: Record<string, string> = { '🟢': 'Buena', '🟡': 'Media', '🔴': 'Crítica' };
@@ -26,6 +28,7 @@ export default function ClientesPage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<{ search?: string }>({});
+  const [showForm, setShowForm] = useState(false);
   const { clientes, isLoading, isError, error, refetch } = useClientes(filters);
 
   const handleSearch = () => {
@@ -73,7 +76,7 @@ export default function ClientesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Clientes</h1>
-        <Button size="sm" className="gap-1.5 bg-[#131B2E] text-xs text-white">
+        <Button size="sm" className="gap-1.5 bg-[#131B2E] text-xs text-white" onClick={() => setShowForm(true)}>
           <Plus className="h-3.5 w-3.5" />
           Nuevo cliente
         </Button>
@@ -150,6 +153,13 @@ export default function ClientesPage() {
           ))}
         </div>
       )}
+      {/* Create dialog */}
+      <Dialog open={showForm} onClose={() => setShowForm(false)} title="Nuevo cliente">
+        <ClienteForm
+          onSuccess={() => { setShowForm(false); refetch(); }}
+          onCancel={() => setShowForm(false)}
+        />
+      </Dialog>
     </div>
   );
 }

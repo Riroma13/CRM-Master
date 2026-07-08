@@ -6,6 +6,8 @@ import { api } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { ClienteForm } from '@/components/forms/cliente-form';
 import { ArrowLeft, Users, HardDrive, ClipboardList, Trash2, Edit3 } from 'lucide-react';
 
 const SALUD_COLORS: Record<string, string> = {
@@ -39,6 +41,7 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showForm, setShowForm] = useState(false);
 
   const fetch = async () => {
     setIsLoading(true);
@@ -96,7 +99,7 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
           <ArrowLeft className="h-4 w-4" /> Volver
         </Button>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1">
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => setShowForm(true)}>
             <Edit3 className="h-3.5 w-3.5" /> Editar
           </Button>
           <Button variant="outline" size="sm" className="gap-1 text-[#EF4444]" onClick={handleDelete}>
@@ -197,6 +200,22 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
           )}
         </CardContent>
       </Card>
+
+      {/* Edit dialog */}
+      <Dialog open={showForm} onClose={() => setShowForm(false)} title="Editar cliente">
+        <ClienteForm
+          initial={{
+            id: cliente.id,
+            nombre: cliente.nombre,
+            tipoNegocio: cliente.tipoNegocio ?? '',
+            estadoRelacion: cliente.estadoRelacion,
+            saludGeneral: cliente.saludGeneral,
+            tags: cliente.tags.join(', '),
+          }}
+          onSuccess={() => { setShowForm(false); fetch(); }}
+          onCancel={() => setShowForm(false)}
+        />
+      </Dialog>
     </div>
   );
 }

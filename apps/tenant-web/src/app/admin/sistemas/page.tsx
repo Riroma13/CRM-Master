@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSistemas } from '@/hooks/use-sistemas';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { SistemaForm } from '@/components/forms/sistema-form';
 import { HardDrive, Activity, Plus } from 'lucide-react';
 
 const ESTADO_COLORS: Record<string, string> = {
@@ -16,6 +19,7 @@ const ESTADO_COLORS: Record<string, string> = {
 
 export default function SistemasPage() {
   const router = useRouter();
+  const [showForm, setShowForm] = useState(false);
   const { sistemas, isLoading, isError, error, refetch } = useSistemas();
 
   if (isLoading) {
@@ -54,7 +58,7 @@ export default function SistemasPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Sistemas</h1>
-        <Button size="sm" className="gap-1.5 bg-[#131B2E] text-xs text-white">
+        <Button size="sm" className="gap-1.5 bg-[#131B2E] text-xs text-white" onClick={() => setShowForm(true)}>
           <Plus className="h-3.5 w-3.5" />
           Nuevo sistema
         </Button>
@@ -94,6 +98,14 @@ export default function SistemasPage() {
           ))}
         </div>
       )}
+
+      {/* Create dialog */}
+      <Dialog open={showForm} onClose={() => setShowForm(false)} title="Nuevo sistema">
+        <SistemaForm
+          onSuccess={() => { setShowForm(false); refetch(); }}
+          onCancel={() => setShowForm(false)}
+        />
+      </Dialog>
     </div>
   );
 }
