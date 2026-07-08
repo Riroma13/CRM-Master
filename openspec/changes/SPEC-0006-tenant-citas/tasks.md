@@ -91,7 +91,7 @@ git checkout src/app/globals.css src/app/layout.tsx
 
 ### Tasks
 
-- [ ] **3b.1 — useSlots hook** (~50 lines)
+- [x] **3b.1 — useSlots hook** (~50 lines)
   - **File:** `apps/tenant-web/src/hooks/use-slots.ts` — Create
   - **Interface:** `useSlots(date: Date): { slots, isLoading, isError, error, refetch }`
   - **Pattern:** Matches admin-web hook pattern (`useState` + `api.get` + loading/error states)
@@ -101,7 +101,7 @@ git checkout src/app/globals.css src/app/layout.tsx
     - `apps/tenant-web/src/hooks/use-slots.test.ts` — Mock fetch, assert loading/empty/data/error states
   - **Verification:** `npx vitest run src/hooks/use-slots.test.ts`
 
-- [ ] **3b.2 — CalendarPicker component** (~120 lines)
+- [x] **3b.2 — CalendarPicker component** (~120 lines)
   - **File:** `apps/tenant-web/src/app/calendario/components/calendar-picker.tsx` — Create
   - **Behaviour:** Month/day grid selector, keyboard-navigable (`role="grid"`, arrow keys + Enter + Escape), `aria-label` per day, month navigation buttons, emits `onSelect(date: Date)`, highlights today
   - **Dependencies:** PR-3a (button.tsx, cn())
@@ -109,7 +109,7 @@ git checkout src/app/globals.css src/app/layout.tsx
     - `apps/tenant-web/src/app/calendario/components/calendar-picker.test.tsx` — RTL: renders month grid, navigates months via buttons, selects a day, keyboard navigation
   - **Verification:** `npx vitest run src/app/calendario/components/calendar-picker.test.tsx`
 
-- [ ] **3b.3 — SlotList component** (~80 lines)
+- [x] **3b.3 — SlotList component** (~80 lines)
   - **File:** `apps/tenant-web/src/app/calendario/components/slot-list.tsx` — Create
   - **Behaviour:** Renders list of available time slots (`Slot[]` from api-types), `aria-selected` on active slot, listbox pattern, `onSelect(slot: Slot)` callback, shows loading/empty states
   - **Dependencies:** PR-3a (scroll-area.tsx, badge.tsx, cn())
@@ -117,7 +117,7 @@ git checkout src/app/globals.css src/app/layout.tsx
     - `apps/tenant-web/src/app/calendario/components/slot-list.test.tsx` — RTL: renders slots, marks selected slot, empty state, loading state
   - **Verification:** `npx vitest run src/app/calendario/components/slot-list.test.tsx`
 
-- [ ] **3b.4 — BookingForm component** (~120 lines)
+- [x] **3b.4 — BookingForm component** (~120 lines)
   - **File:** `apps/tenant-web/src/app/calendario/components/booking-form.tsx` — Create
   - **Behaviour:** Form with fields: nombre (required), email (required), teléfono (optional), descripción (optional, max 500 chars). Client-side validation with zod. Inline validation errors linked via `aria-describedby`. Submit button calls `onSubmit(data)`. Loading state while submitting.
   - **Dependencies:** PR-3a (input.tsx, button.tsx, cn())
@@ -125,7 +125,7 @@ git checkout src/app/globals.css src/app/layout.tsx
     - `apps/tenant-web/src/app/calendario/components/booking-form.test.tsx` — RTL: renders form fields, shows validation errors on empty submit, submits valid data, shows loading state
   - **Verification:** `npx vitest run src/app/calendario/components/booking-form.test.tsx`
 
-- [ ] **3b.5 — BookingConfirmation component** (~50 lines)
+- [x] **3b.5 — BookingConfirmation component** (~50 lines)
   - **File:** `apps/tenant-web/src/app/calendario/components/booking-confirmation.tsx` — Create
   - **Behaviour:** Shows success state after booking: check icon, cita details (date, time, duration), confirmation number, "Volver" button. Props: `cita: Cita`, `onReset(): void`
   - **Dependencies:** PR-3a (card.tsx, button.tsx, cn())
@@ -133,7 +133,7 @@ git checkout src/app/globals.css src/app/layout.tsx
     - `apps/tenant-web/src/app/calendario/components/booking-confirmation.test.tsx` — RTL: renders confirmation details, calls onReset
   - **Verification:** `npx vitest run src/app/calendario/components/booking-confirmation.test.tsx`
 
-- [ ] **3b.6 — Calendario public page** (~60 lines)
+- [x] **3b.6 — Calendario public page** (~60 lines)
   - **File:** `apps/tenant-web/src/app/calendario/page.tsx` — Create
   - **Behaviour:** Orchestrates the full public flow: CalendarPicker → SlotList (when date selected) → BookingForm (when slot selected) → BookingConfirmation (on success). Manages step state. Centered single-column layout, `max-w-2xl`, no sidebar. Calls `POST /api/v1/tenant/calendario/citas` via `api.post()`.
   - **Dependencies:** 3b.1–3b.5 (all public booking components + hook)
@@ -280,7 +280,7 @@ git rm e2e/admin-calendario.spec.ts
 |-------|--------|-------|-----------|
 | Phase 1–2 (Backend) | ✅ Complete | 6 tasks | Done |
 | PR-3a (Config + UI + API) | ✅ Complete | 4 tasks | ~400 |
-| PR-3b (Public booking) | ❌ Ready | 6 tasks | ~300 |
+| PR-3b (Public booking) | ✅ Complete | 6 tasks | ~300 |
 | PR-3c (Admin dashboard) | ❌ Ready | 5 tasks | ~400 |
 | PR-3d (E2E) | ❌ Ready | 2 tasks | ~200 |
 
