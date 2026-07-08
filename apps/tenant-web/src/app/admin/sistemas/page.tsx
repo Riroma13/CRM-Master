@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSistemas } from '@/hooks/use-sistemas';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { HardDrive, Activity } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { HardDrive, Activity, Plus } from 'lucide-react';
 
 const ESTADO_COLORS: Record<string, string> = {
   '🟢': 'bg-[#D1FAE5] text-[#10B981]',
@@ -14,8 +15,8 @@ const ESTADO_COLORS: Record<string, string> = {
 };
 
 export default function SistemasPage() {
-  const { sistemas, isLoading } = useSistemas();
-  const [selected, setSelected] = useState<string | null>(null);
+  const router = useRouter();
+  const { sistemas, isLoading, isError, error, refetch } = useSistemas();
 
   if (isLoading) {
     return (
@@ -30,9 +31,34 @@ export default function SistemasPage() {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Sistemas</h1>
+        </div>
+        <div className="rounded-[0.5rem] border border-[#EF4444]/30 bg-[#FEF2F2] p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[#EF4444]">Error al cargar sistemas</p>
+              <p className="text-xs text-[#45464D]">{error?.message || 'Error desconocido'}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={refetch}>Reintentar</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Sistemas</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Sistemas</h1>
+        <Button size="sm" className="gap-1.5 bg-[#131B2E] text-xs text-white">
+          <Plus className="h-3.5 w-3.5" />
+          Nuevo sistema
+        </Button>
+      </div>
 
       {sistemas.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-[0.5rem] border-2 border-dashed border-[#C6C6CD] bg-white p-12">
@@ -46,7 +72,7 @@ export default function SistemasPage() {
             <Card
               key={s.id}
               className="bg-white transition-shadow hover:shadow-md cursor-pointer"
-              onClick={() => setSelected(selected === s.id ? null : s.id)}
+              onClick={() => router.push(`/admin/sistemas/${s.id}`)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">

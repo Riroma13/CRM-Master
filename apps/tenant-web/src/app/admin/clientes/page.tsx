@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useClientes } from '@/hooks/use-clientes';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ const ESTADO_COLORS: Record<string, string> = {
 };
 
 export default function ClientesPage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<{ search?: string }>({});
   const { clientes, isLoading, isError, error, refetch } = useClientes(filters);
@@ -112,7 +114,11 @@ export default function ClientesPage() {
       {clientes.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {clientes.map((cliente) => (
-            <Card key={cliente.id} className="bg-white transition-shadow hover:shadow-md">
+            <Card
+              key={cliente.id}
+              className="bg-white transition-shadow hover:shadow-md cursor-pointer"
+              onClick={() => router.push(`/admin/clientes/${cliente.id}`)}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="text-[16px] font-semibold text-[#1B1B1D]">{cliente.nombre}</h3>

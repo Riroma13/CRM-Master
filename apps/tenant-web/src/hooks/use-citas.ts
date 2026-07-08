@@ -33,8 +33,9 @@ export function useCitas(): UseCitasReturn {
         { auth: true },
       );
       // Guard against stale responses
+      // Handle both API shapes: plain array Cita[] OR { citas: Cita[] }
       if (id === fetchIdRef.current) {
-        setCitas(result.citas);
+        setCitas(Array.isArray(result) ? result : result.citas);
       }
     } catch (err) {
       if (id === fetchIdRef.current) {

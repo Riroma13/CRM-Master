@@ -124,6 +124,10 @@ export const api = {
   put<T>(path: string, body?: unknown, opts?: RequestOpts): Promise<T> {
     return request<T>('PUT', path, undefined, body, opts);
   },
+
+  delete<T>(path: string, opts?: RequestOpts): Promise<T> {
+    return request<T>('DELETE', path, undefined, undefined, opts);
+  },
 };
 
 // ─── Type helpers ─────────────────────────────────────────────
