@@ -5,6 +5,8 @@ import { useTareas, TareaItem } from '@/hooks/use-tareas';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+import { TareaForm } from '@/components/forms/tarea-form';
 import { Plus, ClipboardList } from 'lucide-react';
 
 const COLUMNAS = ['Pendiente', 'En curso', 'Hecho', 'Cancelada'] as const;
@@ -15,13 +17,14 @@ const PRIORIDAD_COLORS: Record<string, string> = {
   Baja: 'bg-[#D1FAE5] text-[#10B981]',
 };
 
-function TareaCard({ tarea, onAvanzar, onRetroceder }: {
+function TareaCard({ tarea, onEdit, onAvanzar, onRetroceder }: {
   tarea: TareaItem;
+  onEdit: () => void;
   onAvanzar?: () => void;
   onRetroceder?: () => void;
 }) {
   return (
-    <Card className="bg-white mb-2">
+    <Card className="bg-white mb-2 cursor-pointer hover:shadow-md transition-shadow" onClick={onEdit}>
       <CardContent className="p-3">
         <div className="flex items-start justify-between mb-1">
           <p className="text-[13px] font-medium text-[#1B1B1D]">{tarea.titulo}</p>
@@ -37,7 +40,7 @@ function TareaCard({ tarea, onAvanzar, onRetroceder }: {
             {new Date(tarea.fechaLimite).toLocaleDateString('es-ES')}
           </p>
         )}
-        <div className="flex gap-1 mt-2">
+        <div className="flex gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
           {onRetroceder && (
             <button onClick={onRetroceder} className="text-[11px] text-[#45464D] hover:text-[#1B1B1D] px-1">←</button>
           )}
@@ -53,7 +56,7 @@ function TareaCard({ tarea, onAvanzar, onRetroceder }: {
 export default function TareasPage() {
   const { tareas, isLoading, isError, error, refetch, updateTarea, deleteTarea } = useTareas();
   const [showForm, setShowForm] = useState(false);
-  const [newTitulo, setNewTitulo] = useState('');
+  const [editingTarea, setEditingTarea] = useState<TareaItem | null>(null);
 
   const avanzarEstado = (tarea: TareaItem) => {
     const idx = COLUMNAS.indexOf(tarea.estado as any);
@@ -67,6 +70,16 @@ export default function TareasPage() {
     if (idx > 0) {
       updateTarea(tarea.id, { estado: COLUMNAS[idx - 1] });
     }
+  };
+
+  const handleEdit = (tarea: TareaItem) => {
+    setEditingTarea(tarea);
+  };
+
+  const handleFormSuccess = () => {
+    setShowForm(false);
+    setEditingTarea(null);
+    refetch();
   };
 
   if (isLoading) {
@@ -110,42 +123,13 @@ export default function TareasPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Tareas</h1>
-        <Button size="sm" className="gap-1.5 bg-[#131B2E] text-xs text-white" onClick={() => setShowForm(!showForm)}>
+        <Button size="sm" className="gap-1.5 bg-[#131B2E] text-xs text-white" onClick={() => setShowForm(true)}>
           <Plus className="h-3.5 w-3.5" />
           Nueva tarea
         </Button>
       </div>
 
-      {showForm && (
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <div className="flex gap-2">
-              <input
-                value={newTitulo}
-                onChange={(e) => setNewTitulo(e.target.value)}
-                placeholder="Título de la tarea..."
-                className="flex-1 rounded-[0.25rem] border border-[#E2E8F0] px-3 py-2 text-[13px] text-[#1B1B1D]"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newTitulo.trim()) {
-                    updateTarea('new', { titulo: newTitulo.trim() });
-                    setNewTitulo('');
-                    setShowForm(false);
-                  }
-                }}
-              />
-              <Button size="sm" onClick={() => {
-                if (newTitulo.trim()) {
-                  updateTarea('new', { titulo: newTitulo.trim() });
-                  setNewTitulo('');
-                  setShowForm(false);
-                }
-              }}>Crear</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {tareas.length === 0 && !showForm && (
+      {tareas.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-[0.5rem] border-2 border-dashed border-[#C6C6CD] bg-white p-12">
           <ClipboardList className="h-10 w-10 text-[#45464D] mb-3" />
           <p className="text-sm font-semibold text-[#45464D]">No hay tareas</p>
@@ -169,6 +153,7 @@ export default function TareasPage() {
                     <TareaCard
                       key={tarea.id}
                       tarea={tarea}
+                      onEdit={() => handleEdit(tarea)}
                       onAvanzar={col !== 'Hecho' && col !== 'Cancelada' ? () => avanzarEstado(tarea) : undefined}
                       onRetroceder={col !== 'Pendiente' ? () => retrocederEstado(tarea) : undefined}
                     />
@@ -178,6 +163,34 @@ export default function TareasPage() {
           ))}
         </div>
       )}
+
+      {/* Create dialog */}
+      <Dialog open={showForm} onClose={() => setShowForm(false)} title="Nueva tarea">
+        <TareaForm onSuccess={handleFormSuccess} onCancel={() => setShowForm(false)} />
+      </Dialog>
+
+      {/* Edit dialog */}
+      <Dialog
+        open={!!editingTarea}
+        onClose={() => setEditingTarea(null)}
+        title={editingTarea ? `Editar: ${editingTarea.titulo}` : 'Editar tarea'}
+      >
+        {editingTarea && (
+          <TareaForm
+            initial={{
+              id: editingTarea.id,
+              titulo: editingTarea.titulo,
+              descripcion: (editingTarea as any).descripcion ?? '',
+              prioridad: editingTarea.prioridad,
+              estado: editingTarea.estado,
+              clienteId: editingTarea.cliente?.id ?? '',
+              fechaLimite: editingTarea.fechaLimite?.split('T')[0] ?? '',
+            }}
+            onSuccess={handleFormSuccess}
+            onCancel={() => setEditingTarea(null)}
+          />
+        )}
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useDashboard } from '@/hooks/use-dashboard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +12,7 @@ import {
   ClipboardList,
   HardDrive,
   RefreshCw,
+  ArrowRight,
 } from 'lucide-react';
 
 interface KpiCardProps {
@@ -19,11 +21,16 @@ interface KpiCardProps {
   value: number | string;
   subtitle?: string;
   color?: string;
+  href?: string;
 }
 
-function KpiCard({ icon: Icon, label, value, subtitle, color }: KpiCardProps) {
+function KpiCard({ icon: Icon, label, value, subtitle, color, href }: KpiCardProps) {
+  const router = useRouter();
   return (
-    <Card className="bg-white">
+    <Card
+      className={`bg-white ${href ? 'cursor-pointer transition-shadow hover:shadow-md' : ''}`}
+      {...(href ? { onClick: () => router.push(href) } : {})}
+    >
       <CardContent className="flex items-start gap-3 p-4">
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-full ${
@@ -96,6 +103,7 @@ const TIPO_COLORS: Record<string, string> = {
 };
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const { data, isLoading, isError, error, refetch } = useDashboard();
 
   if (isLoading) {
@@ -157,28 +165,33 @@ export default function AdminDashboardPage() {
           label="Clientes"
           value={data.clientesActivos}
           subtitle={`de ${data.totalClientes} totales`}
+          href="/admin/clientes"
         />
         <KpiCard
           icon={Calendar}
           label="Citas hoy"
           value={data.citasHoy}
+          href="/admin/calendario"
         />
         <KpiCard
           icon={Clock}
           label="Pendientes"
           value={data.citasPendientes}
+          href="/admin/calendario"
         />
         <KpiCard
           icon={ClipboardList}
           label="Tareas"
           value={data.tareasPendientes}
           subtitle="pendientes"
+          href="/admin/tareas"
         />
         <KpiCard
           icon={HardDrive}
           label="Sistemas"
           value={data.sistemasActivos}
           subtitle="activos"
+          href="/admin/sistemas"
         />
       </div>
 
@@ -195,9 +208,10 @@ export default function AdminDashboardPage() {
           ) : (
             <div className="space-y-3">
               {data.eventosRecientes.map((evento) => (
-                <div
+                <button
                   key={evento.id}
-                  className="flex items-start gap-3 rounded-[0.25rem] border border-[#E2E8F0] bg-white p-3"
+                  onClick={() => router.push(evento.link || '/admin')}
+                  className="flex w-full items-start gap-3 rounded-[0.25rem] border border-[#E2E8F0] bg-white p-3 text-left transition-colors hover:bg-[#FAFAFA]"
                 >
                   <Badge
                     variant="outline"
@@ -225,7 +239,7 @@ export default function AdminDashboardPage() {
                       })}
                     </p>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}

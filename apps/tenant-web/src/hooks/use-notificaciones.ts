@@ -42,5 +42,27 @@ export function useNotificaciones() {
     return () => clearInterval(interval);
   }, [fetch]);
 
-  return { ...data, isLoading, refetch: fetch };
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      await api.patch(`/api/v1/tenant/notificaciones/${id}`, { leida: true }, { auth: true });
+      setData((prev) => ({
+        notificaciones: prev.notificaciones.map((n) =>
+          n.id === id ? { ...n, leida: true, link: n.link } : n
+        ),
+        noLeidas: Math.max(0, prev.noLeidas - 1),
+      }));
+    } catch { /* ignore */ }
+  }, []);
+
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await api.post('/api/v1/tenant/notificaciones/leer-todas', undefined, { auth: true });
+      setData((prev) => ({
+        notificaciones: prev.notificaciones.map((n) => ({ ...n, leida: true })),
+        noLeidas: 0,
+      }));
+    } catch { /* ignore */ }
+  }, []);
+
+  return { ...data, isLoading, refetch: fetch, markAsRead, markAllAsRead };
 }

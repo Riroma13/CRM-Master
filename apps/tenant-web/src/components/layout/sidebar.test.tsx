@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Sidebar } from './sidebar';
 
+vi.mock('@/lib/api', () => ({
+  api: { get: () => Promise.resolve({ name: 'Demo Test', logo: '' }) },
+}));
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   usePathname: () => '/admin/calendario',
@@ -19,9 +23,9 @@ vi.mock('lucide-react', () => ({
 }));
 
 describe('Sidebar', () => {
-  it('renders brand section', () => {
+  it('renders brand section', async () => {
     render(<Sidebar />);
-    expect(screen.getByText('Mi Portal')).toBeInTheDocument();
+    expect(await screen.findByText('Demo Test')).toBeInTheDocument();
     expect(screen.getByText('Panel de gestión')).toBeInTheDocument();
   });
 

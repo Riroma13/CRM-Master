@@ -26,6 +26,7 @@ export interface DocumentDto {
   sizeBytes: number;
   category: string;
   description?: string;
+  storageKey: string;
   createdAt: string;
   shareLinks?: ShareLinkDto[];
 }

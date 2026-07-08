@@ -172,6 +172,7 @@ export class DocumentosService {
       sizeBytes: doc.sizeBytes,
       category: doc.category,
       description: doc.description ?? undefined,
+      storageKey: doc.storageKey,
       createdAt: doc.createdAt.toISOString(),
       shareLinks: shares
         ? shares.map((s: any) => this.toShareLinkDto(s))

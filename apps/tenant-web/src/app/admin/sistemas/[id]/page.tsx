@@ -6,7 +6,9 @@ import { api } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, HardDrive, Package, Activity } from 'lucide-react';
+import { Dialog } from '@/components/ui/dialog';
+import { ItemForm } from '@/components/forms/item-form';
+import { ArrowLeft, HardDrive, Package, Activity, Plus, Pencil, Trash2 } from 'lucide-react';
 
 const ESTADO_COLORS: Record<string, string> = {
   '🟢': 'bg-[#D1FAE5] text-[#10B981]',
@@ -44,6 +46,8 @@ export default function SistemaDetailPage({ params }: { params: Promise<{ id: st
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showItemForm, setShowItemForm] = useState(false);
+  const [editingItem, setEditingItem] = useState<ItemInventario | null>(null);
 
   const fetch = async () => {
     setIsLoading(true);
@@ -60,6 +64,20 @@ export default function SistemaDetailPage({ params }: { params: Promise<{ id: st
   };
 
   useEffect(() => { fetch(); }, [id]);
+
+  const handleDeleteItem = async (itemId: string) => {
+    if (!confirm('¿Eliminar este item del inventario?')) return;
+    try {
+      await api.delete(`/api/v1/tenant/sistemas/items/${itemId}`, { auth: true });
+      fetch();
+    } catch { /* ignore */ }
+  };
+
+  const handleItemFormSuccess = () => {
+    setShowItemForm(false);
+    setEditingItem(null);
+    fetch();
+  };
 
   const groupByCategory = (items: ItemInventario[]) => {
     const map: Record<string, ItemInventario[]> = {};
@@ -140,9 +158,14 @@ export default function SistemaDetailPage({ params }: { params: Promise<{ id: st
       {/* Items by category */}
       <Card className="bg-white">
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Package className="h-4 w-4 text-[#45464D]" />
-            <h2 className="text-[16px] font-semibold text-[#1B1B1D]">Inventario ({sistema.items.length})</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4 text-[#45464D]" />
+              <h2 className="text-[16px] font-semibold text-[#1B1B1D]">Inventario ({sistema.items.length})</h2>
+            </div>
+            <Button size="sm" variant="outline" className="gap-1" onClick={() => setShowItemForm(true)}>
+              <Plus className="h-3.5 w-3.5" /> Añadir item
+            </Button>
           </div>
 
           {sistema.items.length === 0 ? (
@@ -160,7 +183,23 @@ export default function SistemaDetailPage({ params }: { params: Promise<{ id: st
                       <div key={item.id} className="rounded-[0.25rem] border border-[#E2E8F0] bg-white p-3">
                         <div className="flex items-start justify-between">
                           <p className="text-[13px] font-medium text-[#1B1B1D]">{item.nombre}</p>
-                          <Badge variant="outline" className="text-[10px] bg-[#D1FAE5] text-[#10B981]">{item.estado}</Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px] bg-[#D1FAE5] text-[#10B981]">{item.estado}</Badge>
+                            <button
+                              onClick={() => setEditingItem(item)}
+                              className="p-0.5 text-[#45464D] hover:text-[#1B1B1D]"
+                              title="Editar item"
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="p-0.5 text-[#EF4444] hover:text-[#DC2626]"
+                              title="Eliminar item"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
                         </div>
                         {item.descripcion && <p className="text-[11px] text-[#45464D] mt-1">{item.descripcion}</p>}
                         <div className="flex items-center gap-3 mt-1">
@@ -180,6 +219,38 @@ export default function SistemaDetailPage({ params }: { params: Promise<{ id: st
           )}
         </CardContent>
       </Card>
+      {/* Create item dialog */}
+      <Dialog open={showItemForm} onClose={() => setShowItemForm(false)} title="Nuevo item de inventario">
+        <ItemForm
+          sistemaId={sistema.id}
+          onSuccess={handleItemFormSuccess}
+          onCancel={() => setShowItemForm(false)}
+        />
+      </Dialog>
+
+      {/* Edit item dialog */}
+      <Dialog
+        open={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        title={editingItem ? `Editar: ${editingItem.nombre}` : 'Editar item'}
+      >
+        {editingItem && (
+          <ItemForm
+            sistemaId={sistema.id}
+            initial={{
+              id: editingItem.id,
+              nombre: editingItem.nombre,
+              categoria: editingItem.categoria,
+              estado: editingItem.estado,
+              descripcion: editingItem.descripcion ?? '',
+              responsable: editingItem.responsable ?? '',
+              fechaImplementacion: editingItem.fechaImplementacion?.split('T')[0] ?? '',
+            }}
+            onSuccess={handleItemFormSuccess}
+            onCancel={() => setEditingItem(null)}
+          />
+        )}
+      </Dialog>
     </div>
   );
 }

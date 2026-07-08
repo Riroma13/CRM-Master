@@ -6,7 +6,7 @@ import { useNotificaciones } from '@/hooks/use-notificaciones';
 import Link from 'next/link';
 
 export function NotificationBell() {
-  const { notificaciones, noLeidas, refetch } = useNotificaciones();
+  const { notificaciones, noLeidas, refetch, markAsRead, markAllAsRead } = useNotificaciones();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -38,9 +38,16 @@ export function NotificationBell() {
         <div className="absolute right-0 top-full mt-2 w-80 rounded-[0.5rem] border border-[#E2E8F0] bg-white shadow-lg z-50">
           <div className="flex items-center justify-between border-b border-[#E2E8F0] px-4 py-2">
             <span className="text-[13px] font-semibold text-[#1B1B1D]">Notificaciones</span>
-            <button onClick={refetch} className="text-[11px] text-[#45464D] hover:text-[#1B1B1D]">
-              Actualizar
-            </button>
+            <div className="flex items-center gap-2">
+              {noLeidas > 0 && (
+                <button onClick={() => { markAllAsRead(); }} className="text-[11px] text-[#0F172A] hover:underline">
+                  Leer todo
+                </button>
+              )}
+              <button onClick={refetch} className="text-[11px] text-[#45464D] hover:text-[#1B1B1D]">
+                Actualizar
+              </button>
+            </div>
           </div>
 
           {notificaciones.length === 0 ? (
@@ -53,8 +60,8 @@ export function NotificationBell() {
                 <Link
                   key={n.id}
                   href={n.link}
-                  onClick={() => setOpen(false)}
-                  className="block border-b border-[#E2E8F0] px-4 py-3 transition-colors hover:bg-[#F8FAFC] last:border-0"
+                  onClick={() => { setOpen(false); if (!n.leida) markAsRead(n.id); }}
+                  className={`block border-b border-[#E2E8F0] px-4 py-3 transition-colors hover:bg-[#F8FAFC] last:border-0 ${!n.leida ? 'bg-[#F8FAFC]' : ''}`}
                 >
                   <p className="text-[13px] font-medium text-[#1B1B1D]">{n.titulo}</p>
                   {n.descripcion && (

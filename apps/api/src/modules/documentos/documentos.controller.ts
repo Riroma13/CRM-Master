@@ -7,11 +7,13 @@ import {
   Body,
   Param,
   Req,
+  Res,
   UploadedFile,
   ParseUUIDPipe,
   BadRequestException,
   UseInterceptors,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
@@ -172,6 +174,20 @@ export class DocumentosController {
   ) {
     await this.documentosService.softDelete(tenantId, id);
     return { message: 'Documento eliminado correctamente' };
+  }
+
+  @Get(':id/download')
+  @ApiOperation({ summary: 'Descargar documento directamente' })
+  async download(
+    @TenantId() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const doc = await this.documentosService.findOne(tenantId, id);
+    const file = await this.storageService.get(doc.storageKey);
+    res.setHeader('Content-Type', doc.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${doc.filename}"`);
+    file.stream.pipe(res);
   }
 
   @Post(':id/share')

@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Share2, Trash2 } from 'lucide-react';
+import { FileText, Share2, Trash2, Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { DocumentDto } from '@/lib/api-types';
 
@@ -91,6 +91,14 @@ export function DocumentCard({ documento, onShare, onDelete }: DocumentCardProps
 
       {/* Actions */}
       <div className="mt-3 flex gap-2 border-t border-[#E2E8F0] pt-3">
+        <a
+          href={`/api/v1/tenant/documentos/${documento.id}/download`}
+          className="flex items-center gap-1.5 rounded-[0.25rem] border border-[#E2E8F0] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.05em] text-[#45464D] transition-colors hover:bg-[#F0EDEF]"
+          data-testid={`document-download-${documento.id}`}
+        >
+          <Download className="h-3.5 w-3.5" />
+          Descargar
+        </a>
         <button
           onClick={() => onShare(documento)}
           className="flex items-center gap-1.5 rounded-[0.25rem] border border-[#E2E8F0] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.05em] text-[#45464D] transition-colors hover:bg-[#F0EDEF]"

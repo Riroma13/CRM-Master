@@ -8,7 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { ClienteForm } from '@/components/forms/cliente-form';
-import { ArrowLeft, Users, HardDrive, ClipboardList, Trash2, Edit3 } from 'lucide-react';
+import { TareaForm } from '@/components/forms/tarea-form';
+import { SistemaForm } from '@/components/forms/sistema-form';
+import { ArrowLeft, Users, HardDrive, ClipboardList, Trash2, Edit3, Plus } from 'lucide-react';
 
 const SALUD_COLORS: Record<string, string> = {
   '🟢': 'bg-[#D1FAE5] text-[#10B981]',
@@ -42,6 +44,8 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
   const [isError, setIsError] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showNewSistema, setShowNewSistema] = useState(false);
+  const [showNewTarea, setShowNewTarea] = useState(false);
 
   const fetch = async () => {
     setIsLoading(true);
@@ -145,9 +149,14 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
       {/* Systems */}
       <Card className="bg-white">
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <HardDrive className="h-4 w-4 text-[#45464D]" />
-            <h2 className="text-[16px] font-semibold text-[#1B1B1D]">Sistemas ({cliente.sistemas.length})</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <HardDrive className="h-4 w-4 text-[#45464D]" />
+              <h2 className="text-[16px] font-semibold text-[#1B1B1D]">Sistemas ({cliente.sistemas.length})</h2>
+            </div>
+            <Button size="sm" variant="outline" className="gap-1" onClick={() => setShowNewSistema(true)}>
+              <Plus className="h-3.5 w-3.5" /> Nuevo
+            </Button>
           </div>
           {cliente.sistemas.length === 0 ? (
             <p className="py-3 text-center text-[13px] text-[#45464D]">Sin sistemas registrados</p>
@@ -174,9 +183,14 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
       {/* Tareas */}
       <Card className="bg-white">
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <ClipboardList className="h-4 w-4 text-[#45464D]" />
-            <h2 className="text-[16px] font-semibold text-[#1B1B1D]">Tareas ({cliente.tareas.length})</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-[#45464D]" />
+              <h2 className="text-[16px] font-semibold text-[#1B1B1D]">Tareas ({cliente.tareas.length})</h2>
+            </div>
+            <Button size="sm" variant="outline" className="gap-1" onClick={() => setShowNewTarea(true)}>
+              <Plus className="h-3.5 w-3.5" /> Nueva
+            </Button>
           </div>
           {cliente.tareas.length === 0 ? (
             <p className="py-3 text-center text-[13px] text-[#45464D]">Sin tareas registradas</p>
@@ -214,6 +228,24 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
           }}
           onSuccess={() => { setShowForm(false); fetch(); }}
           onCancel={() => setShowForm(false)}
+        />
+      </Dialog>
+
+      {/* New system dialog */}
+      <Dialog open={showNewSistema} onClose={() => setShowNewSistema(false)} title="Nuevo sistema">
+        <SistemaForm
+          initial={{ clienteId: cliente.id, nombreSistema: '', tipo: '', entorno: 'Producción', version: '' }}
+          onSuccess={() => { setShowNewSistema(false); fetch(); }}
+          onCancel={() => setShowNewSistema(false)}
+        />
+      </Dialog>
+
+      {/* New task dialog */}
+      <Dialog open={showNewTarea} onClose={() => setShowNewTarea(false)} title="Nueva tarea">
+        <TareaForm
+          clienteId={cliente.id}
+          onSuccess={() => { setShowNewTarea(false); fetch(); }}
+          onCancel={() => setShowNewTarea(false)}
         />
       </Dialog>
     </div>

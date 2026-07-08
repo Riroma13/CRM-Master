@@ -66,6 +66,7 @@ export interface EventoItem {
   tipo: string;
   titulo: string;
   descripcion?: string;
+  link?: string;
 }
 
 export interface TenantDashboardResponse {
@@ -90,6 +91,7 @@ export interface DocumentDto {
   sizeBytes: number;
   category: string;
   description?: string;
+  storageKey: string;
   createdAt: string;
   shareLinks?: ShareLinkDto[];
 }
