@@ -51,12 +51,19 @@ export class AuthController {
       .replace(/^-|-$/g, '')
       .slice(0, 40) || `user-${randomBytes(4).toString('hex')}`;
 
-    return this.tenantsService.create({
+    const result = await this.tenantsService.create({
       slug,
       name: businessName || `${name}'s Business`,
       adminEmail: email,
       adminName: name,
     });
+
+    // Store password hash (simple SHA-256 for MVP)
+    const { createHash } = await import('crypto');
+    const passwordHash = createHash('sha256').update(password).digest('hex');
+    await this.tenantsService.updatePassword(email, passwordHash);
+
+    return result;
   }
 
   @Post('logout')

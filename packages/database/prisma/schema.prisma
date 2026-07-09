@@ -154,6 +154,7 @@ model User {
   email           String   @unique
   name            String?
   role            String   @default("user") // "superadmin" | "admin" | "user"
+  passwordHash    String?  @map("password_hash")
   avatar          String?
   isActive        Boolean  @default(true) @map("is_active")
   betterAuthUserId String? @unique @map("better_auth_user_id") // links to ba_users.id

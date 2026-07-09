@@ -1,7 +1,7 @@
 import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { CreateTenantDto, TenantResponseDto, TenantListDto } from './dto';
-import { randomBytes, randomUUID } from 'crypto';
+import { randomBytes, randomUUID, createHash } from 'crypto';
 
 const ALL_MODULES = [
   'dashboard', 'clientes', 'documentos', 'tareas', 'calendario',
@@ -60,6 +60,7 @@ export class TenantsService {
     );
 
     // 6. Crear usuario admin del tenant
+    const defaultHash = createHash('sha256').update('password').digest('hex');
     const adminUser = await this.prisma.admin.user.create({
       data: {
         tenantId: tenant.id,
@@ -69,6 +70,11 @@ export class TenantsService {
         betterAuthUserId: baUserId,
       },
     });
+    // Store password hash via raw SQL (field not in Prisma schema yet)
+    await this.prisma.admin.$executeRawUnsafe(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      defaultHash, adminUser.id,
+    );
 
     // 7. Crear disponibilidad por defecto
     const defaultDailySchedule = [
@@ -115,6 +121,13 @@ export class TenantsService {
       health: '🟢',
       createdAt: tenant.createdAt.toISOString(),
     };
+  }
+
+  async updatePassword(email: string, passwordHash: string) {
+    await this.prisma.admin.$executeRawUnsafe(
+      'UPDATE users SET password_hash = $1 WHERE email = $2',
+      passwordHash, email,
+    );
   }
 
   async findAll(query: TenantListDto) {

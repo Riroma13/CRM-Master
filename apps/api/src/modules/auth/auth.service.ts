@@ -2,7 +2,7 @@ import {
   Injectable, UnauthorizedException, NotFoundException,
   Logger,
 } from '@nestjs/common';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '../../common/prisma.service';
 import { LoginDto, AuthResponseDto, MeDto } from './dto';
 
@@ -29,9 +29,18 @@ export class AuthService {
       throw new UnauthorizedException('Tenant desactivado o no encontrado');
     }
 
-    // TODO: Integrar con Better-Auth para verificación real de password
-    // Por ahora, mock de autenticación
-    if (dto.password !== 'password') {
+    // Check password hash (read via raw SQL since field is not in Prisma schema)
+    const hashRows = await (this.prisma.admin as any).$queryRawUnsafe(
+      'SELECT password_hash FROM users WHERE id = $1', user.id,
+    );
+    const storedHash = hashRows?.[0]?.password_hash;
+    const inputHash = createHash('sha256').update(dto.password).digest('hex');
+    if (!storedHash) {
+      // Legacy user without password hash — accept default password
+      if (dto.password !== 'password') {
+        throw new UnauthorizedException('Credenciales inválidas');
+      }
+    } else if (storedHash !== inputHash) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
