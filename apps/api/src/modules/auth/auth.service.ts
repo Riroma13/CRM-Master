@@ -1,10 +1,8 @@
 import {
   Injectable, UnauthorizedException, NotFoundException,
-  Logger, Inject,
+  Logger,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
 import { PrismaService } from '../../common/prisma.service';
 import { LoginDto, AuthResponseDto, MeDto } from './dto';
 
@@ -14,32 +12,21 @@ export class AuthService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(REQUEST) private readonly req: Request,
   ) {}
 
   async login(dto: LoginDto): Promise<AuthResponseDto> {
-    const tenantSlug = (this.req as any).tenantSlug;
-    if (!tenantSlug) {
-      throw new NotFoundException('Tenant no encontrado');
-    }
-
-    // Resolver tenant por slug
-    const tenant = await this.prisma.admin.tenant.findUnique({
-      where: { slug: tenantSlug },
-    });
-    if (!tenant) {
-      throw new NotFoundException('Tenant no encontrado');
-    }
-    if (!tenant.isActive) {
-      throw new UnauthorizedException('Tenant desactivado');
-    }
-
-    // Buscar usuario por email en el tenant
+    // Buscar usuario por email
     const user = await this.prisma.admin.user.findUnique({
       where: { email: dto.email },
+      include: { tenant: true },
     });
-    if (!user || user.tenantId !== tenant.id) {
+    if (!user) {
       throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    const tenant = user.tenant;
+    if (!tenant || !tenant.isActive) {
+      throw new UnauthorizedException('Tenant desactivado o no encontrado');
     }
 
     // TODO: Integrar con Better-Auth para verificación real de password
