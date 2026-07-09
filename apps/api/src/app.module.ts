@@ -19,6 +19,8 @@ import { TenantModulesModule } from './modules/tenant-modules/tenant-modules.mod
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { TenantHealthModule } from './modules/tenant-health/tenant-health.module';
+import { SearchModule } from './modules/search/search.module';
 import { TenantIncidenciasModule } from './modules/tenant-incidencias/tenant-incidencias.module';
 import { DocumentosModule } from './modules/documentos/documentos.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
@@ -50,6 +52,8 @@ import { authClientProvider } from './common/auth-client.provider';
     TenantIncidenciasModule,
     HealthModule,
     AuditModule,
+    TenantHealthModule,
+    SearchModule,
     DocumentosModule,
   ],
   providers: [
