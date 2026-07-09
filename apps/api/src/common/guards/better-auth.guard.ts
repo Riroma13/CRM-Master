@@ -78,6 +78,7 @@ export class BetterAuthGuard implements CanActivate {
     }
 
     // Set user on request (used by PermissionsGuard downstream)
+    // Also override tenantId to match the user's actual tenant
     (request as any).user = {
       id: sessionUser.userId,
       email: sessionUser.email,
@@ -85,6 +86,8 @@ export class BetterAuthGuard implements CanActivate {
       role: legacyUser.role,
       tenantId: legacyUser.tenantId,
     };
+    (request as any).tenantId = legacyUser.tenantId;
+    (request as any).tenantSlug = legacyUser.tenant?.slug;
 
     // Superadmin has no org membership — allowed on admin routes
     if (legacyUser.role === 'superadmin') return true;
