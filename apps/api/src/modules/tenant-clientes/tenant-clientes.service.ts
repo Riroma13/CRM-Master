@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class TenantClientesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async findAll(tenantId: string, query?: { search?: string; estado?: string; salud?: string }) {
     const where: any = { tenantId };
@@ -38,20 +42,25 @@ export class TenantClientesService {
   }
 
   async create(tenantId: string, data: any) {
-    return this.prisma.admin.cliente.create({
+    const cliente = await this.prisma.admin.cliente.create({
       data: { ...data, tenantId },
     });
+    this.audit.log({ tenantId, action: 'create', resource: 'cliente', resourceId: cliente.id, details: `Cliente creado: ${cliente.nombre}` });
+    return cliente;
   }
 
   async update(tenantId: string, id: string, data: any) {
     const cliente = await this.prisma.admin.cliente.findFirst({ where: { id, tenantId } });
     if (!cliente) throw new NotFoundException('Cliente no encontrado');
-    return this.prisma.admin.cliente.update({ where: { id }, data });
+    const updated = await this.prisma.admin.cliente.update({ where: { id }, data });
+    this.audit.log({ tenantId, action: 'update', resource: 'cliente', resourceId: id, details: `Cliente actualizado: ${cliente.nombre}` });
+    return updated;
   }
 
   async remove(tenantId: string, id: string) {
     const cliente = await this.prisma.admin.cliente.findFirst({ where: { id, tenantId } });
     if (!cliente) throw new NotFoundException('Cliente no encontrado');
-    return this.prisma.admin.cliente.delete({ where: { id } });
+    await this.prisma.admin.cliente.delete({ where: { id } });
+    this.audit.log({ tenantId, action: 'delete', resource: 'cliente', resourceId: id, details: `Cliente eliminado: ${cliente.nombre}` });
   }
 }
