@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Menu, X, ChevronRight } from 'lucide-react';
 import { Sidebar } from './sidebar';
@@ -48,8 +48,20 @@ function Breadcrumbs({ pathname }: { pathname: string }) {
 }
 
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Auth guard: redirect to /login if no session token
+  useEffect(() => {
+    try {
+      const token = sessionStorage.getItem('crm_session_token');
+      if (!token) router.replace('/login');
+    } catch {
+      // sessionStorage unavailable — SSR/test
+    }
+  }, [router]);
 
   // Close drawer on Escape key
   useEffect(() => {

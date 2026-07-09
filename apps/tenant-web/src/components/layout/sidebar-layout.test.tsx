@@ -2,9 +2,23 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SidebarLayout } from './sidebar-layout';
 
+const mockRouterReplace = vi.fn();
 vi.mock('next/navigation', () => ({
   usePathname: () => '/admin/clientes',
+  useRouter: () => ({ replace: mockRouterReplace }),
 }));
+
+// Mock sessionStorage
+const sessionStorageMock = (() => {
+  let store: Record<string, string> = { crm_session_token: 'mock-token' };
+  return {
+    getItem: (k: string) => store[k] ?? null,
+    setItem: (k: string, v: string) => { store[k] = v; },
+    removeItem: (k: string) => { delete store[k]; },
+    clear: () => { store = {}; },
+  };
+})();
+Object.defineProperty(window, 'sessionStorage', { value: sessionStorageMock });
 
 vi.mock('next/link', () => ({
   default: ({ children, href }: any) => <a href={href}>{children}</a>,

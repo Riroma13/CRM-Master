@@ -69,6 +69,22 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return sessionStorage.getItem('crm_session_token');
+  } catch {
+    return null;
+  }
+}
+
+function clearAuthAndRedirect() {
+  if (typeof window === 'undefined') return;
+  try { sessionStorage.removeItem('crm_session_token'); } catch {}
+  try { sessionStorage.removeItem('crm_user'); } catch {}
+  window.location.href = '/login';
+}
+
 async function request<T>(
   method: string,
   path: string,
@@ -85,7 +101,12 @@ async function request<T>(
   const init: RequestInit = { method, headers };
 
   if (opts?.auth) {
-    init.credentials = 'include';
+    const token = getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      init.credentials = 'include';
+    }
   }
 
   if (body !== undefined && method !== 'GET') {
@@ -94,6 +115,13 @@ async function request<T>(
 
   try {
     const response = await fetch(url, init);
+
+    // On 401 Unauthorized, clear session and redirect to login
+    if (response.status === 401 && opts?.auth) {
+      clearAuthAndRedirect();
+      throw new ApiError('Sesión expirada', 401, { message: 'Sesión expirada' });
+    }
+
     return handleResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiError) {
