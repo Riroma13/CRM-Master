@@ -31,7 +31,7 @@ export class LocalCalendarProvider implements CalendarProvider {
    * - existing bookings (pending or confirmed)
    * - slots within minNotice of now
    */
-  async getSlots(tenantId: string, date: Date): Promise<Slot[]> {
+  async getSlots(tenantId: string, date: Date, resourceId?: string): Promise<Slot[]> {
     // 1. Get disponibilidad configuration
     const disp = await this.prisma.admin.disponibilidad.findUnique({
       where: { tenantId },
@@ -71,12 +71,14 @@ export class LocalCalendarProvider implements CalendarProvider {
     const dayEnd = new Date(date);
     dayEnd.setUTCHours(23, 59, 59, 999);
 
+    const whereBookings: any = {
+      tenantId,
+      fecha: { gte: dayStart, lte: dayEnd },
+      estado: { in: ['pendiente', 'confirmada'] },
+    };
+    if (resourceId) whereBookings.resourceId = resourceId;
     const existingBookings = await this.prisma.admin.cita.findMany({
-      where: {
-        tenantId,
-        fecha: { gte: dayStart, lte: dayEnd },
-        estado: { in: ['pendiente', 'confirmada'] },
-      },
+      where: whereBookings,
       select: { fecha: true, duracion: true },
     });
 
@@ -160,12 +162,14 @@ export class LocalCalendarProvider implements CalendarProvider {
       // long overlapping citas) through to the end of our slot.
       const searchStart = new Date(fecha.getTime() - 120 * 60 * 1000);
 
+      const whereOverlap: any = {
+        tenantId,
+        fecha: { gte: searchStart, lt: slotEnd },
+        estado: { in: ['pendiente', 'confirmada'] },
+      };
+      if (input.resourceId) whereOverlap.resourceId = input.resourceId;
       const existingCitas = await tx.cita.findMany({
-        where: {
-          tenantId,
-          fecha: { gte: searchStart, lt: slotEnd },
-          estado: { in: ['pendiente', 'confirmada'] },
-        },
+        where: whereOverlap,
       });
 
       // True overlap check: existing [A_start, A_end) overlaps with [fecha, slotEnd)
@@ -182,6 +186,7 @@ export class LocalCalendarProvider implements CalendarProvider {
           fecha,
           duracion,
           titulo: input.titulo ?? 'Consulta',
+          resourceId: input.resourceId ?? null,
           clienteNombre: input.clienteNombre ?? null,
           clienteEmail: input.clienteEmail ?? null,
           clienteTelefono: input.clienteTelefono ?? null,

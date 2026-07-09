@@ -61,16 +61,22 @@ export class CitasController {
     example: '2026-07-05',
     description: 'Fecha en formato YYYY-MM-DD',
   })
+  @ApiQuery({
+    name: 'resourceId',
+    required: false,
+    description: 'Filtrar slots por recurso específico',
+  })
   async getSlots(
     @TenantId() tenantId: string,
     @Query('fecha') fecha: string,
+    @Query('resourceId') resourceId?: string,
   ) {
     if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
       throw new BadRequestException('Formato de fecha inválido. Use YYYY-MM-DD');
     }
 
     const date = new Date(fecha + 'T00:00:00Z');
-    return this.citasService.getSlots(tenantId, date);
+    return this.citasService.getSlots(tenantId, date, resourceId);
   }
 
   @Post('citas')
@@ -87,6 +93,8 @@ export class CitasController {
     return this.citasService.bookSlot(tenantId, {
       fecha: new Date(parsed.fecha),
       duracion: 30,
+      resourceId: parsed.resourceId,
+      titulo: parsed.titulo,
       clienteNombre: parsed.clienteNombre,
       clienteEmail: parsed.clienteEmail,
       clienteTelefono: parsed.clienteTelefono,

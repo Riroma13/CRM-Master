@@ -28,6 +28,7 @@ model Tenant {
   tareas   Tarea[]
   disponibilidad Disponibilidad?
   citas    Cita[]
+  recursos Resource[]
   documentos Documento[]
 
   @@map("tenants")
@@ -339,10 +340,28 @@ model Disponibilidad {
   @@map("disponibilidad")
 }
 
+model Resource {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  nombre      String
+  tipo        String   @default("professional") // professional | space | equipment
+  descripcion String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  citas  Cita[]
+
+  @@index([tenantId])
+  @@map("recursos")
+}
+
 model Cita {
   id              String   @id @default(uuid())
   tenantId        String   @map("tenant_id")
   clienteId       String?  @map("cliente_id")
+  resourceId      String?  @map("resource_id")
   titulo          String   @default("Consulta")
   descripcion     String?
   fecha           DateTime
@@ -355,10 +374,12 @@ model Cita {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  resource Resource? @relation(fields: [resourceId], references: [id])
 
   @@index([tenantId])
   @@index([fecha])
   @@index([tenantId, estado])
+  @@index([resourceId])
   @@map("citas")
 }

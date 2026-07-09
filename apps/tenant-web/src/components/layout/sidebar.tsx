@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
-import { Calendar, FileText, LayoutDashboard, Users, ClipboardList, Settings, HardDrive } from 'lucide-react';
+import { Calendar, FileText, LayoutDashboard, Users, ClipboardList, Settings, HardDrive, Briefcase } from 'lucide-react';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/admin/documentos', label: 'Documentos', icon: FileText },
   { href: '/admin/tareas', label: 'Tareas', icon: ClipboardList },
   { href: '/admin/calendario', label: 'Calendario', icon: Calendar },
+  { href: '/admin/recursos', label: 'Recursos', icon: Briefcase },
   { href: '/admin/sistemas', label: 'Sistemas', icon: HardDrive },
   { href: '/admin/perfil', label: 'Perfil', icon: Settings },
 ];

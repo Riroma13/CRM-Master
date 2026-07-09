@@ -8,6 +8,7 @@ export interface BookSlotInput {
   fecha: Date;
   duracion: number;
   titulo?: string;
+  resourceId?: string;
   clienteNombre?: string;
   clienteEmail?: string;
   clienteTelefono?: string;
@@ -15,7 +16,7 @@ export interface BookSlotInput {
 }
 
 export interface CalendarProvider {
-  getSlots(tenantId: string, date: Date): Promise<Slot[]>;
+  getSlots(tenantId: string, date: Date, resourceId?: string): Promise<Slot[]>;
   bookSlot(tenantId: string, input: BookSlotInput): Promise<CitaResult>;
   confirmCita(citaId: string): Promise<CitaResult>;
   cancelCita(citaId: string): Promise<CitaResult>;

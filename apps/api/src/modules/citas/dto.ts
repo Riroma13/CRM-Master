@@ -3,6 +3,8 @@ import { z } from 'zod';
 
 export const BookCitaSchema = z.object({
   fecha: z.string().datetime(),
+  resourceId: z.string().uuid().optional(),
+  titulo: z.string().min(2).optional(),
   clienteNombre: z.string().min(2).optional(),
   clienteEmail: z.string().email().optional(),
   clienteTelefono: z.string().optional(),

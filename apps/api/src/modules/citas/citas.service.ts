@@ -12,8 +12,8 @@ export class CitasService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async getSlots(tenantId: string, date: Date): Promise<Slot[]> {
-    return this.calendarProvider.getSlots(tenantId, date);
+  async getSlots(tenantId: string, date: Date, resourceId?: string): Promise<Slot[]> {
+    return this.calendarProvider.getSlots(tenantId, date, resourceId);
   }
 
   async bookSlot(tenantId: string, input: BookSlotInput): Promise<CitaResult> {
