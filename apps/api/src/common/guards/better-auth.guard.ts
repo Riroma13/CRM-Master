@@ -29,24 +29,23 @@ export class BetterAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const path: string = request.path ?? request.originalUrl ?? '';
 
-    // Only enforce on admin routes (replaces AdminAuthGuard boundary)
-    if (!path.startsWith(ADMIN_ROUTE_PREFIX)) return true;
-
-    // Extract Bearer token
+    // Extract Bearer token if present
     const authHeader = request.headers?.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException(
-        'Se requiere token de autenticación para acceder a rutas de administración',
-      );
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+    // For admin routes, token is required
+    if (path.startsWith(ADMIN_ROUTE_PREFIX)) {
+      if (!token) {
+        throw new UnauthorizedException(
+          'Se requiere token de autenticación para acceder a rutas de administración',
+        );
+      }
     }
 
-    const token = authHeader.slice(7);
+    // If no token on non-admin routes, allow anonymous (PermissionsGuard handles restrictions)
+    if (!token) return true;
 
     // Validate session against ba_sessions directly via raw SQL.
-    // We bypass auth.api.getSession() because Better-Auth v1's getSession
-    // requires HMAC-signed cookies (via the bearer plugin) and the Prisma
-    // model name collision (model user vs model User) prevents the adapter
-    // from functioning correctly on ba_users.
     const rows = await (this.prisma.admin as any).$queryRawUnsafe(
       `SELECT s.user_id as "userId", u.email, u.name
        FROM ba_sessions s
@@ -56,7 +55,10 @@ export class BetterAuthGuard implements CanActivate {
     );
 
     if (!rows || rows.length === 0) {
-      throw new UnauthorizedException('Token inválido o expirado');
+      if (path.startsWith(ADMIN_ROUTE_PREFIX)) {
+        throw new UnauthorizedException('Token inválido o expirado');
+      }
+      return true; // Allow anonymous for non-admin routes even with bad token
     }
 
     const sessionUser = rows[0];
@@ -75,21 +77,25 @@ export class BetterAuthGuard implements CanActivate {
       throw new ForbiddenException('Usuario desactivado');
     }
 
+    // Set user on request (used by PermissionsGuard downstream)
+    (request as any).user = {
+      id: sessionUser.userId,
+      email: sessionUser.email,
+      name: sessionUser.name,
+      role: legacyUser.role,
+      tenantId: legacyUser.tenantId,
+    };
+
     // Superadmin has no org membership — allowed on admin routes
-    if (legacyUser.role === 'superadmin') {
-      (request as any).user = {
-        id: sessionUser.userId,
-        email: sessionUser.email,
-        name: sessionUser.name,
-        role: 'superadmin',
-        tenantId: legacyUser.tenantId,
-      };
-      return true;
+    if (legacyUser.role === 'superadmin') return true;
+
+    // Non-superadmin on admin routes → 403
+    if (path.startsWith(ADMIN_ROUTE_PREFIX)) {
+      throw new ForbiddenException(
+        'Acceso denegado: se requiere rol de superadmin',
+      );
     }
 
-    // Non-superadmin on admin routes → 403 (replaces AdminAuthGuard)
-    throw new ForbiddenException(
-      'Acceso denegado: se requiere rol de superadmin',
-    );
+    return true;
   }
 }

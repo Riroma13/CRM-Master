@@ -65,7 +65,7 @@ export class TenantsService {
         tenantId: tenant.id,
         email: dto.adminEmail,
         name: dto.adminName || dto.adminEmail.split('@')[0],
-        role: 'admin',
+        role: 'owner',
         betterAuthUserId: baUserId,
       },
     });

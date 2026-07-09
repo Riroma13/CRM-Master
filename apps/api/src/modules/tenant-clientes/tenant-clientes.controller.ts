@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestj
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TenantClientesService } from './tenant-clientes.service';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
+import { RequirePermission } from '../../common/decorators/permissions.decorator';
 
 @ApiTags('Tenant - Clientes')
 @ApiBearerAuth()
@@ -10,6 +11,7 @@ export class TenantClientesController {
   constructor(private readonly service: TenantClientesService) {}
 
   @Get()
+  @RequirePermission('clientes', 'read')
   @ApiOperation({ summary: 'Listar clientes del tenant' })
   findAll(
     @TenantId() tenantId: string,
@@ -27,18 +29,21 @@ export class TenantClientesController {
   }
 
   @Post()
+  @RequirePermission('clientes', 'create')
   @ApiOperation({ summary: 'Crear un cliente' })
   create(@TenantId() tenantId: string, @Body() body: any) {
     return this.service.create(tenantId, body);
   }
 
   @Patch(':id')
+  @RequirePermission('clientes', 'update')
   @ApiOperation({ summary: 'Actualizar un cliente' })
   update(@TenantId() tenantId: string, @Param('id') id: string, @Body() body: any) {
     return this.service.update(tenantId, id, body);
   }
 
   @Delete(':id')
+  @RequirePermission('clientes', 'delete')
   @ApiOperation({ summary: 'Eliminar un cliente' })
   remove(@TenantId() tenantId: string, @Param('id') id: string) {
     return this.service.remove(tenantId, id);

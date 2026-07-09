@@ -28,6 +28,7 @@ import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.midd
 import { TenantScopeGuard } from './common/guards/tenant-scope.guard';
 import { BetterAuthGuard } from './common/guards/better-auth.guard';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
+import { PermissionsGuard } from './common/guards/permissions.guard';
 import { PrismaService } from './common/prisma.service';
 import { authClientProvider } from './common/auth-client.provider';
 
@@ -73,6 +74,10 @@ import { authClientProvider } from './common/auth-client.provider';
     {
       provide: APP_GUARD,
       useClass: RateLimitGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
     },
   ],
 })
