@@ -1,0 +1,40 @@
+import { Controller, Get } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { PrismaService } from '../../common/prisma.service';
+import { Public } from '../../common/decorators/public.decorator';
+
+@ApiTags('Health')
+@Controller('api/v1/health')
+export class HealthController {
+  private readonly startTime = Date.now();
+
+  constructor(private readonly prisma: PrismaService) {}
+
+  @Get()
+  @Public()
+  @ApiOperation({ summary: 'Health check público — estado del sistema' })
+  async check() {
+    const checks: Record<string, string> = {};
+
+    // Database check
+    try {
+      await this.prisma.admin.$queryRawUnsafe('SELECT 1');
+      checks.database = 'ok';
+    } catch {
+      checks.database = 'error';
+    }
+
+    // Redis check (via simple ping through any Redis call)
+    checks.redis = 'unknown'; // Will be implemented when Redis service is available
+
+    const allOk = Object.values(checks).every((s) => s === 'ok' || s === 'unknown');
+
+    return {
+      status: allOk ? 'ok' : 'degraded',
+      version: process.env.npm_package_version || '1.0.0',
+      uptime: Math.floor((Date.now() - this.startTime) / 1000),
+      timestamp: new Date().toISOString(),
+      checks,
+    };
+  }
+}
