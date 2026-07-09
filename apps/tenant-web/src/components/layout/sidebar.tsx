@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { useModules } from '@/hooks/use-modules';
 import {
   Calendar, FileText, LayoutDashboard, Users,
-  ClipboardList, Settings, HardDrive, Briefcase, ToggleLeft, Bell,
+  ClipboardList, Settings, HardDrive, Briefcase, ToggleLeft, Bell, AlertTriangle,
 } from 'lucide-react';
 
 const MODULE_ICONS: Record<string, React.ElementType> = {
@@ -20,6 +20,7 @@ const MODULE_ICONS: Record<string, React.ElementType> = {
   recursos: Briefcase,
   sistemas: HardDrive,
   notificaciones: Bell,
+  incidencias: AlertTriangle,
   perfil: Settings,
 };
 
@@ -32,6 +33,7 @@ const MODULE_HREF: Record<string, string> = {
   recursos: '/admin/recursos',
   sistemas: '/admin/sistemas',
   notificaciones: '/admin/notificaciones',
+  incidencias: '/admin/incidencias',
   perfil: '/admin/perfil',
 };
 

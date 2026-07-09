@@ -38,6 +38,7 @@ export function createPrismaClient(tenantId?: string) {
             'Cita',
             'Documento',
             'Resource',
+            'Incidencia',
           ];
 
           if (!scopedModels.includes(model)) return query(args);

@@ -11,6 +11,7 @@ export const AVAILABLE_MODULES = [
   { id: 'sistemas', label: 'Sistemas', defaultEnabled: true },
   { id: 'perfil', label: 'Perfil', defaultEnabled: true },
   { id: 'notificaciones', label: 'Notificaciones', defaultEnabled: true },
+  { id: 'incidencias', label: 'Incidencias', defaultEnabled: true },
 ];
 
 const MODULE_IDS = AVAILABLE_MODULES.map((m) => m.id);

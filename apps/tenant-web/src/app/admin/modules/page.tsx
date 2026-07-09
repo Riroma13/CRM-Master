@@ -16,6 +16,7 @@ const MODULE_LABELS: Record<string, string> = {
   calendario: 'Calendario',
   recursos: 'Recursos',
   notificaciones: 'Notificaciones',
+  incidencias: 'Incidencias',
   sistemas: 'Sistemas',
   perfil: 'Perfil',
 };
@@ -28,6 +29,7 @@ const MODULE_DESCRIPTIONS: Record<string, string> = {
   calendario: 'Citas, horarios, reserva pública y disponibilidad',
   recursos: 'Profesionales, espacios y equipos reservables',
   notificaciones: 'Configuración de notificaciones y recordatorios',
+  incidencias: 'Gestión de incidencias, tickets y seguimiento con SLA',
   sistemas: 'Inventario de sistemas y equipamiento técnico',
   perfil: 'Configuración del negocio, nombre y logo',
 };

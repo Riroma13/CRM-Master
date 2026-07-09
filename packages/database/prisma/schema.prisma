@@ -29,6 +29,7 @@ model Tenant {
   disponibilidad Disponibilidad?
   citas    Cita[]
   recursos Resource[]
+  incidencias Incidencia[]
   documentos Documento[]
 
   @@map("tenants")
@@ -181,9 +182,10 @@ model Cliente {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id])
-  sistemas Sistema[]
-  tareas   Tarea[]
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  sistemas    Sistema[]
+  tareas      Tarea[]
+  incidencias Incidencia[]
 
   @@index([tenantId])
   @@map("clientes")
@@ -355,6 +357,28 @@ model Resource {
 
   @@index([tenantId])
   @@map("recursos")
+}
+
+model Incidencia {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  clienteId   String?  @map("cliente_id")
+  titulo      String
+  descripcion String?
+  estado      String   @default("abierta") // abierta | en_curso | resuelta | cerrada
+  prioridad   String   @default("media")   // baja | media | alta | critica
+  asignadoA   String?  @map("asignado_a")
+  fechaLimite DateTime? @map("fecha_limite")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  cliente Cliente? @relation(fields: [clienteId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, estado])
+  @@index([clienteId])
+  @@map("incidencias")
 }
 
 model Cita {
