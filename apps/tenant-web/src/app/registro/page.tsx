@@ -40,21 +40,8 @@ export default function RegistroPage() {
         throw new Error(data.message || 'Error al registrarse');
       }
 
-      const data = await res.json();
-
-      // Auto-login: store session token and redirect to admin
-      if (data.sessionToken) {
-        try {
-          sessionStorage.setItem('crm_session_token', data.sessionToken);
-          sessionStorage.setItem('crm_tenant_name', data.name);
-        } catch {}
-        setSuccess(true);
-        setTimeout(() => router.push('/admin'), 1500);
-      } else {
-        // Fallback: redirect to login
-        setSuccess(true);
-        setTimeout(() => router.push(`/login?registered=${encodeURIComponent(email.trim())}`), 2000);
-      }
+      setSuccess(true);
+      setTimeout(() => router.push(`/login?registered=${encodeURIComponent(email.trim())}`), 1500);
     } catch (err: any) {
       setError(err.message || 'Error al crear la cuenta');
     } finally {
