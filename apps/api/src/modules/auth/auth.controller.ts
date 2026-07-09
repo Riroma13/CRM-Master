@@ -15,8 +15,8 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Iniciar sesión (tenant resuelto por subdominio)' })
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() body: any) {
+    return this.authService.login(body);
   }
 
   @Post('logout')

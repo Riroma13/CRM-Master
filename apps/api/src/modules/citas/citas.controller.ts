@@ -81,7 +81,7 @@ export class CitasController {
   })
   async createCita(
     @TenantId() tenantId: string,
-    @Body() body: BookCitaDto,
+    @Body() body: any,
   ) {
     const parsed = validateOrThrow(BookCitaSchema, body);
     return this.citasService.bookSlot(tenantId, {
@@ -140,7 +140,7 @@ export class CitasController {
   })
   async updateCita(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: UpdateCitaDto,
+    @Body() body: any,
   ) {
     const parsed = validateOrThrow(UpdateCitaSchema, body);
 
@@ -178,7 +178,7 @@ export class CitasController {
   })
   async updateDisponibilidad(
     @TenantId() tenantId: string,
-    @Body() body: DisponibilidadDto,
+    @Body() body: any,
   ) {
     const parsed = validateOrThrow(DisponibilidadSchema, body);
     return this.disponibilidadService.upsertDisponibilidad(tenantId, parsed);

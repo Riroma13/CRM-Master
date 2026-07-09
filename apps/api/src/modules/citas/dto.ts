@@ -1,3 +1,4 @@
+import { IsString, IsEmail, IsOptional, MaxLength, MinLength, IsIn, IsInt, Min, Max, IsArray, IsNumber, ArrayMinSize } from 'class-validator';
 import { z } from 'zod';
 
 export const BookCitaSchema = z.object({
@@ -29,24 +30,63 @@ export const DisponibilidadSchema = z.object({
 });
 
 export class BookCitaDto {
+  @IsString()
   fecha!: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
   clienteNombre?: string;
+
+  @IsOptional()
+  @IsEmail()
   clienteEmail?: string;
+
+  @IsOptional()
+  @IsString()
   clienteTelefono?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
   descripcion?: string;
 }
 
 export class UpdateCitaDto {
+  @IsString()
+  @IsIn(['confirmada', 'cancelada', 'completada'])
   estado!: 'confirmada' | 'cancelada' | 'completada';
+
+  @IsOptional()
+  @IsString()
   notasInternas?: string;
 }
 
 export class DisponibilidadDto {
+  @IsString()
   timezone!: string;
+
+  @IsInt()
+  @Min(15)
+  @Max(120)
   slotDuration!: number;
+
+  @IsInt()
+  @Min(60)
+  @Max(4320)
   minNotice!: number;
+
+  @IsInt()
+  @Min(7)
+  @Max(90)
   maxDays!: number;
+
+  @IsArray()
+  @ArrayMinSize(1)
   dailySchedule!: { day: number; start: string; end: string }[];
+
+  @IsOptional()
+  @IsArray()
   blockedDates?: string[];
 }
 
