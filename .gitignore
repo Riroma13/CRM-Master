@@ -32,3 +32,6 @@ packages/database/src/generated/
 # Testing
 coverage/
 .env
+.auth/
+playwright-report/
+test-results/
