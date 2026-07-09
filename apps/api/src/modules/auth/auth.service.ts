@@ -89,6 +89,14 @@ export class AuthService {
     };
   }
 
+  async checkUserExists(email: string) {
+    const user = await this.prisma.admin.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, tenantId: true },
+    });
+    return user;
+  }
+
   async getMe(tenantId: string, userId: string): Promise<MeDto | null> {
     const user = await this.prisma.admin.user.findUnique({
       where: { id: userId },

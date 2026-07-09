@@ -6,6 +6,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { TenantsService } from '../tenants/tenants.service';
+import { Public } from '../../common/decorators/public.decorator';
 import { randomBytes } from 'crypto';
 
 @ApiTags('Auth')
@@ -16,13 +17,24 @@ export class AuthController {
     private readonly tenantsService: TenantsService,
   ) {}
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Iniciar sesión (tenant resuelto por subdominio)' })
+  @ApiOperation({ summary: 'Iniciar sesión por email + password' })
   async login(@Body() body: any) {
     return this.authService.login(body);
   }
 
+  @Public()
+  @Post('check-user')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verificar si un email existe en el sistema' })
+  async checkUser(@Body() body: any) {
+    const user = await this.authService.checkUserExists(body.email);
+    return { exists: !!user, email: body.email };
+  }
+
+  @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Registrar nuevo tenant con admin' })

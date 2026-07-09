@@ -27,7 +27,21 @@ export default function LoginPage() {
       try { sessionStorage.setItem('crm_tenant_name', user.tenant.name); } catch {}
       router.push('/admin');
     } catch (err: any) {
-      setError(err?.message || 'Credenciales inválidas');
+      const msg = err?.message || '';
+      // Try to check if the user exists at all
+      let extraInfo = '';
+      try {
+        const check = await fetch('/api/v1/auth/check-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        if (check.ok) {
+          const data = await check.json();
+          if (!data.exists) extraInfo = ' — El email no está registrado';
+        }
+      } catch {}
+      setError(`${msg}${extraInfo}`);
     } finally {
       setLoading(false);
     }
