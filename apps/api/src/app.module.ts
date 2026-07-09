@@ -23,6 +23,7 @@ import { DocumentosModule } from './modules/documentos/documentos.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
 import { TenantScopeGuard } from './common/guards/tenant-scope.guard';
 import { BetterAuthGuard } from './common/guards/better-auth.guard';
+import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { PrismaService } from './common/prisma.service';
 import { authClientProvider } from './common/auth-client.provider';
 
@@ -60,6 +61,10 @@ import { authClientProvider } from './common/auth-client.provider';
     {
       provide: APP_GUARD,
       useClass: TenantScopeGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RateLimitGuard,
     },
   ],
 })
