@@ -33,6 +33,7 @@ vi.mock('lucide-react', () => ({
   ToggleLeft: () => <span data-testid="icon-toggle">Tg</span>,
   Bell: () => <span data-testid="icon-bell">Be</span>,
   AlertTriangle: () => <span data-testid="icon-alert">At</span>,
+  Rocket: () => <span data-testid="icon-rocket">Rk</span>,
 }));
 
 describe('Sidebar', () => {

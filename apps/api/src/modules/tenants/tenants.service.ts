@@ -1,7 +1,12 @@
 import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { CreateTenantDto, TenantResponseDto, TenantListDto } from './dto';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
+
+const ALL_MODULES = [
+  'dashboard', 'clientes', 'documentos', 'tareas', 'calendario',
+  'recursos', 'sistemas', 'notificaciones', 'incidencias', 'perfil',
+];
 
 @Injectable()
 export class TenantsService {
@@ -18,33 +23,81 @@ export class TenantsService {
       throw new ConflictException(`El slug "${dto.slug}" ya está en uso`);
     }
 
-    // 2. Crear tenant
+    // 2. Crear Better-Auth organization
+    const orgId = randomUUID();
+    await this.prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_organizations (id, name, slug, "createdAt") VALUES ($1, $2, $3, NOW())`,
+      orgId, dto.name, dto.slug,
+    );
+
+    // 3. Crear tenant con org vinculada + módulos por defecto
     const tenant = await this.prisma.admin.tenant.create({
       data: {
         slug: dto.slug,
         name: dto.name,
-        config: { maxStorageMB: 500, maxUsers: 10 },
+        betterAuthOrganizationId: orgId,
+        config: {
+          maxStorageMB: 500,
+          maxUsers: 10,
+          modules: dto.modules ?? ALL_MODULES,
+          notifications: { reminderHours: 24 },
+        },
       },
     });
 
-    // 3. Crear usuario admin del tenant
+    // 4. Crear Better-Auth user
+    const baUserId = randomUUID();
+    await this.prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_users (id, email, "emailVerified", name, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+      baUserId, dto.adminEmail, true, dto.adminName || dto.adminEmail.split('@')[0],
+    );
+
+    // 5. Vincular user a la org
+    const memberId = randomUUID();
+    await this.prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_members (id, "organization_id", "user_id", role, "createdAt") VALUES ($1, $2, $3, $4, NOW())`,
+      memberId, orgId, baUserId, 'admin',
+    );
+
+    // 6. Crear usuario admin del tenant
     const adminUser = await this.prisma.admin.user.create({
       data: {
         tenantId: tenant.id,
         email: dto.adminEmail,
         name: dto.adminName || dto.adminEmail.split('@')[0],
         role: 'admin',
+        betterAuthUserId: baUserId,
       },
     });
 
-    // 4. Generar token de invitación
-    const inviteToken = `inv_${randomBytes(24).toString('hex')}`;
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 días
+    // 7. Crear disponibilidad por defecto
+    const defaultDailySchedule = [
+      { day: 1, start: '09:00', end: '14:00' },
+      { day: 1, start: '16:00', end: '19:00' },
+      { day: 2, start: '09:00', end: '14:00' },
+      { day: 3, start: '09:00', end: '14:00' },
+      { day: 4, start: '09:00', end: '14:00' },
+      { day: 5, start: '09:00', end: '14:00' },
+    ];
 
-    // TODO: almacenar token en tabla de invitaciones (cuando exista)
-    // Por ahora se devuelve en la respuesta
+    await this.prisma.admin.disponibilidad.create({
+      data: {
+        tenantId: tenant.id,
+        dailySchedule: defaultDailySchedule as any,
+        blockedDates: [],
+      },
+    });
 
-    this.logger.log(`Tenant creado: ${tenant.slug} (${tenant.id})`);
+    this.logger.log(`Tenant onboarded: ${tenant.slug} — admin: ${dto.adminEmail}`);
+
+    // 8. Crear session token para acceso inmediato
+    const sessionToken = `sess_${randomBytes(32).toString('hex')}`;
+    const sessionId = randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await this.prisma.admin.$executeRawUnsafe(
+      `INSERT INTO ba_sessions (id, user_id, token, expires_at, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4::timestamp, NOW(), NOW())`,
+      sessionId, baUserId, sessionToken, expiresAt.toISOString(),
+    );
 
     return {
       id: tenant.id,
@@ -54,10 +107,10 @@ export class TenantsService {
       admin: {
         email: adminUser.email,
         name: adminUser.name || undefined,
-        status: 'invited',
+        status: 'active',
       },
       portalUrl: `https://${tenant.slug}.crmmaster.com`,
-      inviteToken,
+      sessionToken,
       clientCount: 0,
       health: '🟢',
       createdAt: tenant.createdAt.toISOString(),

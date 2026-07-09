@@ -18,8 +18,8 @@ export class TenantsController {
   @ApiOperation({ summary: 'Crear nuevo tenant con admin e invitación' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Tenant creado' })
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Slug duplicado' })
-  async create(@Body() dto: CreateTenantDto) {
-    return this.tenantsService.create(dto);
+  async create(@Body() body: any) {
+    return this.tenantsService.create(body);
   }
 
   @Get()

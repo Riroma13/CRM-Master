@@ -19,6 +19,7 @@ export const CreateTenantSchema = z.object({
   name: z.string().min(2).max(200),
   adminEmail: z.string().email(),
   adminName: z.string().min(2).max(100).optional(),
+  modules: z.array(z.string()).optional(),
 });
 
 export const TenantListQuery = z.object({
@@ -32,6 +33,7 @@ export class CreateTenantDto {
   name!: string;
   adminEmail!: string;
   adminName?: string;
+  modules?: string[];
 }
 
 export class TenantListDto {
@@ -48,6 +50,7 @@ export interface TenantResponseDto {
   admin?: { email: string; name?: string; status: string };
   portalUrl?: string;
   inviteToken?: string;
+  sessionToken?: string;
   clientCount?: number;
   health?: string;
   createdAt: string;

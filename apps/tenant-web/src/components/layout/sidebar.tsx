@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { useModules } from '@/hooks/use-modules';
 import {
   Calendar, FileText, LayoutDashboard, Users,
-  ClipboardList, Settings, HardDrive, Briefcase, ToggleLeft, Bell, AlertTriangle,
+  ClipboardList, Settings, HardDrive, Briefcase, ToggleLeft, Bell, AlertTriangle, Rocket,
 } from 'lucide-react';
 
 const MODULE_ICONS: Record<string, React.ElementType> = {
@@ -94,6 +94,20 @@ export function Sidebar() {
             </Link>
           );
         })}
+        {/* Onboarding — always visible */}
+        <Link
+          href="/admin/onboarding"
+          className={cn(
+            'flex items-center gap-3 rounded-[0.25rem] px-3 py-2 text-sm font-medium transition-colors',
+            pathname === '/admin/onboarding'
+              ? 'bg-[#DAE2FD] text-[#0F172A]'
+              : 'text-[#45464D] hover:bg-[#F0EDEF] hover:text-[#1B1B1D]',
+          )}
+        >
+          <Rocket className="h-4 w-4" />
+          <span>Onboarding</span>
+        </Link>
+
         {/* Módulos — always visible */}
         <Link
           href="/admin/modules"
