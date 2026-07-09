@@ -15,6 +15,7 @@ const MODULE_LABELS: Record<string, string> = {
   tareas: 'Tareas',
   calendario: 'Calendario',
   recursos: 'Recursos',
+  notificaciones: 'Notificaciones',
   sistemas: 'Sistemas',
   perfil: 'Perfil',
 };
@@ -26,6 +27,7 @@ const MODULE_DESCRIPTIONS: Record<string, string> = {
   tareas: 'Kanban board con tareas y seguimiento',
   calendario: 'Citas, horarios, reserva pública y disponibilidad',
   recursos: 'Profesionales, espacios y equipos reservables',
+  notificaciones: 'Configuración de notificaciones y recordatorios',
   sistemas: 'Inventario de sistemas y equipamiento técnico',
   perfil: 'Configuración del negocio, nombre y logo',
 };

@@ -8,9 +8,9 @@ vi.mock('@/lib/api', () => ({
 
 vi.mock('@/hooks/use-modules', () => ({
   useModules: () => ({
-    isEnabled: (id: string) => ['dashboard', 'clientes', 'documentos', 'tareas', 'calendario', 'recursos', 'sistemas', 'perfil', 'modules'].includes(id),
+    isEnabled: (id: string) => ['dashboard', 'clientes', 'documentos', 'tareas', 'calendario', 'recursos', 'sistemas', 'notificaciones', 'perfil', 'modules'].includes(id),
     available: [],
-    enabled: ['dashboard', 'clientes', 'documentos', 'tareas', 'calendario', 'recursos', 'sistemas', 'perfil'],
+    enabled: ['dashboard', 'clientes', 'documentos', 'tareas', 'calendario', 'recursos', 'sistemas', 'notificaciones', 'perfil'],
     isLoading: false,
   }),
 }));
@@ -31,6 +31,7 @@ vi.mock('lucide-react', () => ({
   HardDrive: () => <span data-testid="icon-harddrive">Hd</span>,
   Briefcase: () => <span data-testid="icon-briefcase">Bc</span>,
   ToggleLeft: () => <span data-testid="icon-toggle">Tg</span>,
+  Bell: () => <span data-testid="icon-bell">Be</span>,
 }));
 
 describe('Sidebar', () => {
@@ -48,6 +49,7 @@ describe('Sidebar', () => {
     expect(screen.getByText('Tareas')).toBeInTheDocument();
     expect(screen.getByText('Calendario')).toBeInTheDocument();
     expect(screen.getByText('Recursos')).toBeInTheDocument();
+    expect(screen.getByText('Notificaciones')).toBeInTheDocument();
     expect(screen.getByText('Sistemas')).toBeInTheDocument();
     expect(screen.getByText('Perfil')).toBeInTheDocument();
   });

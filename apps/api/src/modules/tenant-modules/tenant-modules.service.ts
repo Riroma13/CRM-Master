@@ -10,6 +10,7 @@ export const AVAILABLE_MODULES = [
   { id: 'recursos', label: 'Recursos', defaultEnabled: true },
   { id: 'sistemas', label: 'Sistemas', defaultEnabled: true },
   { id: 'perfil', label: 'Perfil', defaultEnabled: true },
+  { id: 'notificaciones', label: 'Notificaciones', defaultEnabled: true },
 ];
 
 const MODULE_IDS = AVAILABLE_MODULES.map((m) => m.id);
