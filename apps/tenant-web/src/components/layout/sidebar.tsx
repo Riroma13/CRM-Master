@@ -5,21 +5,37 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
-import { Calendar, FileText, LayoutDashboard, Users, ClipboardList, Settings, HardDrive, Briefcase } from 'lucide-react';
+import { useModules } from '@/hooks/use-modules';
+import {
+  Calendar, FileText, LayoutDashboard, Users,
+  ClipboardList, Settings, HardDrive, Briefcase, ToggleLeft,
+} from 'lucide-react';
 
-const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/clientes', label: 'Clientes', icon: Users },
-  { href: '/admin/documentos', label: 'Documentos', icon: FileText },
-  { href: '/admin/tareas', label: 'Tareas', icon: ClipboardList },
-  { href: '/admin/calendario', label: 'Calendario', icon: Calendar },
-  { href: '/admin/recursos', label: 'Recursos', icon: Briefcase },
-  { href: '/admin/sistemas', label: 'Sistemas', icon: HardDrive },
-  { href: '/admin/perfil', label: 'Perfil', icon: Settings },
-];
+const MODULE_ICONS: Record<string, React.ElementType> = {
+  dashboard: LayoutDashboard,
+  clientes: Users,
+  documentos: FileText,
+  tareas: ClipboardList,
+  calendario: Calendar,
+  recursos: Briefcase,
+  sistemas: HardDrive,
+  perfil: Settings,
+};
+
+const MODULE_HREF: Record<string, string> = {
+  dashboard: '/admin',
+  clientes: '/admin/clientes',
+  documentos: '/admin/documentos',
+  tareas: '/admin/tareas',
+  calendario: '/admin/calendario',
+  recursos: '/admin/recursos',
+  sistemas: '/admin/sistemas',
+  perfil: '/admin/perfil',
+};
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { isEnabled } = useModules();
   const [tenantName, setTenantName] = useState('');
   const [tenantLogo, setTenantLogo] = useState('');
 
@@ -28,6 +44,8 @@ export function Sidebar() {
       .then((d) => { setTenantName(d.name); setTenantLogo(d.logo || ''); })
       .catch(() => {});
   }, []);
+
+  const visibleModules = Object.entries(MODULE_HREF).filter(([id]) => isEnabled(id));
 
   return (
     <aside className="flex h-screen w-[260px] flex-col border-r border-[#E2E8F0] bg-white" data-testid="sidebar">
@@ -50,16 +68,16 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {navItems.map((item) => {
-          const Icon = item.icon;
+        {visibleModules.map(([id, href]) => {
+          const Icon = MODULE_ICONS[id];
+          const label = id.charAt(0).toUpperCase() + id.slice(1);
           const isActive =
-            pathname === item.href ||
-            (item.href !== '/admin' && pathname.startsWith(item.href));
+            pathname === href || (href !== '/admin' && pathname.startsWith(href));
 
           return (
             <Link
-              key={item.href}
-              href={item.href}
+              key={id}
+              href={href}
               className={cn(
                 'flex items-center gap-3 rounded-[0.25rem] px-3 py-2 text-sm font-medium transition-colors',
                 isActive
@@ -67,11 +85,24 @@ export function Sidebar() {
                   : 'text-[#45464D] hover:bg-[#F0EDEF] hover:text-[#1B1B1D]',
               )}
             >
-              <Icon className="h-4 w-4" />
-              <span>{item.label}</span>
+              {Icon && <Icon className="h-4 w-4" />}
+              <span>{label}</span>
             </Link>
           );
         })}
+        {/* Módulos — always visible */}
+        <Link
+          href="/admin/modules"
+          className={cn(
+            'flex items-center gap-3 rounded-[0.25rem] px-3 py-2 text-sm font-medium transition-colors mt-4 border-t border-[#E2E8F0] pt-4',
+            pathname === '/admin/modules'
+              ? 'bg-[#DAE2FD] text-[#0F172A]'
+              : 'text-[#45464D] hover:bg-[#F0EDEF] hover:text-[#1B1B1D]',
+          )}
+        >
+          <ToggleLeft className="h-4 w-4" />
+          <span>Módulos</span>
+        </Link>
       </nav>
     </aside>
   );

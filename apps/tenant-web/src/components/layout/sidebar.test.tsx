@@ -6,6 +6,15 @@ vi.mock('@/lib/api', () => ({
   api: { get: () => Promise.resolve({ name: 'Demo Test', logo: '' }) },
 }));
 
+vi.mock('@/hooks/use-modules', () => ({
+  useModules: () => ({
+    isEnabled: (id: string) => ['dashboard', 'clientes', 'documentos', 'tareas', 'calendario', 'recursos', 'sistemas', 'perfil', 'modules'].includes(id),
+    available: [],
+    enabled: ['dashboard', 'clientes', 'documentos', 'tareas', 'calendario', 'recursos', 'sistemas', 'perfil'],
+    isLoading: false,
+  }),
+}));
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   usePathname: () => '/admin/calendario',
@@ -21,6 +30,7 @@ vi.mock('lucide-react', () => ({
   Settings: () => <span data-testid="icon-settings">St</span>,
   HardDrive: () => <span data-testid="icon-harddrive">Hd</span>,
   Briefcase: () => <span data-testid="icon-briefcase">Bc</span>,
+  ToggleLeft: () => <span data-testid="icon-toggle">Tg</span>,
 }));
 
 describe('Sidebar', () => {
