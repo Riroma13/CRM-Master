@@ -5,6 +5,7 @@ import { useDashboard } from '@/hooks/use-dashboard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useAnnouncements } from '@/hooks/use-announcements';
 import {
   Users,
   Calendar,
@@ -13,6 +14,7 @@ import {
   HardDrive,
   RefreshCw,
   ArrowRight,
+  Megaphone,
 } from 'lucide-react';
 
 interface KpiCardProps {
@@ -105,6 +107,7 @@ const TIPO_COLORS: Record<string, string> = {
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { data, isLoading, isError, error, refetch } = useDashboard();
+  const { announcements } = useAnnouncements();
 
   if (isLoading) {
     return (
@@ -221,6 +224,24 @@ export default function AdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Announcements */}
+      {announcements.length > 0 && (
+        <div className="space-y-2">
+          {announcements.map((a) => (
+            <div key={a.id} className="flex items-start gap-3 rounded-[0.5rem] border border-[#DAE2FD] bg-[#F8FAFF] p-4">
+              <Megaphone className="h-5 w-5 text-[#131B2E] shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-[13px] text-[#1B1B1D]">{a.message}</p>
+                <p className="text-[11px] text-[#45464D] mt-1">
+                  {new Date(a.createdAt).toLocaleDateString('es-ES')}
+                  {a.expiresAt && ` · Válido hasta ${new Date(a.expiresAt).toLocaleDateString('es-ES')}`}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Recent activity */}
