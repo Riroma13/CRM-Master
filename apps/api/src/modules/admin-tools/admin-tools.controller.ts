@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Delete, Param, Body, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
 import { AnnouncementsService } from './announcements.service';
 import { BackupService } from './backup.service';
 import { GdprService } from './gdpr.service';
+import { CsvImportService } from './csv-import.service';
 
 @ApiTags('Admin Tools')
 @ApiBearerAuth()
@@ -13,6 +15,7 @@ export class AdminToolsController {
     private readonly announcements: AnnouncementsService,
     private readonly backup: BackupService,
     private readonly gdpr: GdprService,
+    private readonly csvImport: CsvImportService,
   ) {}
 
   // ─── Announcements ───
@@ -42,6 +45,18 @@ export class AdminToolsController {
   @ApiOperation({ summary: 'Listar backups disponibles' })
   listBackups() {
     return this.backup.listBackups();
+  }
+
+  // ─── CSV Import ───
+
+  @Post('csv-import')
+  @ApiOperation({ summary: 'Importar clientes desde CSV' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  async importCsv(@TenantId() tenantId: string, @UploadedFile() file: Express.Multer.File | undefined) {
+    if (!file) throw new BadRequestException('Archivo CSV requerido');
+    const content = file.buffer.toString('utf-8');
+    return this.csvImport.importClients(tenantId, content);
   }
 
   // ─── GDPR ───
