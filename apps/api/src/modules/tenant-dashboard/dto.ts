@@ -15,4 +15,5 @@ export interface TenantDashboardResponse {
   tareasPendientes: number;
   sistemasActivos: number;
   eventosRecientes: EventoItem[];
+  onboardingChecklist?: { steps: { id: string; label: string; done: boolean }[] };
 }

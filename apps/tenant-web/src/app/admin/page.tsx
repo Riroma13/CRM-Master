@@ -195,6 +195,34 @@ export default function AdminDashboardPage() {
         />
       </div>
 
+      {/* Onboarding checklist */}
+      {data.onboardingChecklist && data.onboardingChecklist.steps.some((s) => !s.done) && (
+        <Card className="bg-white border-l-[3px] border-l-[#131B2E]">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#131B2E] text-[10px] font-bold text-white">
+                {data.onboardingChecklist.steps.filter((s) => s.done).length}
+              </div>
+              <p className="text-[13px] font-semibold text-[#1B1B1D]">
+                Primeros pasos — {data.onboardingChecklist.steps.filter((s) => s.done).length} de {data.onboardingChecklist.steps.length} completados
+              </p>
+            </div>
+            <div className="space-y-2">
+              {data.onboardingChecklist.steps.map((step) => (
+                <div key={step.id} className={`flex items-center gap-2 text-[13px] ${step.done ? 'text-[#10B981] line-through' : 'text-[#45464D]'}`}>
+                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${
+                    step.done ? 'bg-[#D1FAE5] text-[#10B981]' : 'border border-[#C6C6CD] text-[#C6C6CD]'
+                  }`}>
+                    {step.done ? '✓' : ''}
+                  </span>
+                  {step.label}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Recent activity */}
       <Card className="bg-white">
         <CardContent className="p-4">

@@ -22,6 +22,10 @@ export class TenantDashboardService {
       tareasPendientes,
       sistemasActivos,
       eventos,
+      countClientes,
+      countTareas,
+      countDocumentos,
+      countSistemas,
     ] = await Promise.all([
       this.prisma.admin.cliente.count({ where: { tenantId } }),
       this.prisma.admin.cliente.count({ where: { tenantId, estadoRelacion: 'Activo' } }),
@@ -35,6 +39,11 @@ export class TenantDashboardService {
         orderBy: { fecha: 'desc' },
         take: 5,
       }),
+      // Onboarding checklist counts
+      this.prisma.admin.cliente.count({ where: { tenantId } }),
+      this.prisma.admin.tarea.count({ where: { tenantId } }),
+      this.prisma.admin.documento.count({ where: { tenantId, isDeleted: false } }),
+      this.prisma.admin.sistema.count({ where: { tenantId } }),
     ]);
 
     const eventosRecientes: EventoItem[] = eventos.map((e: any) => ({
@@ -45,6 +54,15 @@ export class TenantDashboardService {
       descripcion: e.descripcion ?? undefined,
     }));
 
+    const onboardingChecklist = {
+      steps: [
+        { id: 'cliente', label: 'Primer cliente', done: countClientes > 0 },
+        { id: 'tarea', label: 'Primera tarea', done: countTareas > 0 },
+        { id: 'documento', label: 'Primer documento', done: countDocumentos > 0 },
+        { id: 'sistema', label: 'Primer sistema', done: countSistemas > 0 },
+      ],
+    };
+
     return {
       totalClientes,
       clientesActivos,
@@ -54,6 +72,7 @@ export class TenantDashboardService {
       tareasPendientes,
       sistemasActivos,
       eventosRecientes,
+      onboardingChecklist,
     };
   }
 }
