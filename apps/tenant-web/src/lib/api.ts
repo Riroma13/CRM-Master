@@ -72,7 +72,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return sessionStorage.getItem('crm_session_token');
+    return sessionStorage.getItem('crm_session_token') || localStorage.getItem('crm_session_token');
   } catch {
     return null;
   }
@@ -82,6 +82,7 @@ function clearAuthAndRedirect() {
   if (typeof window === 'undefined') return;
   try { sessionStorage.removeItem('crm_session_token'); } catch {}
   try { sessionStorage.removeItem('crm_user'); } catch {}
+  try { localStorage.removeItem('crm_session_token'); } catch {}
   window.location.href = '/login';
 }
 

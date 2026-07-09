@@ -1,0 +1,14 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://crm-master.duckdns.org",
+      "localStorage": [
+        {
+          "name": "crm_session_token",
+          "value": "sess_cd6f95bed9021d7a8c864c91e40dba18a546e683aa98ad06093ce3bd5a7f97fc"
+        }
+      ]
+    }
+  ]
+}

@@ -56,7 +56,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
   // Auth guard: redirect to /login if no session token
   useEffect(() => {
     try {
-      const token = sessionStorage.getItem('crm_session_token');
+      const token = sessionStorage.getItem('crm_session_token') || localStorage.getItem('crm_session_token');
       if (!token) router.replace('/login');
     } catch {
       // sessionStorage unavailable — SSR/test

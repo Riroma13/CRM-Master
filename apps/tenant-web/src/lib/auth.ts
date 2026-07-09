@@ -32,11 +32,14 @@ export function getStoredUser(): AuthUser | null {
 export function storeAuth(user: AuthUser) {
   sessionStorage.setItem(TOKEN_KEY, user.session.token);
   sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+  // Also store in localStorage for Playwright test persistence
+  try { localStorage.setItem(TOKEN_KEY, user.session.token); } catch {}
 }
 
 export function clearAuth() {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(USER_KEY);
+  try { localStorage.removeItem(TOKEN_KEY); } catch {}
 }
 
 export async function login(email: string, password: string): Promise<AuthUser> {
