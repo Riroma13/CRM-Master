@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../common/prisma.service';
 
 export interface AuditEntry {
   id: number;
   timestamp: string;
   tenantId: string;
-  tenantName?: string;
   userId?: string;
   userEmail?: string;
   action: string;
@@ -16,34 +16,43 @@ export interface AuditEntry {
 
 @Injectable()
 export class AuditService {
-  private buffer: AuditEntry[] = [];
-  private nextId = 1;
-  private readonly maxEntries = 2000;
+  constructor(private readonly prisma: PrismaService) {}
 
-  log(entry: Omit<AuditEntry, 'id' | 'timestamp'>) {
-    const auditEntry: AuditEntry = {
-      id: this.nextId++,
-      timestamp: new Date().toISOString(),
-      ...entry,
-    };
-
-    this.buffer.push(auditEntry);
-
-    // Keep buffer at max size
-    if (this.buffer.length > this.maxEntries) {
-      this.buffer = this.buffer.slice(-this.maxEntries);
-    }
+  async log(entry: Omit<AuditEntry, 'id' | 'timestamp'>) {
+    const log = await this.prisma.admin.auditLog.create({
+      data: {
+        tenantId: entry.tenantId,
+        userId: entry.userId,
+        userEmail: entry.userEmail,
+        action: entry.action,
+        resource: entry.resource,
+        resourceId: entry.resourceId,
+        details: entry.details,
+        ip: entry.ip,
+      },
+    });
+    return { id: log.id, timestamp: log.createdAt.toISOString(), ...entry };
   }
 
-  findAll(limit = 100, tenantId?: string): AuditEntry[] {
-    let results = this.buffer;
-    if (tenantId) {
-      results = results.filter((e) => e.tenantId === tenantId);
-    }
-    return results.slice(-limit).reverse();
-  }
-
-  findById(id: number): AuditEntry | undefined {
-    return this.buffer.find((e) => e.id === id);
+  async findAll(limit = 100, tenantId?: string): Promise<AuditEntry[]> {
+    const where: any = {};
+    if (tenantId) where.tenantId = tenantId;
+    const logs = await this.prisma.admin.auditLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    return logs.map((l: any) => ({
+      id: l.id,
+      timestamp: l.createdAt.toISOString(),
+      tenantId: l.tenantId,
+      userId: l.userId ?? undefined,
+      userEmail: l.userEmail ?? undefined,
+      action: l.action,
+      resource: l.resource,
+      resourceId: l.resourceId ?? undefined,
+      details: l.details ?? undefined,
+      ip: l.ip ?? undefined,
+    }));
   }
 }

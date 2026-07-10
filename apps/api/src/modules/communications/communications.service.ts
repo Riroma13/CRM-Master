@@ -1,38 +1,23 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../common/prisma.service';
 
-export interface CommEntry {
-  id: number;
-  tenantId: string;
-  clienteId: string;
-  tipo: 'llamada' | 'email' | 'reunion' | 'otro';
-  titulo: string;
-  descripcion?: string;
-  createdAt: string;
-}
+export interface CommEntry { id: number; tenantId: string; clienteId: string; tipo: string; titulo: string; descripcion?: string; createdAt: string; }
 
 @Injectable()
 export class CommunicationsService {
-  private entries: CommEntry[] = [];
-  private nextId = 1;
-  private readonly maxEntries = 2000;
+  constructor(private readonly prisma: PrismaService) {}
 
-  log(entry: { tenantId: string; clienteId: string; tipo: CommEntry['tipo']; titulo: string; descripcion?: string }) {
-    const comm: CommEntry = {
-      id: this.nextId++,
-      createdAt: new Date().toISOString(),
-      ...entry,
-    };
-    this.entries.push(comm);
-    if (this.entries.length > this.maxEntries) {
-      this.entries = this.entries.slice(-this.maxEntries);
-    }
-    return comm;
+  async log(entry: { tenantId: string; clienteId: string; tipo: string; titulo: string; descripcion?: string }) {
+    const c = await this.prisma.admin.comunicacion.create({ data: entry });
+    return { id: c.id, ...entry, createdAt: c.createdAt.toISOString() };
   }
 
-  findByCliente(tenantId: string, clienteId: string): CommEntry[] {
-    return this.entries
-      .filter((e) => e.tenantId === tenantId && e.clienteId === clienteId)
-      .slice(-50)
-      .reverse();
+  async findByCliente(tenantId: string, clienteId: string): Promise<CommEntry[]> {
+    const items = await this.prisma.admin.comunicacion.findMany({
+      where: { tenantId, clienteId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    return items.map((c: any) => ({ id: c.id, tenantId: c.tenantId, clienteId: c.clienteId, tipo: c.tipo, titulo: c.titulo, descripcion: c.descripcion ?? undefined, createdAt: c.createdAt.toISOString() }));
   }
 }

@@ -58,9 +58,9 @@ export class AuthController {
       adminName: name,
     });
 
-    // Store password hash (simple SHA-256 for MVP)
-    const { createHash } = await import('crypto');
-    const passwordHash = createHash('sha256').update(password).digest('hex');
+    // Store password hash with bcrypt
+    const bcrypt = await import('bcryptjs');
+    const passwordHash = bcrypt.hashSync(password, 10);
     await this.tenantsService.updatePassword(email, passwordHash);
 
     return result;

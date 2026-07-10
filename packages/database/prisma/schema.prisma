@@ -34,6 +34,8 @@ model Tenant {
   webhooks Webhook[]
   plantillas PlantillaDocumento[]
   pagos PagoIntent[]
+  auditLogs AuditLog[]
+  comunicaciones Comunicacion[]
   documentos Documento[]
 
   @@map("tenants")
@@ -451,6 +453,42 @@ model Cita {
   @@index([tenantId, estado])
   @@index([resourceId])
   @@map("citas")
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  tenantId   String   @map("tenant_id")
+  userId     String?  @map("user_id")
+  userEmail  String?  @map("user_email")
+  action     String
+  resource   String
+  resourceId String?  @map("resource_id")
+  details    String?
+  ip         String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId], map: "audit_log_tenant")
+  @@index([createdAt], map: "audit_log_created")
+  @@map("audit_log")
+}
+
+model Comunicacion {
+  id          Int      @id @default(autoincrement())
+  tenantId    String   @map("tenant_id")
+  clienteId   String   @map("cliente_id")
+  tipo        String   // llamada | email | reunion | otro
+  titulo      String
+  descripcion String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([clienteId])
+  @@map("comunicaciones")
 }
 
 model PlantillaDocumento {

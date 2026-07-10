@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { EventConnectorService } from '../tenant-automations/event-connector.service';
 
 @Injectable()
 export class TenantClientesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly events: EventConnectorService,
   ) {}
 
   async findAll(tenantId: string, query?: { search?: string; estado?: string; salud?: string }) {
@@ -62,6 +64,7 @@ export class TenantClientesService {
       data: { ...data, tenantId },
     });
     this.audit.log({ tenantId, action: 'create', resource: 'cliente', resourceId: cliente.id, details: `Cliente creado: ${cliente.nombre}` });
+    await this.events.emit(tenantId, 'cliente.creado', { clienteId: cliente.id, nombre: cliente.nombre });
     return cliente;
   }
 

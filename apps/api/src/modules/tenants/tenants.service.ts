@@ -1,7 +1,8 @@
 import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { CreateTenantDto, TenantResponseDto, TenantListDto } from './dto';
-import { randomBytes, randomUUID, createHash } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
+import * as bcrypt from 'bcryptjs';
 
 const ALL_MODULES = [
   'dashboard', 'clientes', 'documentos', 'tareas', 'calendario',
@@ -60,7 +61,7 @@ export class TenantsService {
     );
 
     // 6. Crear usuario admin del tenant
-    const defaultHash = createHash('sha256').update('password').digest('hex');
+    const defaultHash = bcrypt.hashSync('password', 10);
     const adminUser = await this.prisma.admin.user.create({
       data: {
         tenantId: tenant.id,
