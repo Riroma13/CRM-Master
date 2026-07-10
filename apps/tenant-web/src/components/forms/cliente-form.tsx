@@ -12,6 +12,7 @@ interface ClienteFormData {
   estadoRelacion: string;
   saludGeneral: string;
   tags: string;
+  notasGenerales: string;
 }
 
 interface ClienteFormProps {
@@ -31,6 +32,7 @@ export function ClienteForm({ initial, onSuccess, onCancel }: ClienteFormProps) 
   const [estadoRelacion, setEstadoRelacion] = useState(initial?.estadoRelacion ?? 'Activo');
   const [saludGeneral, setSaludGeneral] = useState(initial?.saludGeneral ?? '🟢');
   const [tags, setTags] = useState(initial?.tags ?? '');
+  const [notasGenerales, setNotasGenerales] = useState(initial?.notasGenerales ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,6 +47,7 @@ export function ClienteForm({ initial, onSuccess, onCancel }: ClienteFormProps) 
       tipoNegocio: tipoNegocio.trim() || undefined,
       estadoRelacion,
       saludGeneral,
+      notasGenerales: notasGenerales.trim() || undefined,
       tags: tags
         .split(',')
         .map((t) => t.trim())
@@ -139,6 +142,19 @@ export function ClienteForm({ initial, onSuccess, onCancel }: ClienteFormProps) 
           onChange={(e) => setTags(e.target.value)}
           placeholder="VIP, recurrente, sector tecnología..."
           className="mt-1"
+        />
+      </div>
+
+      <div>
+        <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">
+          Notas internas
+        </label>
+        <textarea
+          value={notasGenerales}
+          onChange={(e) => setNotasGenerales(e.target.value)}
+          placeholder="Anotaciones del equipo sobre este cliente..."
+          rows={3}
+          className="mt-1 block w-full rounded-[0.25rem] border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] text-[#1B1B1D] resize-none"
         />
       </div>
 

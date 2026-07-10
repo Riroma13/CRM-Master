@@ -22,6 +22,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { TenantHealthModule } from './modules/tenant-health/tenant-health.module';
 import { SearchModule } from './modules/search/search.module';
 import { AdminToolsModule } from './modules/admin-tools/admin-tools.module';
+import { CommunicationsModule } from './modules/communications/communications.module';
 import { TenantIncidenciasModule } from './modules/tenant-incidencias/tenant-incidencias.module';
 import { DocumentosModule } from './modules/documentos/documentos.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
@@ -57,6 +58,7 @@ import { authClientProvider } from './common/auth-client.provider';
     TenantHealthModule,
     SearchModule,
     AdminToolsModule,
+    CommunicationsModule,
     DocumentosModule,
   ],
   providers: [

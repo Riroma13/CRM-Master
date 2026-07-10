@@ -6,12 +6,13 @@ import { api } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
 import { ClienteForm } from '@/components/forms/cliente-form';
 import { TareaForm } from '@/components/forms/tarea-form';
 import { SistemaForm } from '@/components/forms/sistema-form';
-import { ArrowLeft, Users, HardDrive, ClipboardList, FileText, Trash2, Edit3, Plus } from 'lucide-react';
+import { ArrowLeft, Users, HardDrive, ClipboardList, FileText, Trash2, Edit3, Plus, Phone, Mail, Calendar, MessageSquare } from 'lucide-react';
 
 const SALUD_COLORS: Record<string, string> = {
   '🟢': 'bg-[#D1FAE5] text-[#10B981]',
@@ -32,6 +33,7 @@ interface ClienteDetail {
   estadoRelacion: string;
   saludGeneral: string;
   tags: string[];
+  notasGenerales?: string;
   createdAt: string;
   sistemas: Array<{ id: string; nombreSistema: string; tipo: string; estadoTecnico: string; entorno?: string }>;
   tareas: Array<{ id: string; titulo: string; estado: string; prioridad: string; fechaLimite?: string }>;
@@ -50,6 +52,28 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
   const [showNewTarea, setShowNewTarea] = useState(false);
   const [documentos, setDocumentos] = useState<Array<{ id: string; filename: string; category: string }>>([]);
   const [docsLoading, setDocsLoading] = useState(false);
+  const [comms, setComms] = useState<any[]>([]);
+  const [showCommForm, setShowCommForm] = useState(false);
+  const [commTipo, setCommTipo] = useState('llamada');
+  const [commTitulo, setCommTitulo] = useState('');
+  const [commDesc, setCommDesc] = useState('');
+
+  const fetchComms = useCallback(async () => {
+    try {
+      const data = await api.get<any[]>(`/api/v1/communications/${id}`, undefined, { auth: true });
+      setComms(data);
+    } catch { /* ignore */ }
+  }, [id]);
+
+  const handleCommSubmit = async () => {
+    if (!commTitulo.trim()) return;
+    try {
+      await api.post(`/api/v1/communications/${id}`, { tipo: commTipo, titulo: commTitulo.trim(), descripcion: commDesc.trim() || undefined }, { auth: true });
+      setShowCommForm(false); setCommTitulo(''); setCommDesc('');
+      toast('success', 'Comunicación registrada');
+      fetchComms();
+    } catch { toast('error', 'Error al registrar'); }
+  };
 
   const fetchDocs = useCallback(async () => {
     setDocsLoading(true);
@@ -76,7 +100,7 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
   };
 
   useEffect(() => { fetch(); }, [id]);
-  useEffect(() => { if (cliente) fetchDocs(); }, [cliente?.id]);
+  useEffect(() => { if (cliente) { fetchDocs(); fetchComms(); } }, [cliente?.id]);
 
   const handleDelete = async () => {
     if (!confirm('¿Eliminar este cliente? Esta acción no se puede deshacer.')) return;
@@ -159,6 +183,13 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
           <p className="text-[11px] text-[#45464D]">
             Cliente desde {new Date(cliente.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
           </p>
+
+          {(cliente as any).notasGenerales && (
+            <div className="mt-4 border-t border-[#E2E8F0] pt-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D] mb-2">Notas internas</p>
+              <p className="text-[13px] text-[#1B1B1D] whitespace-pre-wrap">{(cliente as any).notasGenerales}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -258,6 +289,77 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
         </CardContent>
       </Card>
 
+      {/* Timeline / Comunicaciones */}
+      <Card className="bg-white">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-[#45464D]" />
+              <h2 className="text-[16px] font-semibold text-[#1B1B1D]">Timeline</h2>
+            </div>
+            <Button size="sm" variant="outline" className="gap-1" onClick={() => setShowCommForm(true)}>
+              <Plus className="h-3.5 w-3.5" /> Registrar comunicación
+            </Button>
+          </div>
+
+          {comms.length === 0 ? (
+            <p className="py-3 text-center text-[13px] text-[#45464D]">Sin actividad registrada</p>
+          ) : (
+            <div className="space-y-3">
+              {comms.map((c: any) => (
+                <div key={c.id} className="flex items-start gap-3 rounded-[0.25rem] border border-[#E2E8F0] bg-white p-3">
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                    c.tipo === 'llamada' ? 'bg-[#DAE2FD]' : c.tipo === 'email' ? 'bg-[#D1FAE5]' : c.tipo === 'reunion' ? 'bg-[#FEF3C7]' : 'bg-[#F0EDEF]'
+                  }`}>
+                    {c.tipo === 'llamada' ? <Phone className="h-4 w-4 text-[#131B2E]" /> :
+                     c.tipo === 'email' ? <Mail className="h-4 w-4 text-[#10B981]" /> :
+                     c.tipo === 'reunion' ? <Calendar className="h-4 w-4 text-[#F59E0B]" /> :
+                     <MessageSquare className="h-4 w-4 text-[#45464D]" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">{c.tipo}</span>
+                      <span className="text-[13px] font-medium text-[#1B1B1D]">{c.titulo}</span>
+                    </div>
+                    {c.descripcion && <p className="text-[12px] text-[#45464D] mt-0.5">{c.descripcion}</p>}
+                    <p className="text-[10px] text-[#45464D] mt-1">{new Date(c.createdAt).toLocaleString('es-ES')}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Register communication dialog */}
+      <Dialog open={showCommForm} onClose={() => setShowCommForm(false)} title="Registrar comunicación">
+        <div className="space-y-4">
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">Tipo</label>
+            <select value={commTipo} onChange={(e) => setCommTipo(e.target.value)}
+              className="mt-1 block w-full rounded-[0.25rem] border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] text-[#1B1B1D]">
+              <option value="llamada">Llamada</option>
+              <option value="email">Email</option>
+              <option value="reunion">Reunión</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">Título *</label>
+            <Input value={commTitulo} onChange={(e) => setCommTitulo(e.target.value)} placeholder="Ej: Llamada para revisar presupuesto" className="mt-1" />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">Descripción</label>
+            <textarea value={commDesc} onChange={(e) => setCommDesc(e.target.value)} placeholder="Detalles de la interacción..." rows={3}
+              className="mt-1 block w-full rounded-[0.25rem] border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] text-[#1B1B1D] resize-none" />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setShowCommForm(false)}>Cancelar</Button>
+            <Button size="sm" className="bg-[#131B2E] text-xs text-white" onClick={handleCommSubmit} disabled={!commTitulo.trim()}>Guardar</Button>
+          </div>
+        </div>
+      </Dialog>
+
       {/* Edit dialog */}
       <Dialog open={showForm} onClose={() => setShowForm(false)} title="Editar cliente">
         <ClienteForm
@@ -268,6 +370,7 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
             estadoRelacion: cliente.estadoRelacion,
             saludGeneral: cliente.saludGeneral,
             tags: cliente.tags.join(', '),
+            notasGenerales: cliente.notasGenerales ?? '',
           }}
           onSuccess={() => { setShowForm(false); fetch(); toast('success', 'Cliente actualizado'); }}
           onCancel={() => setShowForm(false)}

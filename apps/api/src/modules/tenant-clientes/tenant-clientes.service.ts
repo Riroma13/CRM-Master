@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { AuditService } from '../audit/audit.service';
 
@@ -42,6 +42,22 @@ export class TenantClientesService {
   }
 
   async create(tenantId: string, data: any) {
+    // Duplicate detection: check existing client with same nombre
+    const existing = await this.prisma.admin.cliente.findFirst({
+      where: {
+        tenantId,
+        nombre: { equals: data.nombre, mode: 'insensitive' },
+      },
+      select: { id: true, nombre: true },
+    });
+
+    if (existing) {
+      throw new ConflictException(
+        `Ya existe un cliente con el nombre "${data.nombre}" (${existing.id.slice(0, 8)}...). ` +
+        'Usa el nombre exacto o agrega un diferenciador.',
+      );
+    }
+
     const cliente = await this.prisma.admin.cliente.create({
       data: { ...data, tenantId },
     });
