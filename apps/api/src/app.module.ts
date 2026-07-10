@@ -26,6 +26,11 @@ import { CommunicationsModule } from './modules/communications/communications.mo
 import { ExportModule } from './modules/export/export.module';
 import { TenantPresupuestosModule } from './modules/tenant-presupuestos/tenant-presupuestos.module';
 import { TenantWebhooksModule } from './modules/tenant-webhooks/tenant-webhooks.module';
+import { TenantPlantillasModule } from './modules/tenant-plantillas/tenant-plantillas.module';
+import { TenantEmailModule } from './modules/tenant-email/tenant-email.module';
+import { TenantAutomationsModule } from './modules/tenant-automations/tenant-automations.module';
+import { TenantPagosModule } from './modules/tenant-pagos/tenant-pagos.module';
+import { TenantGoogleCalendarModule } from './modules/tenant-google-calendar/tenant-google-calendar.module';
 import { TenantIncidenciasModule } from './modules/tenant-incidencias/tenant-incidencias.module';
 import { DocumentosModule } from './modules/documentos/documentos.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
@@ -65,6 +70,11 @@ import { authClientProvider } from './common/auth-client.provider';
     ExportModule,
     TenantPresupuestosModule,
     TenantWebhooksModule,
+    TenantPlantillasModule,
+    TenantEmailModule,
+    TenantAutomationsModule,
+    TenantPagosModule,
+    TenantGoogleCalendarModule,
     DocumentosModule,
   ],
   providers: [

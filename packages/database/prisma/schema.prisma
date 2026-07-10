@@ -32,6 +32,8 @@ model Tenant {
   incidencias Incidencia[]
   presupuestos Presupuesto[]
   webhooks Webhook[]
+  plantillas PlantillaDocumento[]
+  pagos PagoIntent[]
   documentos Documento[]
 
   @@map("tenants")
@@ -210,6 +212,7 @@ model Presupuesto {
 
   tenant  Tenant  @relation(fields: [tenantId], references: [id])
   cliente Cliente @relation(fields: [clienteId], references: [id])
+  pagos PagoIntent[]
 
   @@index([tenantId])
   @@index([clienteId])
@@ -448,4 +451,40 @@ model Cita {
   @@index([tenantId, estado])
   @@index([resourceId])
   @@map("citas")
+}
+
+model PlantillaDocumento {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  nombre      String
+  tipo        String   @default("documento") // documento | contrato | presupuesto
+  contenido   String   // HTML con variables {{...}}
+  variables   Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("plantillas_documentos")
+}
+
+model PagoIntent {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  clienteId     String?  @map("cliente_id")
+  presupuestoId String?  @map("presupuesto_id")
+  monto         Float
+  moneda        String   @default("eur")
+  metodoPago    String?  @map("metodo_pago") // stripe | transferencia | efectivo
+  estado        String   @default("pendiente") // pendiente | completado | fallido | reembolsado
+  referencia    String?  // ID de transacción externa (Stripe)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  presupuesto Presupuesto? @relation(fields: [presupuestoId], references: [id])
+
+  @@index([tenantId])
+  @@map("pagos")
 }

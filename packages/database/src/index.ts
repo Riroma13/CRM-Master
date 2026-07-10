@@ -41,6 +41,8 @@ export function createPrismaClient(tenantId?: string) {
             'Incidencia',
             'Presupuesto',
             'Webhook',
+            'PlantillaDocumento',
+            'PagoIntent',
           ];
 
           if (!scopedModels.includes(model)) return query(args);

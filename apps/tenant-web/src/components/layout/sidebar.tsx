@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { useModules } from '@/hooks/use-modules';
 import {
   Calendar, FileText, LayoutDashboard, Users,
-  ClipboardList, Settings, HardDrive, Briefcase, ToggleLeft, Bell, AlertTriangle, Rocket, History, TrendingUp, BarChart, Wallet, Webhook,
+  ClipboardList, Settings, HardDrive, Briefcase, ToggleLeft, Bell, AlertTriangle, Rocket, History, TrendingUp, BarChart, Wallet, Webhook, FileDigit, Mail, Zap, CreditCard,
 } from 'lucide-react';
 
 const MODULE_ICONS: Record<string, React.ElementType> = {
@@ -18,6 +18,11 @@ const MODULE_ICONS: Record<string, React.ElementType> = {
   reportes: BarChart,
   presupuestos: Wallet,
   webhooks: Webhook,
+  plantillas: FileDigit,
+  email: Mail,
+  automations: Zap,
+  pagos: CreditCard,
+  calendar: Calendar,
   documentos: FileText,
   tareas: ClipboardList,
   calendario: Calendar,
@@ -35,6 +40,11 @@ const MODULE_HREF: Record<string, string> = {
   reportes: '/admin/reportes',
   presupuestos: '/admin/presupuestos',
   webhooks: '/admin/webhooks',
+  plantillas: '/admin/plantillas',
+  email: '/admin/email',
+  automations: '/admin/automations',
+  pagos: '/admin/pagos',
+  calendar: '/admin/calendar-sync',
   documentos: '/admin/documentos',
   tareas: '/admin/tareas',
   calendario: '/admin/calendario',
