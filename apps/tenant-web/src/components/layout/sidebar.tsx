@@ -8,13 +8,14 @@ import { api } from '@/lib/api';
 import { useModules } from '@/hooks/use-modules';
 import {
   Calendar, FileText, LayoutDashboard, Users,
-  ClipboardList, Settings, HardDrive, Briefcase, ToggleLeft, Bell, AlertTriangle, Rocket, History, TrendingUp,
+  ClipboardList, Settings, HardDrive, Briefcase, ToggleLeft, Bell, AlertTriangle, Rocket, History, TrendingUp, BarChart,
 } from 'lucide-react';
 
 const MODULE_ICONS: Record<string, React.ElementType> = {
   dashboard: LayoutDashboard,
   clientes: Users,
   pipeline: TrendingUp,
+  reportes: BarChart,
   documentos: FileText,
   tareas: ClipboardList,
   calendario: Calendar,
@@ -29,6 +30,7 @@ const MODULE_HREF: Record<string, string> = {
   dashboard: '/admin',
   clientes: '/admin/clientes',
   pipeline: '/admin/pipeline',
+  reportes: '/admin/reportes',
   documentos: '/admin/documentos',
   tareas: '/admin/tareas',
   calendario: '/admin/calendario',
