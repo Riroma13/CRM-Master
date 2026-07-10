@@ -6,6 +6,8 @@ export const AVAILABLE_MODULES = [
   { id: 'clientes', label: 'Clientes', defaultEnabled: true },
   { id: 'pipeline', label: 'Pipeline', defaultEnabled: true },
   { id: 'reportes', label: 'Reportes', defaultEnabled: true },
+  { id: 'presupuestos', label: 'Presupuestos', defaultEnabled: true },
+  { id: 'webhooks', label: 'Webhooks', defaultEnabled: true },
   { id: 'documentos', label: 'Documentos', defaultEnabled: true },
   { id: 'tareas', label: 'Tareas', defaultEnabled: true },
   { id: 'calendario', label: 'Calendario', defaultEnabled: true },

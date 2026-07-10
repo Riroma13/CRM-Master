@@ -89,6 +89,8 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   clientes: 'Clientes',
   pipeline: 'Pipeline',
   reportes: 'Reportes',
+  presupuestos: 'Presupuestos',
+  webhooks: 'Webhooks',
   documentos: 'Documentos',
   tareas: 'Tareas',
   calendario: 'Calendario',

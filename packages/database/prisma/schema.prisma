@@ -30,6 +30,8 @@ model Tenant {
   citas    Cita[]
   recursos Resource[]
   incidencias Incidencia[]
+  presupuestos Presupuesto[]
+  webhooks Webhook[]
   documentos Documento[]
 
   @@map("tenants")
@@ -180,6 +182,7 @@ model Cliente {
   fechaInicio      DateTime? @map("fecha_inicio")
   notasGenerales   String?  @map("notas_generales")
   tags             String[]
+  customFields     Json?    @default("{}") @map("custom_fields")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
@@ -187,9 +190,47 @@ model Cliente {
   sistemas    Sistema[]
   tareas      Tarea[]
   incidencias Incidencia[]
+  presupuestos Presupuesto[]
 
   @@index([tenantId])
   @@map("clientes")
+}
+
+model Presupuesto {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  clienteId   String   @map("cliente_id")
+  titulo      String
+  lineas      Json     @default("[]")  // [{concepto, cantidad, precioUnitario, total}]
+  total       Float    @default(0)
+  estado      String   @default("borrador") // borrador | enviado | aceptado | rechazado
+  notas       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+
+  @@index([tenantId])
+  @@index([clienteId])
+  @@map("presupuestos")
+}
+
+model Webhook {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  url       String
+  eventos   String[] // eventos que activan este webhook
+  isActive  Boolean  @default(true) @map("is_active")
+  ultimoEnvio DateTime? @map("ultimo_envio")
+  ultimoError String?  @map("ultimo_error")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("webhooks")
 }
 
 // ─── Sistema ────────────────────────────────────────────────────────

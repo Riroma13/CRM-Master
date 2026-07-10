@@ -24,6 +24,8 @@ import { SearchModule } from './modules/search/search.module';
 import { AdminToolsModule } from './modules/admin-tools/admin-tools.module';
 import { CommunicationsModule } from './modules/communications/communications.module';
 import { ExportModule } from './modules/export/export.module';
+import { TenantPresupuestosModule } from './modules/tenant-presupuestos/tenant-presupuestos.module';
+import { TenantWebhooksModule } from './modules/tenant-webhooks/tenant-webhooks.module';
 import { TenantIncidenciasModule } from './modules/tenant-incidencias/tenant-incidencias.module';
 import { DocumentosModule } from './modules/documentos/documentos.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
@@ -61,6 +63,8 @@ import { authClientProvider } from './common/auth-client.provider';
     AdminToolsModule,
     CommunicationsModule,
     ExportModule,
+    TenantPresupuestosModule,
+    TenantWebhooksModule,
     DocumentosModule,
   ],
   providers: [
