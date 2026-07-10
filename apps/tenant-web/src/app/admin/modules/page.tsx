@@ -11,6 +11,7 @@ import { Save, Check, X } from 'lucide-react';
 const MODULE_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
   clientes: 'Clientes',
+  pipeline: 'Pipeline',
   documentos: 'Documentos',
   tareas: 'Tareas',
   calendario: 'Calendario',
@@ -24,6 +25,7 @@ const MODULE_LABELS: Record<string, string> = {
 const MODULE_DESCRIPTIONS: Record<string, string> = {
   dashboard: 'Panel principal con KPIs y actividad reciente',
   clientes: 'Gestión de clientes, contactos y segmentación',
+  pipeline: 'Kanban comercial: prospecto → activo → cerrado',
   documentos: 'Subida, descarga y compartición de documentos',
   tareas: 'Kanban board con tareas y seguimiento',
   calendario: 'Citas, horarios, reserva pública y disponibilidad',

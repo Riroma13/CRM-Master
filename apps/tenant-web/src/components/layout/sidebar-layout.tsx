@@ -87,6 +87,7 @@ import { ToastProvider } from '@/components/ui/toast';
 const BREADCRUMB_LABELS: Record<string, string> = {
   admin: 'Dashboard',
   clientes: 'Clientes',
+  pipeline: 'Pipeline',
   documentos: 'Documentos',
   tareas: 'Tareas',
   calendario: 'Calendario',

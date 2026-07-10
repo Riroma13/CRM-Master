@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/prisma.service';
 export const AVAILABLE_MODULES = [
   { id: 'dashboard', label: 'Dashboard', defaultEnabled: true },
   { id: 'clientes', label: 'Clientes', defaultEnabled: true },
+  { id: 'pipeline', label: 'Pipeline', defaultEnabled: true },
   { id: 'documentos', label: 'Documentos', defaultEnabled: true },
   { id: 'tareas', label: 'Tareas', defaultEnabled: true },
   { id: 'calendario', label: 'Calendario', defaultEnabled: true },
