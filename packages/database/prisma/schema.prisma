@@ -16,6 +16,8 @@ model Tenant {
   logo      String?
   config    Json?    @default("{}")
   isActive                Boolean  @default(true) @map("is_active")
+  plan                    String   @default("gratuito") // gratuito | profesional | empresa
+  planDesde               DateTime? @map("plan_desde")
   betterAuthOrganizationId String?  @unique @map("better_auth_org_id")
   createdAt               DateTime @default(now()) @map("created_at")
   updatedAt               DateTime @updatedAt @map("updated_at")
@@ -36,6 +38,8 @@ model Tenant {
   pagos PagoIntent[]
   auditLogs AuditLog[]
   comunicaciones Comunicacion[]
+  encuestas Encuesta[]
+  eventosAcademicos EventoAcademico[]
   documentos Documento[]
 
   @@map("tenants")
@@ -161,6 +165,8 @@ model User {
   name            String?
   role            String   @default("user") // "superadmin" | "admin" | "user"
   passwordHash    String?  @map("password_hash")
+  notifEmail      Boolean  @default(true) @map("notif_email")
+  notifWhatsApp   Boolean  @default(false) @map("notif_whatsapp")
   avatar          String?
   isActive        Boolean  @default(true) @map("is_active")
   betterAuthUserId String? @unique @map("better_auth_user_id") // links to ba_users.id
@@ -525,4 +531,36 @@ model PagoIntent {
 
   @@index([tenantId])
   @@map("pagos")
+}
+
+model Encuesta {
+  id          Int      @id @default(autoincrement())
+  tenantId    String   @map("tenant_id")
+  referenciaId String  @map("referencia_id") // cita_id o incidencia_id
+  tipo        String   // cita | incidencia
+  puntuacion  Int      // 1-5
+  comentario  String?
+  respondida  Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("encuestas")
+}
+
+model EventoAcademico {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  titulo      String
+  tipo        String   // festivo | examen | evento | periodo_notas
+  fechaInicio DateTime @map("fecha_inicio")
+  fechaFin    DateTime? @map("fecha_fin")
+  descripcion String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("eventos_academicos")
 }

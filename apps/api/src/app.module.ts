@@ -31,6 +31,10 @@ import { TenantEmailModule } from './modules/tenant-email/tenant-email.module';
 import { TenantAutomationsModule } from './modules/tenant-automations/tenant-automations.module';
 import { TenantPagosModule } from './modules/tenant-pagos/tenant-pagos.module';
 import { TenantGoogleCalendarModule } from './modules/tenant-google-calendar/tenant-google-calendar.module';
+import { TenantEncuestasModule } from './modules/tenant-encuestas/tenant-encuestas.module';
+import { TenantPlanesModule } from './modules/tenant-planes/tenant-planes.module';
+import { TenantEventosAcademicosModule } from './modules/tenant-eventos-academicos/tenant-eventos-academicos.module';
+import { TenantPreferenciasModule } from './modules/tenant-preferencias/tenant-preferencias.module';
 import { TenantIncidenciasModule } from './modules/tenant-incidencias/tenant-incidencias.module';
 import { DocumentosModule } from './modules/documentos/documentos.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
@@ -75,6 +79,10 @@ import { authClientProvider } from './common/auth-client.provider';
     TenantAutomationsModule,
     TenantPagosModule,
     TenantGoogleCalendarModule,
+    TenantEncuestasModule,
+    TenantPlanesModule,
+    TenantEventosAcademicosModule,
+    TenantPreferenciasModule,
     DocumentosModule,
   ],
   providers: [
