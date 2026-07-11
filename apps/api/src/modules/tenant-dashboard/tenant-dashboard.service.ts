@@ -37,7 +37,7 @@ export class TenantDashboardService {
       this.prisma.admin.eventoBitacora.findMany({
         where: { tenantId },
         orderBy: { fecha: 'desc' },
-        take: 5,
+        take: 10,
       }),
       // Onboarding checklist counts
       this.prisma.admin.cliente.count({ where: { tenantId } }),

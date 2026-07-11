@@ -17,6 +17,7 @@ export class TenantProfileController {
   @Patch()
   @ApiOperation({ summary: 'Actualizar perfil del tenant' })
   updateProfile(@TenantId() tenantId: string, @Body() body: any) {
+    if (body.password) return this.service.updatePassword(tenantId, body.password);
     return this.service.updateProfile(tenantId, body);
   }
 }

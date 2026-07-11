@@ -95,6 +95,29 @@ export class TenantsService {
       },
     });
 
+    // 8. Pre-cargar automatizaciones según vertical (detectada por slug o config)
+    const defaultRules = {
+      fiscal: [
+        { nombre: 'Bienvenida nuevo cliente', trigger: 'cliente.creado', action: { type: 'email', config: { subject: 'Bienvenido a nuestra asesoría', to: dto.adminEmail } } },
+        { nombre: 'Alerta incidencia sin resolver', trigger: 'incidencia.creada', action: { type: 'email', config: { subject: 'Nueva incidencia registrada', to: dto.adminEmail } } },
+      ],
+      salud: [
+        { nombre: 'Recordatorio cita profesional', trigger: 'cita.confirmada', action: { type: 'email', config: { subject: 'Cita confirmada', to: dto.adminEmail } } },
+        { nombre: 'Aviso cancelación', trigger: 'cita.cancelada', action: { type: 'email', config: { subject: 'Cita cancelada por cliente', to: dto.adminEmail } } },
+      ],
+      educacion: [
+        { nombre: 'Nueva incidencia alumno', trigger: 'incidencia.creada', action: { type: 'email', config: { subject: 'Incidencia registrada', to: dto.adminEmail } } },
+        { nombre: 'Tutoría confirmada', trigger: 'cita.confirmada', action: { type: 'email', config: { subject: 'Tutoría confirmada', to: dto.adminEmail } } },
+      ],
+    };
+    // Store presets in tenant.config.automations
+    const currentConfig = (tenant.config as any) ?? {};
+    currentConfig.automations = defaultRules;
+    await this.prisma.admin.tenant.update({
+      where: { id: tenant.id },
+      data: { config: currentConfig as any },
+    });
+
     this.logger.log(`Tenant onboarded: ${tenant.slug} — admin: ${dto.adminEmail}`);
 
     // 8. Crear session token para acceso inmediato

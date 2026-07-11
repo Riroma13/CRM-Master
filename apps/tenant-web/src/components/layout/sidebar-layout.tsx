@@ -100,6 +100,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   planes: 'Plan',
   calendarioAcademico: 'Cal. Académico',
   preferencias: 'Preferencias',
+  cambiarPassword: 'Seguridad',
   documentos: 'Documentos',
   tareas: 'Tareas',
   calendario: 'Calendario',

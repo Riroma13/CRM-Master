@@ -1,9 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../common/prisma.service';
 
 @Injectable()
 export class TenantProfileService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async updatePassword(tenantId: string, newPassword: string) {
+    const hash = bcrypt.hashSync(newPassword, 10);
+    await this.prisma.admin.$executeRawUnsafe(
+      'UPDATE users SET password_hash = $1 WHERE tenant_id = $2',
+      hash, tenantId,
+    );
+    return { success: true };
+  }
 
   async getProfile(tenantId: string) {
     const tenant = await this.prisma.admin.tenant.findUnique({ where: { id: tenantId } });

@@ -17,6 +17,7 @@ export const AVAILABLE_MODULES = [
   { id: 'planes', label: 'Plan', defaultEnabled: true },
   { id: 'calendarioAcademico', label: 'Cal. Académico', defaultEnabled: true },
   { id: 'preferencias', label: 'Preferencias', defaultEnabled: true },
+  { id: 'cambiarPassword', label: 'Seguridad', defaultEnabled: true },
   { id: 'documentos', label: 'Documentos', defaultEnabled: true },
   { id: 'tareas', label: 'Tareas', defaultEnabled: true },
   { id: 'calendario', label: 'Calendario', defaultEnabled: true },
@@ -42,7 +43,12 @@ export class TenantModulesService {
     if (!tenant) throw new NotFoundException('Tenant no encontrado');
 
     const config = (tenant.config as any) ?? {};
-    const enabledModules: string[] = config.modules ?? getDefaultModules();
+    const storedModules: string[] = config.modules ?? [];
+    // Merge stored modules with any new default-enabled modules not yet in the list
+    const defaults = getDefaultModules();
+    const enabledModules = storedModules.length > 0
+      ? [...new Set([...storedModules, ...defaults])]
+      : defaults;
 
     return {
       available: AVAILABLE_MODULES,
