@@ -47,6 +47,7 @@ export function createPrismaClient(tenantId?: string) {
             'Comunicacion',
             'Encuesta',
             'EventoAcademico',
+            'ClientUser',
           ];
 
           if (!scopedModels.includes(model)) return query(args);
