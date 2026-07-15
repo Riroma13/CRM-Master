@@ -1,5 +1,16 @@
 # AGENTS.md — CRM-Master
 
+## Session Startup
+
+Al inicio de cada sesión, el agente DEBE leer estos archivos en orden:
+1. `.ai/context/PROJECT.md` — stack, arquitectura, reglas, filosofía
+2. `.ai/context/SESSION.md` — estado actual, próximo paso
+3. `.ai/context/DECISIONS.md` — ADRs y decisiones arquitectónicas
+4. `.ai/context/KNOWN_ISSUES.md` — issues conocidos no bloqueantes
+5. `.ai/context/ROADMAP.md` — próximos hitos
+
+Esto evita tener que re-explicar el proyecto en cada sesión.
+
 ## Qué es
 CRM-Master es una plataforma SaaS multi-tenant de gestión. Cada cliente
 (tenant) tiene su propio portal en `{slug}.crmmaster.com` para gestionar
