@@ -66,7 +66,7 @@ export class ClientAuthController {
       throw new UnauthorizedException('No autenticado');
     }
 
-    const result = await this.clientAuthService.getMe(clientUserId);
+    const result = await this.clientAuthService.getMe(clientUserId, (req as any).tenantId);
     if (!result) {
       throw new UnauthorizedException('Usuario no encontrado');
     }

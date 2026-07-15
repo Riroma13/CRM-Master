@@ -117,7 +117,7 @@ describe('ClientAuthService', () => {
 
   describe('getMe', () => {
     it('should return clientUser without passwordHash field', async () => {
-      const result = await service.getMe(CLIENTUSER_ID);
+      const result = await service.getMe(CLIENTUSER_ID, TENANT_ID);
 
       expect(result).not.toBeNull();
       expect(result!.clientUser.id).toBe(CLIENTUSER_ID);
@@ -128,7 +128,17 @@ describe('ClientAuthService', () => {
     });
 
     it('should return null for unknown userId', async () => {
-      const result = await service.getMe('00000000-0000-0000-0000-000000000099');
+      const result = await service.getMe('00000000-0000-0000-0000-000000000099', TENANT_ID);
+      expect(result).toBeNull();
+    });
+
+    it('should return null for deactivated user', async () => {
+      const result = await service.getMe(CLIENTUSER_DEACTIVATED_ID, TENANT_ID);
+      expect(result).toBeNull();
+    });
+
+    it('should return null when tenantId does not match (cross-tenant isolation)', async () => {
+      const result = await service.getMe(CLIENTUSER_ID, TENANT_B_ID);
       expect(result).toBeNull();
     });
   });

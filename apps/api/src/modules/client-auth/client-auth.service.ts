@@ -98,7 +98,7 @@ export class ClientAuthService {
     });
 
     if (!clientUser) {
-      bcrypt.compareSync(dto.password, DUMMY_HASH);
+      await bcrypt.compare(dto.password, DUMMY_HASH);
       this.logger.warn(`[AUTH] client-login failure email=<${this.hashEmail(dto.email)}> ip=${ip} attempts=${attemptCount}`);
       throw new UnauthorizedException('Credenciales inválidas');
     }
@@ -108,7 +108,7 @@ export class ClientAuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    const valid = bcrypt.compareSync(dto.password, clientUser.passwordHash);
+    const valid = await bcrypt.compare(dto.password, clientUser.passwordHash);
     if (!valid) {
       this.logger.warn(`[AUTH] client-login failure email=<${this.hashEmail(dto.email)}> ip=${ip} attempts=${attemptCount}`);
       throw new UnauthorizedException('Credenciales inválidas');
@@ -139,9 +139,9 @@ export class ClientAuthService {
     tokenBlacklist.add(token);
   }
 
-  async getMe(clientUserId: string): Promise<ClientMeDto | null> {
+  async getMe(clientUserId: string, requestTenantId: string): Promise<ClientMeDto | null> {
     const clientUser = await this.prisma.admin.clientUser.findUnique({
-      where: { id: clientUserId },
+      where: { id: clientUserId, isActive: true, tenantId: requestTenantId },
       include: { cliente: true },
     });
 

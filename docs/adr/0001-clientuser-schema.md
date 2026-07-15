@@ -27,10 +27,14 @@ Adopt **approach 2**: a separate `ClientUser` model with its own authentication 
 - **Security boundary**: A single table means a single cookie. If any code accidentally reads the wrong token type, the auth boundary is breached. Separate tables + separate cookies + separate guards enforce type safety at three levels.
 - **Schema clarity**: `ClientUser` has a FK to `Cliente` with cascade delete — when a `Cliente` is deleted, the associated login is removed. `User` has no such relationship.
 
-### `@@unique([tenantId, email])` Design
+### Unique Constraints: `email @unique` + `@@unique([tenantId, email])`
 
-- **Why composite unique instead of `email` unique alone**: A client email MUST be unique within a tenant (a tenant cannot have two clients with the same email), but the same email COULD exist in different tenants (e.g., `c@acme.com` and `c@beta.com` are different people). A single `@unique` on `email` would prevent cross-tenant reuse.
-- **Why not `@unique` on `email` alone + manual tenant check**: Prisma's `findUnique` is optimized for unique constraints. Using `@@unique([tenantId, email])` enables efficient lookup by `(tenantId, email)` in the login flow (the exact query the auth endpoint needs).
+The implementation applies **both** constraints:
+
+- **`email @unique`** (global unique): prevents the same email from being registered in any tenant. This eliminates email collision risk entirely, simplifies the registration logic, and allows Prisma's `findUnique({ where: { email } })` for login lookups.
+- **`@@unique([tenantId, email])`** (composite): kept as an extra safety net. While the global unique already guarantees no duplicates, the composite constraint reinforces the tenant-aware lookup path and provides a natural index for the `(tenantId, email)` query used during login.
+
+**Trade-off acknowledged**: A truly cross-tenant email reuse scenario (e.g., `c@acme.com` in Tenant A and `c@beta.com` in Tenant B) is not possible with this design. This was accepted because the added complexity of allowing cross-tenant duplicates outweighs the unlikely real-world benefit in this application's domain (client identity for a B2B SaaS platform).
 
 ### `cuid()` vs `uuid()` for PK
 
