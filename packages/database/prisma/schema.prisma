@@ -41,6 +41,7 @@ model Tenant {
   encuestas Encuesta[]
   eventosAcademicos EventoAcademico[]
   documentos Documento[]
+  clientUsers ClientUser[]
 
   @@map("tenants")
 }
@@ -201,9 +202,29 @@ model Cliente {
   tareas      Tarea[]
   incidencias Incidencia[]
   presupuestos Presupuesto[]
+  clientUsers ClientUser[]
 
   @@index([tenantId])
   @@map("clientes")
+}
+
+// ─── ClientUser ──────────────────────────────────────────────────────
+
+model ClientUser {
+  id           String   @id @default(cuid())
+  clienteId    String
+  tenantId     String
+  email        String   @unique
+  passwordHash String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@map("client_users")
 }
 
 model Presupuesto {

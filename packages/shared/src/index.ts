@@ -67,3 +67,8 @@ export const CreateTareaSchema = z.object({
   prioridad: PrioridadTarea.default('Media'),
   fechaLimite: z.string().datetime().optional(),
 });
+
+// ─── Client Auth ─────────────────────────────────────────────────────
+
+export * from './client-auth';
+
