@@ -1,23 +1,30 @@
 import { PrismaClient } from '@prisma/client';
 import { injectWhere, injectData, injectDataArray } from './prisma-helpers';
+import {
+  TENANT_SCOPED_MODELS,
+  CLIENTE_SCOPED_MODELS,
+} from '../prisma/generators/tenant-scope/generated/tenant-models';
 
 interface CreatePrismaClientOptions {
   tenantId?: string;
   clienteId?: string;
 }
 
-const clienteIdModels = ['Cita', 'Documento'];
-
 /**
  * Creates a Prisma client with automatic tenant scoping.
+ *
+ * Sourced from schema.prisma via the tenant-scope generator.
+ * ⚠️ Never hardcode model lists — always go through the generator.
+ *
  * Every query that touches a model with `tenantId` is filtered
  * to the active tenant — no manual `where: { tenantId }` needed.
  *
  * When called without a `tenantId`, the returned client is unscoped
  * (for admin paths only) and a warning is emitted in non-test environments.
  *
- * When `clienteId` is provided, client-scoped models (Cita, Documento) also
- * receive automatic `clienteId` filtering.
+ * When `clienteId` is provided, client-scoped models also receive
+ * automatic `clienteId` filtering — cross-client isolation enforced
+ * at the Prisma extension level, not in handlers.
  *
  * Raw SQL methods ($queryRaw, $queryRawUnsafe, $executeRaw) are blocked
  * on tenant-scoped clients to prevent bypassing the tenant_id filter.
@@ -37,28 +44,7 @@ export function createPrismaClient(opts?: CreatePrismaClientOptions | string) {
 
   if (!tenantId) return client;
 
-  const scopedModels = [
-    'User',
-    'Cliente',
-    'Sistema',
-    'ItemInventario',
-    'EventoBitacora',
-    'Tarea',
-    'Disponibilidad',
-    'Cita',
-    'Documento',
-    'Resource',
-    'Incidencia',
-    'Presupuesto',
-    'Webhook',
-    'PlantillaDocumento',
-    'PagoIntent',
-    'AuditLog',
-    'Comunicacion',
-    'Encuesta',
-    'EventoAcademico',
-    'ClientUser',
-  ];
+  const scopedModels = TENANT_SCOPED_MODELS;
 
   const readOps = [
     'findUnique', 'findFirst', 'findMany', 'count',
@@ -74,7 +60,7 @@ export function createPrismaClient(opts?: CreatePrismaClientOptions | string) {
           if (!scopedModels.includes(model)) return query(args);
 
           const fields: Record<string, string> = { tenantId };
-          if (clienteId && clienteIdModels.includes(model)) {
+          if (clienteId && (CLIENTE_SCOPED_MODELS as readonly string[]).includes(model)) {
             fields.clienteId = clienteId;
           }
 
@@ -86,13 +72,13 @@ export function createPrismaClient(opts?: CreatePrismaClientOptions | string) {
             injectDataArray(args, fields);
           } else if (writeOps.includes(operation)) {
             injectWhere(args, { tenantId });
-            if (clienteId && clienteIdModels.includes(model)) {
+            if (clienteId && (CLIENTE_SCOPED_MODELS as readonly string[]).includes(model)) {
               injectWhere(args, { clienteId });
             }
           } else if (operation === 'upsert') {
             injectWhere(args, { tenantId });
             if (args.create) args.create.tenantId = tenantId;
-            if (clienteId && clienteIdModels.includes(model)) {
+            if (clienteId && (CLIENTE_SCOPED_MODELS as readonly string[]).includes(model)) {
               injectWhere(args, { clienteId });
               if (args.create) args.create.clienteId = clienteId;
             }
