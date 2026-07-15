@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@crm-master/ui';
+import { Badge } from '@crm-master/ui';
 import type { ClientFilters } from '@/lib/api-types';
 
 interface DashboardFiltersProps {
@@ -23,7 +23,7 @@ const SALUD_LABELS: Record<SaludOption, string> = {
 
 export function DashboardFilters({ filters, onFiltersChange }: DashboardFiltersProps) {
   const [search, setSearch] = useState(filters.search ?? '');
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync external filter changes (e.g., on reset)
   useEffect(() => {

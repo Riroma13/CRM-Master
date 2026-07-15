@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@crm-master/ui';
+import { Badge } from '@crm-master/ui';
+import { Button } from '@crm-master/ui';
 import { HealthBadge } from './health-badge';
 import type { ClienteListItem } from '@/lib/api-types';
 

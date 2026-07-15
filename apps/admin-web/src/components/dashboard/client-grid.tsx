@@ -3,7 +3,7 @@
 import { useClients } from '@/hooks/use-clients';
 import { ClientCard } from './client-card';
 import { Pagination } from './pagination';
-import { Button } from '@/components/ui/button';
+import { Button } from '@crm-master/ui';
 import type { ClientFilters } from '@/lib/api-types';
 import { useMemo } from 'react';
 

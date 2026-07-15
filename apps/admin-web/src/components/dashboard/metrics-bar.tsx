@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useDashboardMetrics } from '@/hooks/use-dashboard-metrics';
 import { KpiCard } from './kpi-card';
-import { Button } from '@/components/ui/button';
+import { Button } from '@crm-master/ui';
 
 function KpiSkeleton() {
   return (

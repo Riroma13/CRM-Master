@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@crm-master/ui';
 
 type Salud = '🟢' | '🟡' | '🔴';
 type BadgeVariant = 'success' | 'warning' | 'critical';

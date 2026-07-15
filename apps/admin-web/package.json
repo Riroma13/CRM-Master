@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@crm-master/ui": "workspace:*",
     "@radix-ui/react-avatar": "^1.2.1",
     "@radix-ui/react-dialog": "^1.1.18",
     "@radix-ui/react-dropdown-menu": "^2.1.19",

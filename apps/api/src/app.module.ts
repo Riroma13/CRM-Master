@@ -37,6 +37,8 @@ import { TenantEventosAcademicosModule } from './modules/tenant-eventos-academic
 import { TenantPreferenciasModule } from './modules/tenant-preferencias/tenant-preferencias.module';
 import { TenantIncidenciasModule } from './modules/tenant-incidencias/tenant-incidencias.module';
 import { DocumentosModule } from './modules/documentos/documentos.module';
+import { ClientAuthModule } from './modules/client-auth/client-auth.module';
+import { ClientUserManagementModule } from './modules/client-user-management/client-user-management.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
 import { TenantScopeGuard } from './common/guards/tenant-scope.guard';
 import { BetterAuthGuard } from './common/guards/better-auth.guard';
@@ -84,6 +86,8 @@ import { authClientProvider } from './common/auth-client.provider';
     TenantEventosAcademicosModule,
     TenantPreferenciasModule,
     DocumentosModule,
+    ClientAuthModule,
+    ClientUserManagementModule,
   ],
   providers: [
     PrismaService,

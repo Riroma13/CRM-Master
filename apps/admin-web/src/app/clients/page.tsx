@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { Plus, Search } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@crm-master/ui';
+import { Badge } from '@crm-master/ui';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Button } from '@crm-master/ui';
 
 const allClients = [
   { id: 'C-001', name: 'Aura Logistics', health: 100, color: 'bg-[#10B981]', systems: 3, tags: ['TECH', 'SAAS'] },

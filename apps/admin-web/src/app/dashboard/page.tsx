@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@crm-master/ui';
+import { Button } from '@crm-master/ui';
 import { Plus } from 'lucide-react';
 import { MetricsBar } from '@/components/dashboard/metrics-bar';
 import { DashboardFilters } from '@/components/dashboard/dashboard-filters';

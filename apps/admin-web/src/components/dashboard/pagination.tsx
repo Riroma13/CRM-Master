@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@crm-master/ui';
 import type { PaginationMeta } from '@/lib/api-types';
 
 interface PaginationProps {
