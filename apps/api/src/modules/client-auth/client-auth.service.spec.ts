@@ -3,6 +3,8 @@ import { ClientAuthService } from './client-auth.service';
 import { PrismaService } from '../../common/prisma.service';
 import * as bcrypt from 'bcryptjs';
 
+const TEST_IP = '127.0.0.1';
+
 describe('ClientAuthService', () => {
   let service: ClientAuthService;
   let prisma: PrismaService;
@@ -74,6 +76,7 @@ describe('ClientAuthService', () => {
       const result = await service.login(
         { email: 'client@test.com', password: 'testpass123' },
         TENANT_ID,
+        TEST_IP,
       );
 
       expect(result.token).toBeDefined();
@@ -89,25 +92,25 @@ describe('ClientAuthService', () => {
 
     it('should throw UnauthorizedException on wrong password', async () => {
       await expect(
-        service.login({ email: 'client@test.com', password: 'wrongpass' }, TENANT_ID),
+        service.login({ email: 'client@test.com', password: 'wrongpass' }, TENANT_ID, TEST_IP),
       ).rejects.toThrow(/Credenciales inválidas/);
     });
 
-    it('should throw NotFoundException on unknown email (no existence leak)', async () => {
+    it('should throw UnauthorizedException on unknown email (no existence leak)', async () => {
       await expect(
-        service.login({ email: 'unknown@test.com', password: 'testpass123' }, TENANT_ID),
+        service.login({ email: 'unknown@test.com', password: 'testpass123' }, TENANT_ID, TEST_IP),
       ).rejects.toThrow(/Credenciales inválidas/);
     });
 
-    it('should throw ForbiddenException for deactivated ClientUser', async () => {
+    it('should throw UnauthorizedException for deactivated ClientUser', async () => {
       await expect(
-        service.login({ email: 'deactivated@test.com', password: 'pass123' }, TENANT_ID),
-      ).rejects.toThrow(/Usuario desactivado/);
+        service.login({ email: 'deactivated@test.com', password: 'pass123' }, TENANT_ID, TEST_IP),
+      ).rejects.toThrow(/Credenciales inválidas/);
     });
 
-    it('should return 404 for email from different tenant (no leak)', async () => {
+    it('should throw UnauthorizedException for email from different tenant (no leak)', async () => {
       await expect(
-        service.login({ email: 'client@test.com', password: 'testpass123' }, TENANT_B_ID),
+        service.login({ email: 'client@test.com', password: 'testpass123' }, TENANT_B_ID, TEST_IP),
       ).rejects.toThrow(/Credenciales inválidas/);
     });
   });

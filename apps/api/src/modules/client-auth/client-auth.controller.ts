@@ -32,7 +32,8 @@ export class ClientAuthController {
       throw new ForbiddenException('No se pudo resolver el tenant');
     }
 
-    const result = await this.clientAuthService.login(dto, tenantId);
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || '0.0.0.0';
+    const result = await this.clientAuthService.login(dto, tenantId, ip);
 
     res.cookie(
       ClientAuthService.COOKIE_NAME,
