@@ -1,12 +1,12 @@
 import {
   Injectable, OnModuleDestroy, UnauthorizedException,
-  HttpException, HttpStatus, Logger,
+  BadRequestException, HttpException, HttpStatus, Logger,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../common/prisma.service';
-import { ClientLoginDto, ClientAuthResponseDto, ClientMeDto } from './dto/client-auth.dto';
+import { ClientLoginDto, ClientAuthResponseDto, ClientMeDto, RegisterDto, RegisterResponseDto } from './dto/client-auth.dto';
 
 const JWT_SECRET = process.env.CLIENT_JWT_SECRET || 'client-jwt-dev-secret-change-in-prod';
 const COOKIE_NAME = '__Secure-client-session';
@@ -141,6 +141,48 @@ export class ClientAuthService implements OnModuleDestroy {
       clientUser: safeClientUser,
       cliente: clientUser.cliente,
     };
+  }
+
+  async register(dto: RegisterDto, tenantId: string, ip: string): Promise<RegisterResponseDto> {
+    const rateLimitKey = `register:${ip}`;
+    const { blocked, attemptCount } = this.getCurrentAttempt(rateLimitKey);
+
+    if (blocked) {
+      this.logger.warn(`[AUTH] client-register blocked ip=${ip} attempts=${attemptCount}`);
+      throw new HttpException('Demasiados intentos. Intente nuevamente en 1 minuto.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    if (dto.password.length < 8) {
+      throw new BadRequestException('La contraseña debe tener al menos 8 caracteres');
+    }
+
+    const existing = await this.prisma.admin.clientUser.findUnique({
+      where: { email: dto.email },
+    });
+    if (existing) {
+      throw new HttpException('Este email ya está registrado', HttpStatus.CONFLICT);
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 12);
+    const clienteId = crypto.randomUUID();
+    const clientUserId = crypto.randomUUID();
+
+    const [cliente, clientUser] = await this.prisma.admin.$transaction([
+      this.prisma.admin.cliente.create({
+        data: { id: clienteId, tenantId, nombre: dto.businessName || dto.nombre },
+      }),
+      this.prisma.admin.clientUser.create({
+        data: {
+          id: clientUserId, clienteId, tenantId,
+          email: dto.email, passwordHash,
+          nombre: dto.nombre, isActive: true,
+        },
+      }),
+    ]);
+
+    this.logger.log(`[AUTH] client-register success email=<${this.hashEmail(dto.email)}> clienteId=${clienteId}`);
+
+    return { id: clientUser.id, nombre: clientUser.nombre!, email: clientUser.email };
   }
 
   async logout(token: string): Promise<void> {

@@ -115,6 +115,102 @@ describe('ClientAuthService', () => {
     });
   });
 
+  describe('register', () => {
+    const TEST_EMAIL = 'new.register@test.com';
+
+    it('should create Cliente + ClientUser and return id/nombre/email', async () => {
+      const result = await service.register(
+        { nombre: 'New Client', email: TEST_EMAIL, password: 'securePass1' },
+        TENANT_ID,
+        TEST_IP,
+      );
+
+      expect(result.id).toBeDefined();
+      expect(result.nombre).toBe('New Client');
+      expect(result.email).toBe(TEST_EMAIL);
+
+      const saved = await prisma.admin.clientUser.findUnique({
+        where: { email: TEST_EMAIL },
+        include: { cliente: true },
+      });
+      expect(saved).not.toBeNull();
+      expect(saved!.cliente.nombre).toBe('New Client');
+      expect(saved!.tenantId).toBe(TENANT_ID);
+      expect(saved!.isActive).toBe(true);
+      expect(saved!.passwordHash).not.toBe(TEST_EMAIL);
+      expect(saved!.passwordHash).toMatch(/^\$2b\$12\$/);
+    });
+
+    it('should map businessName to Cliente.nombre when provided', async () => {
+      const email = 'business.register@test.com';
+      const result = await service.register(
+        { nombre: 'John Doe', email, password: 'securePass1', businessName: 'Mi Empresa SL' },
+        TENANT_ID,
+        TEST_IP,
+      );
+
+      const saved = await prisma.admin.clientUser.findUnique({
+        where: { email },
+        include: { cliente: true },
+      });
+      expect(saved).not.toBeNull();
+      expect(saved!.cliente.nombre).toBe('Mi Empresa SL');
+    });
+
+    it('should throw 409 on duplicate email (same tenant)', async () => {
+      await expect(
+        service.register(
+          { nombre: 'Dup', email: 'client@test.com', password: 'securePass1' },
+          TENANT_ID,
+          TEST_IP,
+        ),
+      ).rejects.toThrow(/registrado|already exists/i);
+    });
+
+    it('should throw 409 on duplicate email (cross-tenant, per ADR-003)', async () => {
+      await expect(
+        service.register(
+          { nombre: 'Dup Cross', email: 'client@test.com', password: 'securePass1' },
+          TENANT_B_ID,
+          TEST_IP,
+        ),
+      ).rejects.toThrow(/registrado|already exists/i);
+    });
+
+    it('should throw BadRequestException on weak password (< 8 chars)', async () => {
+      await expect(
+        service.register(
+          { nombre: 'Weak', email: 'weak@test.com', password: '1234567' },
+          TENANT_ID,
+          TEST_IP,
+        ),
+      ).rejects.toThrow(/contraseña|password/i);
+    });
+
+    it('should throw 429 on rate limit', async () => {
+      // Exhaust rate limit for this ip:email pair
+      for (let i = 0; i < 6; i++) {
+        try {
+          await service.register(
+            { nombre: 'Rate', email: `rate${i}@test.com`, password: 'securePass1' },
+            TENANT_ID,
+            'rate-limit-ip',
+          );
+        } catch {
+          // expected after limit exceeded
+        }
+      }
+
+      await expect(
+        service.register(
+          { nombre: 'Rate Final', email: 'rate-final@test.com', password: 'securePass1' },
+          TENANT_ID,
+          'rate-limit-ip',
+        ),
+      ).rejects.toThrow(/intentos/i);
+    });
+  });
+
   describe('getMe', () => {
     it('should return clientUser without passwordHash field', async () => {
       const result = await service.getMe(CLIENTUSER_ID, TENANT_ID);

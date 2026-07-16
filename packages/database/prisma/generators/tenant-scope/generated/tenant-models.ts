@@ -1,7 +1,7 @@
 // ⚡ AUTO-GENERATED — DO NOT EDIT
 // Source: prisma/schema.prisma
 // Generator: prisma/generators/tenant-scope/generator.ts
-// Generated: 2026-07-15T21:29:18.972Z
+// Generated: 2026-07-16T21:17:24.501Z
 
 /**
  * Models that have a `tenantId` field and receive automatic

@@ -9,7 +9,7 @@ import { UserPlus, CheckCircle } from 'lucide-react';
 
 export default function RegistroPage() {
   const router = useRouter();
-  const [name, setName] = useState('');
+  const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [businessName, setBusinessName] = useState('');
@@ -19,21 +19,26 @@ export default function RegistroPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || !password.trim()) return;
+    if (!nombre.trim() || !email.trim() || !password.trim()) return;
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch('/api/v1/auth/register', {
+      const res = await fetch('/api/v1/client/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim(),
           password,
-          name: name.trim(),
+          nombre: nombre.trim(),
           businessName: businessName.trim() || undefined,
         }),
       });
+
+      if (res.status === 409) {
+        setError('Este email ya está registrado');
+        return;
+      }
 
       if (!res.ok) {
         const data = await res.json();
@@ -41,7 +46,7 @@ export default function RegistroPage() {
       }
 
       setSuccess(true);
-      setTimeout(() => router.push(`/login?registered=${encodeURIComponent(email.trim())}`), 1500);
+      setTimeout(() => router.push('/login?registered=true'), 1500);
     } catch (err: any) {
       setError(err.message || 'Error al crear la cuenta');
     } finally {
@@ -85,7 +90,7 @@ export default function RegistroPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">Tu nombre *</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Juan García" className="mt-1" required />
+            <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Juan García" className="mt-1" required />
           </div>
           <div>
             <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">Email *</label>

@@ -216,6 +216,8 @@ model ClientUser {
   tenantId     String
   email        String   @unique
   passwordHash String
+  nombre       String?
+  telefono     String?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

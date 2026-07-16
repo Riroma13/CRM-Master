@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 import { z } from 'zod';
 
 export const ClientLoginSchema = z.object({
@@ -29,6 +29,28 @@ export interface ClientAuthResponseDto {
     tenantId: string;
     nombre: string;
   };
+}
+
+export class RegisterDto {
+  @IsString()
+  nombre!: string;
+
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(8)
+  password!: string;
+
+  @IsOptional()
+  @IsString()
+  businessName?: string;
+}
+
+export interface RegisterResponseDto {
+  id: string;
+  nombre: string;
+  email: string;
 }
 
 export interface ClientMeDto {

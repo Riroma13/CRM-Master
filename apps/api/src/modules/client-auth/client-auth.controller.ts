@@ -5,7 +5,7 @@ import {
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { ClientAuthService } from './client-auth.service';
-import { ClientLoginDto } from './dto/client-auth.dto';
+import { ClientLoginDto, RegisterDto } from './dto/client-auth.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { ClientAuthGuard } from './client-auth.guard';
 
@@ -45,6 +45,20 @@ export class ClientAuthController {
       clientUser: result.clientUser,
       cliente: result.cliente,
     };
+  }
+
+  @Public()
+  @Post('auth/register')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Client self-registration — creates Cliente + ClientUser' })
+  async register(@Body() dto: RegisterDto, @Req() req: Request) {
+    const tenantId = (req as any).tenantId;
+    if (!tenantId) {
+      throw new ForbiddenException('No se pudo resolver el tenant');
+    }
+
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || '0.0.0.0';
+    return this.clientAuthService.register(dto, tenantId, ip);
   }
 
   @Public()
