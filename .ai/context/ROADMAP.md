@@ -2,21 +2,24 @@
 
 > Próximos hitos y dirección del producto.
 
-## 🔜 Siguiente
+## ✅ Completado
 
-- [ ] **Merge PR2 (Client Platform)** — backend + frontend + fixes
-- [ ] **Activar portal cliente** — `NEXT_PUBLIC_CLIENT_PORTAL_ENABLED=true` (cuando Better-Auth esté listo)
+- [x] **PR2 (Client Platform)** — mergeado + security fixes
+- [x] **Portal cliente activado** — `NEXT_PUBLIC_CLIENT_PORTAL_ENABLED=true`
+- [x] **Rate limiter OnModuleDestroy** — fix memory leak
+- [x] **Integrity test** — tenant-scope cross-references schema
+- [x] **CI workflow** — GitHub Actions con verify + test + lint
+- [x] **Documentación** — tenant-scope generator en `docs/`
+- [x] **Client self-registration** — signup, login, portal access
 
-## 📋 Pendientes técnicos
+## Pendientes técnicos
 
-- [x] `OnModuleDestroy` para el rate limiter (limpiar interval)
-- [x] Test de integridad: verificar que modelos generados cubran schema
-- [x] CI check: `pnpm generate:scope:verify` en el pipeline
-- [x] Documentar el tenant-scope generator en `docs/`
+- [ ] Lint pre-existing (API sin ESLint config)
+- [ ] Rate limiter service-side double check redundancy
 
-## 🏗️ Próximas features (idea)
+## 🏗️ Próximas features
 
-- Client self-registration
+- **Client self-registration** ✅ Completado
 - OAuth social login
 - Password reset email
 - Mobile app
