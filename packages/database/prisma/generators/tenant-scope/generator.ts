@@ -267,17 +267,41 @@ function verifyGeneratedFiles(data: ClassifiedModels, outDir: string): { valid: 
 // ── Main ────────────────────────────────────────────────────────────────
 
 function main() {
-  const schemaPath = process.argv[2] || SCHEMA_PATH;
-  const outDir = process.argv[3] || OUTPUT_DIR;
-
-  // Ensure output directory exists
-  fs.mkdirSync(outDir, { recursive: true });
+  const args = process.argv.slice(2);
+  const verifyOnly = args.includes('--verify');
+  const schemaPath = args.find((a) => !a.startsWith('--')) || SCHEMA_PATH;
+  const outDir = args.find((_, i) => i > 0 && !args[i].startsWith('--')) || OUTPUT_DIR;
 
   // Parse and classify
   const models = parseSchema(schemaPath);
   const classified = classifyModels(models);
 
-  // Write generated files
+  if (verifyOnly) {
+    // Read-only verification — no files written
+    const verification = verifyGeneratedFiles(classified, outDir);
+
+    console.log('── Tenant Scope Verify ──');
+    console.log(`Schema:     ${schemaPath}`);
+    console.log(`Models:     ${classified.allModels.length} total`);
+    console.log(`  tenantId: ${classified.tenantScoped.length} models`);
+    console.log(`  clienteId:${classified.clienteScoped.length} models`);
+
+    if (!verification.valid) {
+      console.log(`\n⚠️  CI Verification:`);
+      for (const err of verification.errors) {
+        console.log(`   ❌ ${err}`);
+      }
+      console.log(`\n❌ Generated files are stale. Run \`pnpm generate:scope\` to regenerate.`);
+      process.exit(1);
+    }
+
+    console.log(`\n✅ Generated files are up to date.`);
+    return;
+  }
+
+  // Full generation mode
+  fs.mkdirSync(outDir, { recursive: true });
+
   const modelsPath = writeTenantModels(classified, outDir);
   const metadataPath = writeTenantMetadata(classified, outDir);
   const testsPath = writeTenantTests(classified, outDir);
