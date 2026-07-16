@@ -9,10 +9,10 @@
 
 ## 📋 Pendientes técnicos
 
-- [ ] `OnModuleDestroy` para el rate limiter (limpiar interval)
-- [ ] Test de integridad: verificar que `clienteIdModels` generados cubran todos los modelos con `clienteId` en schema
-- [ ] CI check: `pnpm generate:scope:verify` en el pipeline
-- [ ] Documentar el tenant-scope generator en `docs/`
+- [x] `OnModuleDestroy` para el rate limiter (limpiar interval)
+- [x] Test de integridad: verificar que modelos generados cubran schema
+- [x] CI check: `pnpm generate:scope:verify` en el pipeline
+- [x] Documentar el tenant-scope generator en `docs/`
 
 ## 🏗️ Próximas features (idea)
 
