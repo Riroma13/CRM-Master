@@ -1,5 +1,5 @@
 import {
-  Injectable, UnauthorizedException,
+  Injectable, OnModuleDestroy, UnauthorizedException,
   HttpException, HttpStatus, Logger,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
@@ -31,7 +31,7 @@ interface RateLimitEntry {
 }
 
 @Injectable()
-export class ClientAuthService {
+export class ClientAuthService implements OnModuleDestroy {
   private readonly logger = new Logger(ClientAuthService.name);
   private readonly rateLimitMap = new Map<string, RateLimitEntry>();
   private readonly RATE_LIMIT_MAX = 5;
@@ -41,6 +41,14 @@ export class ClientAuthService {
 
   constructor(private readonly prisma: PrismaService) {
     this.cleanupTimer = setInterval(() => this.cleanupRateLimit(), this.CLEANUP_INTERVAL);
+  }
+
+  onModuleDestroy() {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+    this.rateLimitMap.clear();
   }
 
   private cleanupRateLimit(): void {
