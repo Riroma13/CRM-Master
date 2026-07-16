@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { SidebarLayout } from '@/components/layout/sidebar-layout';
 
 export const metadata: Metadata = {
   title: 'CRM-Master | Portal del Cliente',
@@ -34,5 +33,9 @@ export default async function ClientLayout({ children }: { children: React.React
     redirect('/login');
   }
 
-  return <SidebarLayout>{children}</SidebarLayout>;
+  return (
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {children}
+    </div>
+  );
 }

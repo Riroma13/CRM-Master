@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Button } from '@crm-master/ui';
 import { Input } from '@/components/ui/input';
 import { Save } from 'lucide-react';
 

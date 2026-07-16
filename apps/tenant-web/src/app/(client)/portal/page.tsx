@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@crm-master/ui';
 import { Calendar, FileText, User } from 'lucide-react';
 
 async function getClientDashboard() {

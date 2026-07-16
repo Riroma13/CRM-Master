@@ -50,8 +50,20 @@ export class ClientAuthController {
   @Public()
   @Post('auth/logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Client logout — clears cookie' })
-  async logout(@Res({ passthrough: true }) res: Response) {
+  @ApiOperation({ summary: 'Client logout — clears cookie and invalidates token' })
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const cookieHeader = req.headers?.cookie || '';
+    const cookies = Object.fromEntries(
+      cookieHeader.split(';').map(c => {
+        const idx = c.indexOf('=');
+        if (idx === -1) return [c.trim(), ''];
+        return [c.slice(0, idx).trim(), c.slice(idx + 1).trim()];
+      }),
+    );
+    const token = cookies[ClientAuthService.COOKIE_NAME];
+    if (token) {
+      this.clientAuthService.logout(token);
+    }
     res.clearCookie(ClientAuthService.COOKIE_NAME, { path: '/' });
     return;
   }

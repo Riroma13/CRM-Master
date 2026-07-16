@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import * as jwt from 'jsonwebtoken';
 
 const RESERVED_SLUGS = new Set(['www', 'api', 'admin', 'app', 'mail', 'dev']);
 
@@ -25,9 +26,25 @@ interface CookiePayload {
 
 function parseCookie(cookieValue: string | undefined): CookiePayload {
   if (!cookieValue) return { role: null };
+
+  const secret = process.env.CLIENT_JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('[middleware] CLIENT_JWT_SECRET not set — cannot verify client token in production');
+      return { role: null };
+    }
+    console.warn('[middleware] CLIENT_JWT_SECRET not set — parsing client token without signature verification (dev only)');
+    try {
+      const payload = JSON.parse(atob(cookieValue.split('.')[1]));
+      return { role: payload?.role ?? null };
+    } catch {
+      return { role: null };
+    }
+  }
+
   try {
-    const payload = JSON.parse(atob(cookieValue.split('.')[1]));
-    return { role: payload?.role ?? null };
+    const decoded = jwt.verify(cookieValue, secret) as any;
+    return { role: decoded?.role ?? null };
   } catch {
     return { role: null };
   }
