@@ -1,44 +1,9 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { TenantsModule } from './modules/tenants/tenant.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { ClientsModule } from './modules/clients/clients.module';
-import { DashboardModule } from './modules/dashboard/dashboard.module';
-import { EventosModule } from './modules/eventos/eventos.module';
-import { TareasModule } from './modules/tareas/tareas.module';
-import { CitasModule } from './modules/citas/citas.module';
-import { TenantDashboardModule } from './modules/tenant-dashboard/tenant-dashboard.module';
-import { TenantClientesModule } from './modules/tenant-clientes/tenant-clientes.module';
-import { TenantTareasModule } from './modules/tenant-tareas/tenant-tareas.module';
-import { TenantNotificacionesModule } from './modules/tenant-notificaciones/tenant-notificaciones.module';
-import { TenantProfileModule } from './modules/tenant-profile/tenant-profile.module';
-import { TenantSistemasModule } from './modules/tenant-sistemas/tenant-sistemas.module';
-import { TenantRecursosModule } from './modules/tenant-recursos/tenant-recursos.module';
-import { TenantModulesModule } from './modules/tenant-modules/tenant-modules.module';
-import { NotificationsModule } from './modules/notifications/notifications.module';
-import { HealthModule } from './modules/health/health.module';
-import { AuditModule } from './modules/audit/audit.module';
-import { TenantHealthModule } from './modules/tenant-health/tenant-health.module';
-import { SearchModule } from './modules/search/search.module';
-import { AdminToolsModule } from './modules/admin-tools/admin-tools.module';
-import { CommunicationsModule } from './modules/communications/communications.module';
-import { ExportModule } from './modules/export/export.module';
-import { TenantPresupuestosModule } from './modules/tenant-presupuestos/tenant-presupuestos.module';
-import { TenantWebhooksModule } from './modules/tenant-webhooks/tenant-webhooks.module';
-import { TenantPlantillasModule } from './modules/tenant-plantillas/tenant-plantillas.module';
-import { TenantEmailModule } from './modules/tenant-email/tenant-email.module';
-import { TenantAutomationsModule } from './modules/tenant-automations/tenant-automations.module';
-import { TenantPagosModule } from './modules/tenant-pagos/tenant-pagos.module';
-import { TenantGoogleCalendarModule } from './modules/tenant-google-calendar/tenant-google-calendar.module';
-import { TenantEncuestasModule } from './modules/tenant-encuestas/tenant-encuestas.module';
-import { TenantPlanesModule } from './modules/tenant-planes/tenant-planes.module';
-import { TenantEventosAcademicosModule } from './modules/tenant-eventos-academicos/tenant-eventos-academicos.module';
-import { TenantPreferenciasModule } from './modules/tenant-preferencias/tenant-preferencias.module';
-import { TenantIncidenciasModule } from './modules/tenant-incidencias/tenant-incidencias.module';
-import { DocumentosModule } from './modules/documentos/documentos.module';
-import { ClientAuthModule } from './modules/client-auth/client-auth.module';
-import { ClientUserManagementModule } from './modules/client-user-management/client-user-management.module';
+import { InfrastructureModule } from './modules/infrastructure/infrastructure.module';
+import { CoreModule } from './modules/core/core.module';
+import { TenantModule } from './modules/tenant/tenant.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
 import { TenantScopeGuard } from './common/guards/tenant-scope.guard';
 import { BetterAuthGuard } from './common/guards/better-auth.guard';
@@ -50,44 +15,9 @@ import { authClientProvider } from './common/auth-client.provider';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '../../.env' }),
-    TenantsModule,
-    AuthModule,
-    ClientsModule,
-    DashboardModule,
-    EventosModule,
-    TareasModule,
-    CitasModule,
-    TenantDashboardModule,
-    TenantClientesModule,
-    TenantTareasModule,
-    TenantNotificacionesModule,
-    TenantProfileModule,
-    TenantSistemasModule,
-    TenantRecursosModule,
-    TenantModulesModule,
-    NotificationsModule,
-    TenantIncidenciasModule,
-    HealthModule,
-    AuditModule,
-    TenantHealthModule,
-    SearchModule,
-    AdminToolsModule,
-    CommunicationsModule,
-    ExportModule,
-    TenantPresupuestosModule,
-    TenantWebhooksModule,
-    TenantPlantillasModule,
-    TenantEmailModule,
-    TenantAutomationsModule,
-    TenantPagosModule,
-    TenantGoogleCalendarModule,
-    TenantEncuestasModule,
-    TenantPlanesModule,
-    TenantEventosAcademicosModule,
-    TenantPreferenciasModule,
-    DocumentosModule,
-    ClientAuthModule,
-    ClientUserManagementModule,
+    InfrastructureModule,
+    CoreModule,
+    TenantModule,
   ],
   providers: [
     PrismaService,

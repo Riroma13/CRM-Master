@@ -1,0 +1,36 @@
+import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
+import { CitasModule } from '../citas/citas.module';
+import { ClientAuthModule } from '../client-auth/client-auth.module';
+import { ClientUserManagementModule } from '../client-user-management/client-user-management.module';
+import { ClientsModule } from '../clients/clients.module';
+import { CommunicationsModule } from '../communications/communications.module';
+import { DashboardModule } from '../dashboard/dashboard.module';
+import { DocumentosModule } from '../documentos/documentos.module';
+import { EventosModule } from '../eventos/eventos.module';
+import { TareasModule } from '../tareas/tareas.module';
+import { TenantsModule } from '../tenants/tenant.module';
+
+/**
+ * Aggregation module for the platform's core business context.
+ *
+ * Mission Control / admin back-office modules plus shared domain
+ * capabilities (appointments, documents, auth) that are consumed
+ * by the tenant layer and infrastructure alike.
+ */
+@Module({
+  imports: [
+    AuthModule,
+    CitasModule,
+    ClientAuthModule,
+    ClientUserManagementModule,
+    ClientsModule,
+    CommunicationsModule,
+    DashboardModule,
+    DocumentosModule,
+    EventosModule,
+    TareasModule,
+    TenantsModule,
+  ],
+})
+export class CoreModule {}
