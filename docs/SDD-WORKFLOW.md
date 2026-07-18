@@ -1,9 +1,9 @@
 # SDD Workflow — Spec-Driven Development para CRM-Master
 
-> **Versión:** 1.0
-> **Fecha:** 2026-07-04
-> **Autor:** Einstein (propuesta)
-> **Estado:** proposed → esperando aprobación de Ricardo
+> **Versión:** 2.0
+> **Fecha:** 2026-07-18
+> **Autor:** Sistema
+> **Estado:** active
 
 ---
 
@@ -16,11 +16,12 @@ Establecer un flujo de fases claro, repetible y riguroso para el desarrollo de f
 ## 📋 Fases del SDD
 
 ```
-┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
-│  FASE 1 │ → │  FASE 2 │ → │  FASE 3 │ → │  FASE 4 │ → │  FASE 5 │ → │  FASE 6 │ → │  FASE 7 │ → │  FASE 8 │
-│   IDEA  │    │  DRAFT  │    │APROBADA │    │  ADR    │    │   RED   │    │  GREEN  │    │REFACTOR │    │  DONE   │
-│         │    │  SPEC   │    │         │    │         │    │  (TDD)  │    │         │    │         │    │         │
-└─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘
+┌──────────┐   ┌──────────┐   ┌──────────┐   ┌───────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌───────────┐
+│  FASE 1  │ → │  FASE 2  │ → │  FASE 3  │ → │  FASE 4   │ → │  FASE 5  │ → │  FASE 6  │ → │  FASE 7  │ → │  FASE 8   │
+│   IDEA   │   │  DRAFT   │   │ APROBADA │   │  DESIGN   │   │   RED    │   │  GREEN   │   │ REFACTOR │   │  ARCHIVE  │
+│          │   │  SPEC    │   │          │   │ +Working  │   │  (TDD)   │   │          │   │          │   │ +Learning │
+│          │   │          │   │          │   │   Set     │   │          │   │          │   │          │   │ +JSON     │
+└──────────┘   └──────────┘   └──────────┘   └───────────┘   └──────────┘   └──────────┘   └──────────┘   └───────────┘
 ```
 
 ---
@@ -92,9 +93,13 @@ Establecer un flujo de fases claro, repetible y riguroso para el desarrollo de f
 - **Actividad:**
   - Si la spec introduce cambios arquitectónicos significativos → crear ADR (`docs/architecture/adr/`)
   - Definir detalles técnicos: flujo de datos, integraciones, decisiones de librerías
+  - **Generar Working Set**: predecir los archivos primarios, secundarios, tests, configuración y archivos que NO cambiarán.
+  - **Generar Read Order**: secuencia óptima de lectura para minimizar exploración durante Apply.
+  - **Estimar Design Confidence**: High/Medium/Low. Si no es High, explicar la brecha.
+  - **Definir Exploration Budget**: máximo de búsquedas (grep/find), lecturas y modificaciones esperadas.
   - Actualizar `docs/decisions-log.md`
-- **Entregable:** ADR (si aplica) + spec actualizada con sección "Diseño técnico" completa.
-- **Gate:** ¿Necesita ADR? ¿El diseño es coherente con ADRs existentes?
+- **Entregable:** ADR (si aplica) + spec actualizada con sección "Diseño técnico" completa + Working Set + Read Order + Exploration Budget.
+- **Gate:** ¿Necesita ADR? ¿El diseño es coherente con ADRs existentes? ¿El Working Set y Read Order están completos?
 
 ---
 
@@ -125,12 +130,15 @@ Establecer un flujo de fases claro, repetible y riguroso para el desarrollo de f
   - No anticipar abstracciones
   - No optimizar prematuramente
   - Hacer pasar los tests, nada más
-- **Entregable:** Código de producción que hace pasar todos los tests.
-- **Gate:** ¿`pnpm test` pasa al 100%? ¿Cobertura ≥ 80%?
+  - **Consumir el Working Set y Read Order** del diseño antes de explorar el repositorio
+  - No realizar búsquedas repo-wide (grep, find) a menos que el Working Set sea insuficiente
+  - Si se necesitan archivos fuera del Working Set, documentar por qué y qué asunción del diseño fue incorrecta
+- **Entregable:** Código de producción que hace pasar todos los tests + Working Set Accuracy report.
+- **Gate:** ¿`pnpm test` pasa al 100%? ¿Cobertura ≥ 80%? ¿La exploración se mantuvo dentro del presupuesto?
 
 ---
 
-### **FASE 7: Refactor & Review**
+### **FASE 7: Refactor & Verification**
 > **Estado:** `refactor` → Responsable: Tech Lead
 
 - **Trigger:** Tests en green.
@@ -142,35 +150,92 @@ Establecer un flujo de fases claro, repetible y riguroso para el desarrollo de f
   - Verificar formato (`pnpm format`)
   - Revisar que no hay credenciales hardcodeadas
   - Revisar que todo query a tenant tiene `tenant_id`
-- **Entregable:** Código limpio, tests pasando, lint limpio.
+  - **Validar Working Set**: comparar Planned Files vs Actual Files. Identificar Unexpected Files.
+  - **Evaluar Exploration**: revisar si Apply realizó búsquedas o lecturas innecesarias.
+- **Entregable:** Código limpio, tests pasando, lint limpio + Working Set Validation + Exploration Review.
 - **Gate:**
   - [ ] `pnpm test` ✅
   - [ ] `pnpm lint` ✅
   - [ ] `pnpm format` ✅
   - [ ] Cobertura ≥ 80% ✅
   - [ ] No hay secrets expuestos ✅
+  - [ ] Working Set Validation completada ✅
 
 ---
 
-### **FASE 8: Aceptación & Merge**
-> **Estado:** `implemented` → Responsable: Product Owner (validación) + Tech Lead (merge)
+### **FASE 8: Archive & Learning**
+> **Estado:** `implemented` → Responsable: Tech Lead
 
-- **Trigger:** Refactor completo.
+- **Trigger:** Verification completa.
 - **Actividad:**
-  1. Yo presento el resultado a Ricardo (demo breve o resumen)
-  2. Ricardo valida que cumple con la spec aprobada
-  3. Si hay desviaciones, documentarlas en la spec (sección "Notas")
-  4. Commit con Conventional Commit
-  5. Actualizar spec a estado `implemented`
+  1. Sync delta specs a main specs
+  2. Mover change folder a archive
+  3. **Generar Learning section**
+  4. **Generar JSON artifact** con métricas estructuradas
+  5. Commit con Conventional Commit
   6. Actualizar `docs/decisions-log.md` si hubo ADR
 - **Entregable:**
   - Spec con estado `implemented`
+  - Archive report con Learning metrics:
+    - Working Set Accuracy (%)
+    - Design Confidence (High/Medium/Low)
+    - Verify iterations
+    - Unexpected dependencies
+    - JSON artifact
   - Código mergeado en main
-  - Tests en CI pasando
 - **Gate final:**
-  - [ ] Product Owner valida que resuelve el problema original
+  - [ ] Working Set Accuracy measured and recorded
+  - [ ] JSON artifact generated
   - [ ] CI/CD pasa (tests, lint, build)
   - [ ] Spec actualizada con estado `implemented`
+
+---
+
+## 📐 Exploration Optimization
+
+### Objective
+
+Reduce repository exploration during Apply by making Design produce an explicit execution plan and by making Verify/Archive measure its accuracy.
+
+### Workflow
+
+```
+Design
+  → Working Set (Primary + Secondary + Tests + Config + NOT-to-change)
+  → Read Order (optimal file reading sequence)
+  → Expected Commands (build, test, lint, etc.)
+  → Design Confidence (High/Medium/Low)
+  → Exploration Budget (max searches, reads, modifications)
+     ↓
+Apply
+  → Consume Working Set + Read Order
+  → Follow Read Order strictly
+  → No repo-wide searches unless Working Set is insufficient
+  → Document every excess read/search + which Design assumption was incomplete
+     ↓
+Verify
+  → Working Set Validation (Planned vs Actual vs Unexpected)
+  → Exploration Review (unnecessary reads/searches, budget compliance)
+     ↓
+Archive
+  → Learning
+    → Working Set Accuracy (%)
+    → Unexpected Dependencies
+    → Verify Iterations
+    → Lessons Learned
+    → Future Recommendations
+  → JSON artifact (machine-readable metrics)
+```
+
+### Metrics tracked over time
+
+| Metric | Source | Purpose |
+|--------|--------|---------|
+| Working Set Accuracy | Archive | How well Design predicts the actual changes |
+| Design Confidence | Design | Self-assessment of completeness |
+| Exploration Budget vs Actual | Verify | Whether Apply explored more than expected |
+| Verify Iterations | Archive | How many fix cycles were needed |
+| Unexpected Dependencies | Archive | Recurring blind spots in Design |
 
 ---
 
@@ -297,12 +362,21 @@ Para que el SDD funcione, necesitamos:
 
 ---
 
-## 🤔 Preguntas para Ricardo
+---
 
-1. **¿Aprobas este workflow?** ¿Quieres ajustar alguna fase?
-2. **¿Quieres que las specs existentes (SPEC-0001 a SPEC-0007) pasen por este flujo?** Es decir, ¿las revisamos juntos y las llevamos a `approved` antes de implementar?
-3. **¿Hay alguna feature que quieras saltar a Fase 1 ahora mismo?**
+## 🏥 SDD Platform Infrastructure
+
+La plataforma SDD incluye componentes de infraestructura que garantizan su
+correcto funcionamiento:
+
+| Componente | Propósito | Documentación |
+|------------|-----------|---------------|
+| Environment Verification | Checks pre-workflow antes de cada fase | `docs/architecture/sdd-infrastructure.md` §1 |
+| Fallback Policy | 3 niveles de respaldo de modelos | `docs/architecture/sdd-infrastructure.md` §2 |
+| SDD Doctor | Auditoría completa del entorno (`/sdd-doctor`) | `docs/architecture/sdd-infrastructure.md` §3 |
+| JSON Artifact | Métricas estructuradas con environment info | `docs/architecture/sdd-infrastructure.md` §4 |
+| Stability Policy | Régimen de mantenimiento post-feature-complete | `docs/architecture/sdd-infrastructure.md` §5 |
 
 ---
 
-*Propuesta generada por Einstein el 2026-07-04. Pendiente de aprobación.*
+*Documento mantenido por el equipo de plataforma. Versión 2.0.*
