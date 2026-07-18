@@ -306,6 +306,21 @@ or `Not captured`.
 
 ---
 
+## 7. SDD v2.1 Feature Freeze
+
+A partir del merge de este commit, la plataforma SDD se declara
+
+**FEATURE FROZEN**
+
+No se añadirán nuevas fases, prompts, agentes, comandos, ni métricas
+al workflow SDD salvo que `/sdd-metrics` lo justifique con evidencia
+histórica recurrente (mínimo 20 implementaciones).
+
+Preferir mejorar la calidad del Design sobre añadir nuevas fases.
+Preferir reducir exploración sobre aumentar complejidad de orquestación.
+
+---
+
 ## 8. References
 
 - `docs/SDD-WORKFLOW.md` — full workflow documentation (v2.0+)
