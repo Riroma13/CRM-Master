@@ -13,6 +13,8 @@ export class TenantDashboardService {
     const weekStart = new Date(today);
     weekStart.setDate(today.getDate() - today.getDay());
 
+    const tx = this.prisma.forTenant(tenantId);
+
     const [
       totalClientes,
       clientesActivos,
@@ -22,28 +24,24 @@ export class TenantDashboardService {
       tareasPendientes,
       sistemasActivos,
       eventos,
-      countClientes,
       countTareas,
       countDocumentos,
       countSistemas,
     ] = await Promise.all([
-      this.prisma.admin.cliente.count({ where: { tenantId } }),
-      this.prisma.admin.cliente.count({ where: { tenantId, estadoRelacion: 'Activo' } }),
-      this.prisma.admin.cita.count({ where: { tenantId, fecha: { gte: today } } }),
-      this.prisma.admin.cita.count({ where: { tenantId, estado: 'pendiente' } }),
-      this.prisma.admin.cita.count({ where: { tenantId, fecha: { gte: weekStart } } }),
-      this.prisma.admin.tarea.count({ where: { tenantId, estado: { not: 'Hecho' } } }),
-      this.prisma.admin.sistema.count({ where: { tenantId, estadoTecnico: { not: '🔴 Caído' } } }),
-      this.prisma.admin.eventoBitacora.findMany({
-        where: { tenantId },
+      tx.cliente.count(),
+      tx.cliente.count({ where: { estadoRelacion: 'Activo' } }),
+      tx.cita.count({ where: { fecha: { gte: today } } }),
+      tx.cita.count({ where: { estado: 'pendiente' } }),
+      tx.cita.count({ where: { fecha: { gte: weekStart } } }),
+      tx.tarea.count({ where: { estado: { not: 'Hecho' } } }),
+      tx.sistema.count({ where: { estadoTecnico: { not: '🔴 Caído' } } }),
+      tx.eventoBitacora.findMany({
         orderBy: { fecha: 'desc' },
-        take: 10,
+        take: 5,
       }),
-      // Onboarding checklist counts
-      this.prisma.admin.cliente.count({ where: { tenantId } }),
-      this.prisma.admin.tarea.count({ where: { tenantId } }),
-      this.prisma.admin.documento.count({ where: { tenantId, isDeleted: false } }),
-      this.prisma.admin.sistema.count({ where: { tenantId } }),
+      tx.tarea.count(),
+      tx.documento.count({ where: { isDeleted: false } }),
+      tx.sistema.count(),
     ]);
 
     const eventosRecientes: EventoItem[] = eventos.map((e: any) => ({
@@ -56,12 +54,14 @@ export class TenantDashboardService {
 
     const onboardingChecklist = {
       steps: [
-        { id: 'cliente', label: 'Primer cliente', done: countClientes > 0 },
+        { id: 'cliente', label: 'Primer cliente', done: totalClientes > 0 },
         { id: 'tarea', label: 'Primera tarea', done: countTareas > 0 },
         { id: 'documento', label: 'Primer documento', done: countDocumentos > 0 },
         { id: 'sistema', label: 'Primer sistema', done: countSistemas > 0 },
       ],
     };
+
+    const ultimosEventos = eventosRecientes;
 
     return {
       totalClientes,
@@ -72,6 +72,8 @@ export class TenantDashboardService {
       tareasPendientes,
       sistemasActivos,
       eventosRecientes,
+      ultimosEventos,
+      ultimaActualizacion: new Date().toISOString(),
       onboardingChecklist,
     };
   }

@@ -5,6 +5,7 @@ import type { TenantDashboardResponse } from '@/lib/api-types';
 interface UseDashboardReturn {
   data: TenantDashboardResponse | null;
   isLoading: boolean;
+  loading: boolean;
   isError: boolean;
   error: Error | null;
   refetch: () => void;
@@ -53,5 +54,5 @@ export function useDashboard(): UseDashboardReturn {
     fetchDashboard();
   }, [fetchDashboard]);
 
-  return { data, isLoading, isError, error, refetch };
+  return { data, isLoading, loading: isLoading, isError, error, refetch };
 }
