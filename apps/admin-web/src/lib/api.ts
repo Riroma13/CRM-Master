@@ -92,6 +92,35 @@ export const api = {
       );
     }
   },
+
+  async post<T>(path: string, body?: unknown): Promise<T> {
+    const token = process.env.NEXT_PUBLIC_API_TOKEN;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetch(path, {
+        method: 'POST',
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      return handleResponse<T>(response);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new NetworkError(
+        error instanceof Error ? error.message : 'Failed to fetch',
+        error,
+      );
+    }
+  },
 };
 
 // ─── Type helper ──────────────────────────────────────────────
