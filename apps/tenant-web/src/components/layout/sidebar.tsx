@@ -6,64 +6,27 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { useModules } from '@/hooks/use-modules';
-import {
-  Calendar, FileText, LayoutDashboard, Users,
-  ClipboardList, Settings, HardDrive, Briefcase, ToggleLeft, Bell, AlertTriangle, Rocket, History, TrendingUp, BarChart, Wallet, Webhook, FileDigit, Mail, Zap, CreditCard, Star, BookOpen, Lock,
-} from 'lucide-react';
+import { navigationRegistry } from '@/config/navigation';
+import type { NavItem } from '@/config/navigation';
 
-const MODULE_ICONS: Record<string, React.ElementType> = {
-  dashboard: LayoutDashboard,
-  clientes: Users,
-  pipeline: TrendingUp,
-  reportes: BarChart,
-  presupuestos: Wallet,
-  webhooks: Webhook,
-  plantillas: FileDigit,
-  email: Mail,
-  automations: Zap,
-  pagos: CreditCard,
-  calendar: Calendar,
-  encuestas: Star,
-  planes: CreditCard,
-  calendarioAcademico: BookOpen,
-  preferencias: Bell,
-  cambiarPassword: Lock,
-  documentos: FileText,
-  tareas: ClipboardList,
-  calendario: Calendar,
-  recursos: Briefcase,
-  sistemas: HardDrive,
-  notificaciones: Bell,
-  incidencias: AlertTriangle,
-  perfil: Settings,
-};
-
-const MODULE_HREF: Record<string, string> = {
-  dashboard: '/admin',
-  clientes: '/admin/clientes',
-  pipeline: '/admin/pipeline',
-  reportes: '/admin/reportes',
-  presupuestos: '/admin/presupuestos',
-  webhooks: '/admin/webhooks',
-  plantillas: '/admin/plantillas',
-  email: '/admin/email',
-  automations: '/admin/automations',
-  pagos: '/admin/pagos',
-  calendar: '/admin/calendar-sync',
-  encuestas: '/admin/encuestas',
-  planes: '/admin/planes',
-  calendarioAcademico: '/admin/calendario-academico',
-  preferencias: '/admin/preferencias',
-  cambiarPassword: '/admin/cambiar-password',
-  documentos: '/admin/documentos',
-  tareas: '/admin/tareas',
-  calendario: '/admin/calendario',
-  recursos: '/admin/recursos',
-  sistemas: '/admin/sistemas',
-  notificaciones: '/admin/notificaciones',
-  incidencias: '/admin/incidencias',
-  perfil: '/admin/perfil',
-};
+function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      key={item.id}
+      href={item.href}
+      className={cn(
+        'flex items-center gap-3 rounded-[0.25rem] px-3 py-2 text-sm font-medium transition-colors',
+        isActive
+          ? 'bg-[#DAE2FD] text-[#0F172A]'
+          : 'text-[#45464D] hover:bg-[#F0EDEF] hover:text-[#1B1B1D]',
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{item.label}</span>
+    </Link>
+  );
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -77,7 +40,7 @@ export function Sidebar() {
       .catch(() => {});
   }, []);
 
-  const visibleModules = Object.entries(MODULE_HREF).filter(([id]) => isEnabled(id));
+  const visibleItems = navigationRegistry.getVisible(isEnabled);
 
   return (
     <aside className="flex h-screen w-[260px] flex-col border-r border-[#E2E8F0] bg-white" data-testid="sidebar">
@@ -100,68 +63,19 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {visibleModules.map(([id, href]) => {
-          const Icon = MODULE_ICONS[id];
-          const label = id.charAt(0).toUpperCase() + id.slice(1);
+        {visibleItems.map((item) => {
           const isActive =
-            pathname === href || (href !== '/admin' && pathname.startsWith(href));
+            pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
 
           return (
-            <Link
-              key={id}
-              href={href}
-              className={cn(
-                'flex items-center gap-3 rounded-[0.25rem] px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-[#DAE2FD] text-[#0F172A]'
-                  : 'text-[#45464D] hover:bg-[#F0EDEF] hover:text-[#1B1B1D]',
+            <div key={item.id}>
+              {item.separator && (
+                <div className="mt-4 border-t border-[#E2E8F0] pt-4" />
               )}
-            >
-              {Icon && <Icon className="h-4 w-4" />}
-              <span>{label}</span>
-            </Link>
+              <NavLink item={item} isActive={isActive} />
+            </div>
           );
         })}
-        {/* Onboarding — always visible */}
-        <Link
-          href="/admin/onboarding"
-          className={cn(
-            'flex items-center gap-3 rounded-[0.25rem] px-3 py-2 text-sm font-medium transition-colors',
-            pathname === '/admin/onboarding'
-              ? 'bg-[#DAE2FD] text-[#0F172A]'
-              : 'text-[#45464D] hover:bg-[#F0EDEF] hover:text-[#1B1B1D]',
-          )}
-        >
-          <Rocket className="h-4 w-4" />
-          <span>Onboarding</span>
-        </Link>
-
-        {/* Módulos — always visible */}
-        <Link
-          href="/admin/audit"
-          className={cn(
-            'flex items-center gap-3 rounded-[0.25rem] px-3 py-2 text-sm font-medium transition-colors',
-            pathname === '/admin/audit'
-              ? 'bg-[#DAE2FD] text-[#0F172A]'
-              : 'text-[#45464D] hover:bg-[#F0EDEF] hover:text-[#1B1B1D]',
-          )}
-        >
-          <History className="h-4 w-4" />
-          <span>Auditoría</span>
-        </Link>
-
-        <Link
-          href="/admin/modules"
-          className={cn(
-            'flex items-center gap-3 rounded-[0.25rem] px-3 py-2 text-sm font-medium transition-colors mt-4 border-t border-[#E2E8F0] pt-4',
-            pathname === '/admin/modules'
-              ? 'bg-[#DAE2FD] text-[#0F172A]'
-              : 'text-[#45464D] hover:bg-[#F0EDEF] hover:text-[#1B1B1D]',
-          )}
-        >
-          <ToggleLeft className="h-4 w-4" />
-          <span>Módulos</span>
-        </Link>
       </nav>
     </aside>
   );

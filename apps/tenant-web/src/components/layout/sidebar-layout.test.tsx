@@ -29,12 +29,38 @@ vi.mock('./sidebar', () => ({
   Sidebar: () => <div data-testid="sidebar">Sidebar</div>,
 }));
 
-// Mock lucide-react icons
+// Mock lucide-react icons (all icons used by navigation registry + layout)
 vi.mock('lucide-react', () => ({
   Menu: () => <span data-testid="icon-menu">Menu</span>,
   X: () => <span data-testid="icon-x">X</span>,
   Bell: () => <span data-testid="icon-bell">Bell</span>,
   ChevronRight: () => <span data-testid="icon-chevron">&gt;</span>,
+  Search: () => <span data-testid="icon-search">Sr</span>,
+  ArrowRight: () => <span>Ar</span>,
+  // Navigation registry icons
+  LayoutDashboard: () => <span>Db</span>,
+  Users: () => <span>Us</span>,
+  TrendingUp: () => <span>Tr</span>,
+  BarChart: () => <span>Bc</span>,
+  Wallet: () => <span>Wl</span>,
+  HardDrive: () => <span>Hd</span>,
+  Calendar: () => <span>Cal</span>,
+  Briefcase: () => <span>Bc</span>,
+  BookOpen: () => <span>Bo</span>,
+  AlertTriangle: () => <span>At</span>,
+  ClipboardList: () => <span>Tk</span>,
+  FileText: () => <span>Ft</span>,
+  Mail: () => <span>Ml</span>,
+  Star: () => <span>Sr</span>,
+  Zap: () => <span>Zp</span>,
+  Webhook: () => <span>Wh</span>,
+  FileDigit: () => <span>Fd</span>,
+  Settings: () => <span>St</span>,
+  Lock: () => <span>Lk</span>,
+  CreditCard: () => <span>Cc</span>,
+  ToggleLeft: () => <span>Tg</span>,
+  Rocket: () => <span>Rk</span>,
+  History: () => <span>Hy</span>,
 }));
 
 // Mock notification bell hook
