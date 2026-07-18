@@ -50,6 +50,10 @@ y bitácora de cada tenant — modelo de datos completo en docs/DESIGN.md.
  de permitir el alta.
 7. Conventional commits (`feat:`, `fix:`, `test:`, `docs:`, `refactor:`).
 8. Cambios de schema Prisma requieren ADR o referencia a uno existente.
+9. **Split de TenantModule obligatorio** si: (a) supera 25 feature modules, O (b) múltiples ramas concurrentes modifican `tenant/tenant.module.ts` frecuentemente por conflictos de merge. La estrategia de split está documentada en ADR-0003.
+10. **Composition modules puros**: todo módulo NestJS que agregue otros módulos debe seguir `docs/architecture/module-composition.md`. Sin providers, controllers, ni lógica de negocio. Imports ordenados alfabéticamente.
+11. **Regresión de app.module.ts**: si `app.module.ts` vuelve a aparecer entre los Top Hot Files del proyecto, se considera regresión arquitectónica y requiere acción correctiva inmediata.
+12. **Sidebar es presentation-only**: la navegación pertenece a los features (`src/config/navigation/*.ts`). Sidebar solo renderiza. Nunca añadir rutas, iconos o labels hardcodeados en Sidebar.
 
 ## Comandos
 - Instalar: `pnpm install`
@@ -58,6 +62,7 @@ y bitácora de cada tenant — modelo de datos completo en docs/DESIGN.md.
 - Build: `pnpm turbo build`
 - Migración: `pnpm --filter database prisma migrate dev`
 - Levantar local: `docker compose up -d`
+- SDD Doctor: `/sdd-doctor` (audita el entorno SDD completo)
 
 ## Estructura de specs (docs/specs/NNNN-nombre.md)
 - Contexto / problema que resuelve
@@ -65,19 +70,64 @@ y bitácora de cada tenant — modelo de datos completo en docs/DESIGN.md.
 - Casos de borde
 - Criterios de aceptación (testables, no ambiguos)
 
+## Exploration Optimization (Phase 2)
+El flujo SDD ahora incluye medición de precisión del Working Set:
+
+```
+Design → Working Set + Read Order + Exploration Budget
+Apply  → Consume Working Set antes de explorar
+Verify → Validar Working Set vs cambios reales
+Archive→ Learning + JSON artifact con métricas
+```
+
+Documentación completa en `docs/SDD-WORKFLOW.md` (sección "Exploration Optimization").
+
 ## Entidades core (detalle completo en docs/DESIGN.md)
 Tenant (Cliente) → Sistema(s) → Inventario / Bitácora / Tareas
 
 ## Asignación de modelos por tipo de tarea
-El modelo a usar depende del tipo de implementación:
 
-| Contexto | Modelo | Razón |
+### Modelos por contexto
+
+| Contexto | Sub-agente | Modelo | Razón |
+|---|---|---|---|
+| `sdd-apply` código general (CRUD, DTOs, servicios estándar) | `sdd-apply` (default) | `opencode-go/deepseek-v4-flash` | Barato, rápido, suficiente |
+| `sdd-apply` aislamiento/seguridad (guards, scoping, auth, raw SQL, frontera entre tenants) | `sdd-apply-pro` | `opencode-go/kimi-k2.7-code` | Precisión crítica, revisión adversarial |
+| `sdd-design`, `sdd-propose` | `sdd-design`, `sdd-propose` | `opencode-go/minimax-m3` | Razonamiento profundo para planificación |
+| `sdd-spec`, `sdd-tasks` | `sdd-spec`, `sdd-tasks` | `opencode-go/glm-5.2` | Buen equilibrio coste/precisión |
+| `sdd-verify` | `sdd-verify` | `opencode-go/deepseek-v4-pro` | Precisión en validación |
+| `sdd-archive`, `sdd-explore`, `sdd-init`, `sdd-onboard` | respectivos | `opencode-go/deepseek-v4-flash` | Tareas ligeras |
+| Conversación, orquestación | `gentle-orchestrator` | `opencode-go/deepseek-v4-flash` | Razonamiento general suficiente |
+
+**Regla**: si el cambio toca `tenant_id`, guards, auth, o validación de frontera entre tenants, usar `sdd-apply-pro`. Si es lógica de negocio estándar sin implicación de aislamiento, `sdd-apply` es suficiente.
+
+### Fallback policy
+
+Si un sub-agente no puede cargar su modelo configurado:
+
+1. El orquestador intenta el modelo configurado en `opencode.json`.
+2. Si falla (`Model not found`), reintenta con `opencode-go/deepseek-v4-flash`.
+3. Registra el fallback: `[WARN] sdd-<phase> fallback: configured=<model> → used=opencode-go/deepseek-v4-flash`.
+4. Si deepseek-v4-flash también falla, el workflow se detiene con error.
+
+La ejecución del SDD nunca debe fallar por un modelo no disponible. El fallback es automático y silencioso.
+
+### Model verification
+
+Antes de iniciar un workflow SDD, el orquestador verifica los modelos:
+
+```bash
+# Verificar que todos los modelos existen
+opencode models | grep -E "opencode-go/(deepseek-v4-flash|deepseek-v4-pro|minimax-m3|glm-5.2|kimi-k2.7-code)" > /dev/null 2>&1
+```
+
+Si algún modelo falta, registrar advertencia pero continuar con fallback.
+
+### Variantes de sub-agentes
+
+| Sub-agente base | Variante pro | Cuándo usar la variante pro |
 |---|---|---|
-| `sdd-apply` código general (CRUD, endpoints, DTOs, servicios estándar) | `deepseek-v4-flash` | Barato, rápido, suficiente |
-| `sdd-apply` aislamiento/seguridad (guards, scoping de tenant, auth, permisos, raw SQL, validación de frontera) | `kimi-k2.7-code` o `deepseek-v4-pro` | Precisión crítica, revisión adversarial |
-| Conversación, planificación, revisión | `deepseek-v4-flash` | Razonamiento general suficiente |
-
-**Regla**: si el cambio toca `tenant_id`, guards, auth, o validación de frontera entre tenants, usar modelo de precisión. Si es lógica de negocio estándar sin implicación de aislamiento, flash es suficiente.
+| `sdd-apply` | `sdd-apply-pro` | Cambios que tocan tenant_id, guards, auth, raw SQL, o frontera entre tenants |
 
 ## Antes de marcar una tarea como hecha
 - [ ] Tests pasan (`pnpm test`)

@@ -140,6 +140,59 @@ Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `chore:`
 8. **Cambios de schema Prisma requieren ADR**
 9. **Zero hardcoded model lists**: usar tenant-scope generator siempre
 10. **Login siempre 401**: nunca revelar existencia de usuario
+11. **Split de TenantModule obligatorio** si: (a) supera 25 feature modules, O (b) múltiples ramas concurrentes modifican `tenant/tenant.module.ts` por conflictos. Estrategia en ADR-0003.
+12. **Composition modules puros**: todo módulo NestJS agregador debe seguir `docs/architecture/module-composition.md`. Sin providers, controllers, ni lógica.
+13. **Regresión de app.module.ts**: si reappears among Top Hot Files, es regresión.
+
+---
+
+## SDD Platform Infrastructure
+
+La plataforma SDD incluye componentes de infraestructura documentados en
+`docs/architecture/sdd-infrastructure.md`:
+
+- **Environment Verification**: chequeos pre-workflow (modelos, templates, docs)
+- **Fallback Telemetry**: registro estructurado de cada fallback de modelo
+- **SDD Doctor**: comando `/sdd-doctor` para auditoría completa del entorno
+- **JSON Artifact**: métricas estructuradas con info del entorno
+- **Stability Policy**: la plataforma SDD es feature-complete; cambios requieren evidencia
+
+---
+
+## Frontend Architecture (Navigation)
+
+### Composition Rules
+
+1. **Navigation ownership belongs to features.** Each feature module owns its
+   `navigation.ts` with id, label, href, icon, order, and visibility rules.
+   See `src/config/navigation/{feature}.ts`.
+
+2. **Sidebar is presentation only.** It consumes the Navigation Registry and
+   renders items. No hardcoded routes, icons, or labels.
+
+3. **Registry is composition only.** `src/config/navigation/registry.ts` imports
+   all feature navigation files, sorts by order, and exposes `getVisible()`.
+   Zero feature-specific logic.
+
+4. **No feature requires modifying Sidebar.** Adding a new admin page = create
+   the page + create/add to a navigation feature file. Sidebar is untouched.
+
+5. **Breadcrumbs derive from the same registry.** `Breadcrumbs.tsx` resolves
+   path segments against navigation item labels.
+
+6. **Always-visible items** (Onboarding, Auditoría) are `system` category with
+   `alwaysVisible: true`. They bypass module-gating.
+
+### Hot File Prevention
+
+`sidebar.tsx` was the project's **#2 hot file** (19 commits, 14.0% of all commits).
+The navigation decentralization eliminates this pattern.
+
+| Before | After |
+|--------|-------|
+| sidebar.tsx owns: icons, routes, labels, visibility | Features own metadata; Sidebar renders only |
+| Adding a feature edits sidebar.tsx | Adding a feature edits only navigation/{feature}.ts |
+| Breadcrumbs have separate hardcoded map | Breadcrumbs resolve from the same registry |
 
 ---
 
