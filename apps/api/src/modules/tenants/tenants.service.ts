@@ -203,6 +203,7 @@ export class TenantsService {
       slug: tenant.slug,
       name: tenant.name,
       status: tenant.isActive ? 'active' : 'inactive',
+      portalUrl: `https://${tenant.slug}.crmmaster.com`,
       config: tenant.config,
       clientCount: tenant._count.clients,
       userCount: tenant._count.users,
