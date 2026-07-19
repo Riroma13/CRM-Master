@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import * as jwt from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
 
 const RESERVED_SLUGS = new Set(['www', 'api', 'admin', 'app', 'mail', 'dev']);
 
@@ -24,7 +24,7 @@ interface CookiePayload {
   role: string | null;
 }
 
-function parseCookie(cookieValue: string | undefined): CookiePayload {
+async function parseCookie(cookieValue: string | undefined): Promise<CookiePayload> {
   if (!cookieValue) return { role: null };
 
   const secret = process.env.CLIENT_JWT_SECRET;
@@ -43,8 +43,9 @@ function parseCookie(cookieValue: string | undefined): CookiePayload {
   }
 
   try {
-    const decoded = jwt.verify(cookieValue, secret) as any;
-    return { role: decoded?.role ?? null };
+    const secretKey = new TextEncoder().encode(secret);
+    const { payload } = await jwtVerify(cookieValue, secretKey);
+    return { role: (payload as any)?.role ?? null };
   } catch {
     return { role: null };
   }
@@ -72,7 +73,7 @@ export function resolveRouteByCookie(params: {
   return { destination, action: 'rewrite' };
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
@@ -91,7 +92,7 @@ export function middleware(request: NextRequest) {
   const clientCookie = request.cookies.get('__Secure-client-session')?.value;
 
   const clientPortalEnabled = process.env.NEXT_PUBLIC_CLIENT_PORTAL_ENABLED === 'true';
-  const payload = parseCookie(clientPortalEnabled ? (adminCookie || clientCookie) : adminCookie);
+  const payload = await parseCookie(clientPortalEnabled ? (adminCookie || clientCookie) : adminCookie);
   const { role } = payload;
 
   const decision = resolveRouteByCookie({ role, pathname });
