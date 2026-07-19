@@ -68,7 +68,15 @@ export const CreateTareaSchema = z.object({
   fechaLimite: z.string().datetime().optional(),
 });
 
+// ─── Activity Timeline ──────────────────────────────────────────────
+
+export * from './activity-timeline';
+
 // ─── Client Auth ─────────────────────────────────────────────────────
 
 export * from './client-auth';
+
+// ─── Search (Universal Search 2.0) ────────────────────────────────────
+
+export * from './search';
 

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
 import { LocalCalendarProvider } from './local-calendar-provider';
 import { Slot, BookSlotInput, CitaResult } from './calendar-provider.interface';
 
@@ -10,6 +11,7 @@ export class CitasService {
   constructor(
     private readonly calendarProvider: LocalCalendarProvider,
     private readonly prisma: PrismaService,
+    private readonly activityTimeline: ActivityTimelineService,
   ) {}
 
   async getSlots(tenantId: string, date: Date, resourceId?: string): Promise<Slot[]> {
@@ -17,7 +19,23 @@ export class CitasService {
   }
 
   async bookSlot(tenantId: string, input: BookSlotInput): Promise<CitaResult> {
-    return this.calendarProvider.bookSlot(tenantId, input);
+    const result = await this.calendarProvider.bookSlot(tenantId, input);
+    try {
+      await this.activityTimeline.publish({
+        eventType: 'reserva.creada',
+        tenantId,
+        entityType: 'cita',
+        entityId: result.id,
+        actor: input.clienteEmail ?? 'system',
+        sourceModule: 'citas',
+        severity: 'info',
+        category: 'scheduling',
+        payload: { fecha: result.fecha.toISOString(), estado: result.estado },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to publish reserva.creada: ${(e as Error).message}`);
+    }
+    return result;
   }
 
   async confirmCita(citaId: string): Promise<CitaResult> {

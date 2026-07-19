@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
 import { z } from 'zod';
 import { CreateEventoSchema, EventoListQuery } from './dto';
 
@@ -7,7 +8,10 @@ import { CreateEventoSchema, EventoListQuery } from './dto';
 export class EventosService {
   private readonly logger = new Logger(EventosService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityTimeline: ActivityTimelineService,
+  ) {}
 
   async findAll(clienteId: string, query: z.infer<typeof EventoListQuery>) {
     const where: any = {
@@ -75,6 +79,23 @@ export class EventosService {
         sistema: { select: { id: true, nombreSistema: true } },
       },
     });
+
+    try {
+      await this.activityTimeline.publish({
+        eventType: 'evento.creado',
+        tenantId: sistema.tenantId,
+        clienteId,
+        entityType: 'evento',
+        entityId: evento.id,
+        actor: 'system',
+        sourceModule: 'eventos',
+        severity: 'info',
+        category: 'scheduling',
+        payload: { titulo: evento.titulo, tipo: evento.tipo },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to publish evento.creado: ${(e as Error).message}`);
+    }
 
     return {
       id: evento.id,

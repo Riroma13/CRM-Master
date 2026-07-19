@@ -106,3 +106,30 @@ export interface ShareLinkDto {
   downloadCount: number;
   createdAt: string;
 }
+
+// ─── Search (SPEC-0010) ─────────────────────────────────────
+
+export interface SearchResultItem {
+  entityType: string;
+  entityId: string;
+  title: string;
+  description?: string;
+  tags?: string[];
+  matchField?: string;
+  score: number;
+  url: string;
+  createdAt: string;
+}
+
+export interface SearchGroup {
+  entityType: string;
+  label: string;
+  icon: string;
+  results: SearchResultItem[];
+}
+
+export interface SearchResponse {
+  groups: SearchGroup[];
+  total: number;
+  query: string;
+}

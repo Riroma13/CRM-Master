@@ -1,13 +1,14 @@
 // ⚡ AUTO-GENERATED — DO NOT EDIT
 // Source: prisma/schema.prisma
 // Generator: prisma/generators/tenant-scope/generator.ts
-// Generated: 2026-07-16T21:17:24.501Z
+// Generated: 2026-07-19T11:43:55.847Z
 
 /**
  * Models that have a `tenantId` field and receive automatic
  * tenant-scoping in every Prisma query via createPrismaClient().
  */
 export const TENANT_SCOPED_MODELS = [
+  "ActivityEvent",
   "AuditLog",
   "Cita",
   "ClientUser",
@@ -35,6 +36,7 @@ export const TENANT_SCOPED_MODELS = [
  * cross-client isolation via createPrismaClient({ clienteId }).
  */
 export const CLIENTE_SCOPED_MODELS = [
+  "ActivityEvent",
   "Cita",
   "ClientUser",
   "Comunicacion",
@@ -50,6 +52,7 @@ export const CLIENTE_SCOPED_MODELS = [
  * Every model in the schema. Useful for validation.
  */
 export const ALL_MODELS = [
+  "ActivityEvent",
   "AuditLog",
   "Cita",
   "ClientUser",
@@ -104,6 +107,7 @@ export const MODELS_BY_SCOPED_FIELD = {
     "Comunicacion",
     "PlantillaDocumento",
     "PagoIntent",
+    "ActivityEvent",
     "Encuesta",
     "EventoAcademico"
   ],
@@ -116,7 +120,8 @@ export const MODELS_BY_SCOPED_FIELD = {
     "Incidencia",
     "Cita",
     "Comunicacion",
-    "PagoIntent"
+    "PagoIntent",
+    "ActivityEvent"
   ]
 } as const;
 

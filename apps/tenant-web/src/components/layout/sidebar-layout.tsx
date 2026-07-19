@@ -6,6 +6,7 @@ import { Menu, X, Search, ArrowRight } from 'lucide-react';
 import { Sidebar } from './sidebar';
 import { AuthGuard } from './auth-guard';
 import { Breadcrumbs } from './breadcrumbs';
+import { CommandPalette } from '@/components/search/command-palette';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { ToastProvider } from '@/components/ui/toast';
 
@@ -130,6 +131,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           <NotificationBell />
         </div>
 
+        <CommandPalette />
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1440px] px-6 py-6">
             <Breadcrumbs pathname={pathname} />

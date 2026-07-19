@@ -1,55 +1,36 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../common/prisma.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import type { SearchEngine, SearchQuery, SearchResultItem, IndexSearchInput } from '@shared/search';
 
 @Injectable()
 export class SearchService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(SearchService.name);
 
-  async search(tenantId: string, q: string) {
-    if (!q || q.length < 2) return { results: [] };
-    const term = q.toLowerCase();
+  constructor(
+    @Inject('SEARCH_ENGINE') private readonly engine: SearchEngine,
+  ) {}
 
-    const results: any[] = [];
-
-    // Search clientes
-    const clientes = await this.prisma.admin.cliente.findMany({
-      where: {
-        tenantId,
-        nombre: { contains: term, mode: 'insensitive' },
-      },
-      take: 5,
-      select: { id: true, nombre: true, tipoNegocio: true },
-    });
-    for (const c of clientes) {
-      results.push({ type: 'cliente', id: c.id, title: c.nombre, subtitle: c.tipoNegocio, link: `/admin/clientes/${c.id}` });
+  async search(query: SearchQuery): Promise<SearchResultItem[]> {
+    try {
+      return await this.engine.search(query);
+    } catch (error) {
+      this.logger.error(`Search failed: ${(error as Error).message}`);
+      return [];
     }
+  }
 
-    // Search tareas
-    const tareas = await this.prisma.admin.tarea.findMany({
-      where: {
-        tenantId,
-        titulo: { contains: term, mode: 'insensitive' },
-      },
-      take: 5,
-      select: { id: true, titulo: true, estado: true },
-    });
-    for (const t of tareas) {
-      results.push({ type: 'tarea', id: t.id, title: t.titulo, subtitle: t.estado, link: '/admin/tareas' });
+  async index(input: IndexSearchInput): Promise<void> {
+    try {
+      await this.engine.index(input);
+    } catch (error) {
+      this.logger.error(`Index failed for ${input.entityType}/${input.entityId}: ${(error as Error).message}`);
     }
+  }
 
-    // Search incidencias
-    const incidencias = await this.prisma.admin.incidencia.findMany({
-      where: {
-        tenantId,
-        titulo: { contains: term, mode: 'insensitive' },
-      },
-      take: 5,
-      select: { id: true, titulo: true, estado: true },
-    });
-    for (const inc of incidencias) {
-      results.push({ type: 'incidencia', id: inc.id, title: inc.titulo, subtitle: inc.estado, link: '/admin/incidencias' });
+  async remove(entityType: string, entityId: string, tenantId: string): Promise<void> {
+    try {
+      await this.engine.remove(entityType, entityId, tenantId);
+    } catch (error) {
+      this.logger.error(`Remove failed for ${entityType}/${entityId}: ${(error as Error).message}`);
     }
-
-    return { results };
   }
 }

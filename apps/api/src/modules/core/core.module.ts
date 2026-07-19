@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ActivityTimelineModule } from '../activity-timeline/activity-timeline.module';
 import { AuthModule } from '../auth/auth.module';
 import { CitasModule } from '../citas/citas.module';
 import { ClientAuthModule } from '../client-auth/client-auth.module';
@@ -8,6 +9,7 @@ import { CommunicationsModule } from '../communications/communications.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DocumentosModule } from '../documentos/documentos.module';
 import { EventosModule } from '../eventos/eventos.module';
+import { SearchModule } from '../search/search.module';
 import { TareasModule } from '../tareas/tareas.module';
 import { TenantsModule } from '../tenants/tenant.module';
 
@@ -20,6 +22,7 @@ import { TenantsModule } from '../tenants/tenant.module';
  */
 @Module({
   imports: [
+    ActivityTimelineModule,
     AuthModule,
     CitasModule,
     ClientAuthModule,
@@ -29,6 +32,7 @@ import { TenantsModule } from '../tenants/tenant.module';
     DashboardModule,
     DocumentosModule,
     EventosModule,
+    SearchModule,
     TareasModule,
     TenantsModule,
   ],

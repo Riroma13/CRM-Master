@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
 
 @Injectable()
 export class TenantSistemasService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(TenantSistemasService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityTimeline: ActivityTimelineService,
+  ) {}
 
   async findAll(tenantId: string, clienteId?: string) {
     const where: any = { tenantId };
@@ -31,15 +37,49 @@ export class TenantSistemasService {
   }
 
   async create(tenantId: string, data: { nombreSistema: string; tipo: string; clienteId: string; entorno?: string; version?: string }) {
-    return this.prisma.admin.sistema.create({
+    const sistema = await this.prisma.admin.sistema.create({
       data: { ...data, tenantId },
     });
+    try {
+      await this.activityTimeline.publish({
+        eventType: 'sistema.añadido',
+        tenantId,
+        clienteId: data.clienteId,
+        entityType: 'sistema',
+        entityId: sistema.id,
+        actor: 'system',
+        sourceModule: 'sistemas',
+        severity: 'info',
+        category: 'crm',
+        payload: { nombreSistema: sistema.nombreSistema, tipo: sistema.tipo },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to publish sistema.añadido: ${(e as Error).message}`);
+    }
+    return sistema;
   }
 
   async update(tenantId: string, id: string, data: any) {
     const sistema = await this.prisma.admin.sistema.findFirst({ where: { id, tenantId } });
     if (!sistema) throw new NotFoundException('Sistema no encontrado');
-    return this.prisma.admin.sistema.update({ where: { id }, data });
+    const updated = await this.prisma.admin.sistema.update({ where: { id }, data });
+    try {
+      await this.activityTimeline.publish({
+        eventType: 'sistema.modificado',
+        tenantId,
+        clienteId: sistema.clienteId ?? undefined,
+        entityType: 'sistema',
+        entityId: id,
+        actor: 'system',
+        sourceModule: 'sistemas',
+        severity: 'info',
+        category: 'crm',
+        payload: { nombreSistema: updated.nombreSistema },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to publish sistema.modificado: ${(e as Error).message}`);
+    }
+    return updated;
   }
 
   async remove(tenantId: string, id: string) {

@@ -196,6 +196,47 @@ The navigation decentralization eliminates this pattern.
 
 ---
 
+## Platform Baseline
+
+Referencia oficial: `docs/architecture/platform-baseline.md`
+
+- El estado actual de la plataforma es **arquitectónicamente estable**.
+- El trabajo futuro prioriza **capacidades de producto** sobre evolución de infraestructura.
+- Cambios en infraestructura requieren **evidencia histórica recurrente** y un **ADR** antes de ser aceptados.
+
+---
+
+## Enterprise Design Standard
+
+Todo nuevo Design SDD DEBE generarse usando:
+
+```
+docs/templates/design-master-prompt.md
+```
+
+que a su vez sigue la estructura de:
+
+```
+docs/templates/design-enterprise-template.md
+```
+
+**Por qué:**
+
+- Garantiza consistencia arquitectónica entre todas las implementaciones.
+- Elimina la redacción ad-hoc de Designs.
+- Asegura que las 18 secciones obligatorias están siempre presentes.
+- La Architecture Review (7 temas: escalabilidad, OCP, ownership, retención,
+  idempotencia, contratos compartidos, particionado) es obligatoria en todo Design.
+
+**Política de evolución:**
+
+Estos templates son parte de la plataforma de ingeniería. Cambios requieren
+evidencia histórica recurrente observada en múltiples implementaciones
+archivadas (≥20). No se modifican por preferencias personales. Sujetos a
+ADR-0004 (Feature Freeze).
+
+---
+
 ## Filosofía
 
 > **24 proyectos/año. Hecho bien desde el principio.**

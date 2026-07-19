@@ -54,6 +54,8 @@ y bitácora de cada tenant — modelo de datos completo en docs/DESIGN.md.
 10. **Composition modules puros**: todo módulo NestJS que agregue otros módulos debe seguir `docs/architecture/module-composition.md`. Sin providers, controllers, ni lógica de negocio. Imports ordenados alfabéticamente.
 11. **Regresión de app.module.ts**: si `app.module.ts` vuelve a aparecer entre los Top Hot Files del proyecto, se considera regresión arquitectónica y requiere acción correctiva inmediata.
 12. **Sidebar es presentation-only**: la navegación pertenece a los features (`src/config/navigation/*.ts`). Sidebar solo renderiza. Nunca añadir rutas, iconos o labels hardcodeados en Sidebar.
+13. **Enterprise Design Standard**: todo nuevo Design SDD DEBE generarse usando `docs/templates/design-master-prompt.md`, que sigue la estructura de `docs/templates/design-enterprise-template.md`. Ningún Design debe redactarse ad-hoc. El template es el estándar canónico de ingeniería del proyecto. Esta regla está sujeta a la política de Feature Freeze (ADR-0004): el template solo cambia con evidencia histórica recurrente, no por preferencias personales.
+14. **Platform Baseline**: el baseline arquitectónico actual está definido en `docs/architecture/platform-baseline.md`. Este documento representa la referencia arquitectónica oficial desde la que comienza todo el desarrollo de producto futuro. La infraestructura se considera feature-frozen. Toda nueva implementación sigue el Enterprise Design Standard.
 
 ## Comandos
 - Instalar: `pnpm install`

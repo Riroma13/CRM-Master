@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
 import { z } from 'zod';
 import { CreateClienteDto, UpdateClienteDto, ClienteCardDto, ClienteListQuery } from './dto';
 
@@ -7,10 +8,29 @@ import { CreateClienteDto, UpdateClienteDto, ClienteCardDto, ClienteListQuery } 
 export class ClientsService {
   private readonly logger = new Logger(ClientsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityTimeline: ActivityTimelineService,
+  ) {}
 
   async create(dto: CreateClienteDto): Promise<ClienteCardDto> {
     const cliente = await this.prisma.admin.cliente.create({ data: dto as any });
+    try {
+      await this.activityTimeline.publish({
+        eventType: 'cliente.creado',
+        tenantId: cliente.tenantId,
+        clienteId: cliente.id,
+        entityType: 'cliente',
+        entityId: cliente.id,
+        actor: 'system',
+        sourceModule: 'clientes',
+        severity: 'info',
+        category: 'crm',
+        payload: { nombre: cliente.nombre },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to publish cliente.creado: ${(e as Error).message}`);
+    }
     return this.mapToDto(cliente);
   }
 
@@ -112,6 +132,22 @@ export class ClientsService {
       where: { id },
       data: dto as any,
     });
+    try {
+      await this.activityTimeline.publish({
+        eventType: 'cliente.actualizado',
+        tenantId: cliente.tenantId,
+        clienteId: cliente.id,
+        entityType: 'cliente',
+        entityId: cliente.id,
+        actor: 'system',
+        sourceModule: 'clientes',
+        severity: 'info',
+        category: 'crm',
+        payload: { nombre: cliente.nombre },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to publish cliente.actualizado: ${(e as Error).message}`);
+    }
     return cliente;
   }
 

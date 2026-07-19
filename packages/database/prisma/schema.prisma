@@ -22,9 +22,11 @@ model Tenant {
   createdAt               DateTime @default(now()) @map("created_at")
   updatedAt               DateTime @updatedAt @map("updated_at")
 
-  users    User[]
-  clients  Cliente[]
-  sistemas Sistema[]
+  activityEvents ActivityEvent[]
+  searchEntries  SearchEntry[]
+  users          User[]
+  clients         Cliente[]
+  sistemas        Sistema[]
   items    ItemInventario[]
   eventos  EventoBitacora[]
   tareas   Tarea[]
@@ -556,6 +558,33 @@ model PagoIntent {
   @@map("pagos")
 }
 
+// ─── ActivityEvent (Activity Timeline) ──────────────────────────────
+
+model ActivityEvent {
+  id           Int      @id @default(autoincrement())
+  tenantId     String   @map("tenant_id")
+  clienteId    String?  @map("cliente_id")
+  entityType   String   @map("entity_type")
+  entityId     String?  @map("entity_id")
+  eventType    String   @map("event_type")
+  actor        String
+  sourceModule String   @map("source_module")
+  severity     String   @default("info")
+  category     String
+  payload      Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, createdAt(sort: Desc)], map: "timeline_tenant_created")
+  @@index([tenantId, clienteId, createdAt(sort: Desc)], map: "timeline_cliente")
+  @@index([tenantId, entityType, entityId, createdAt(sort: Desc)], map: "timeline_entity")
+  @@index([tenantId, eventType, createdAt(sort: Desc)], map: "timeline_event_type")
+  @@index([tenantId, sourceModule, createdAt(sort: Desc)], map: "timeline_source_module")
+  @@index([tenantId, severity, createdAt(sort: Desc)], map: "timeline_severity")
+  @@map("activity_events")
+}
+
 model Encuesta {
   id          Int      @id @default(autoincrement())
   tenantId    String   @map("tenant_id")
@@ -586,4 +615,27 @@ model EventoAcademico {
 
   @@index([tenantId])
   @@map("eventos_academicos")
+}
+
+// ─── SearchEntry (Universal Search) ──────────────────────────────────
+
+model SearchEntry {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  clienteId   String?  @map("cliente_id")
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  title       String
+  description String?
+  tags        String[]
+  searchVector String?  @map("search_vector") @db.Text
+  payload     Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([entityType, entityId, tenantId])
+  @@index([tenantId, entityType])
+  @@map("search_entries")
 }

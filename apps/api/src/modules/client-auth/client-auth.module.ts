@@ -2,9 +2,11 @@ import { Module, OnModuleInit, Logger } from '@nestjs/common';
 import { ClientAuthController } from './client-auth.controller';
 import { ClientAuthService } from './client-auth.service';
 import { ClientAuthGuard } from './client-auth.guard';
+import { ActivityTimelineModule } from '../activity-timeline/activity-timeline.module';
 import { PrismaService } from '../../common/prisma.service';
 
 @Module({
+  imports: [ActivityTimelineModule],
   controllers: [ClientAuthController],
   providers: [ClientAuthService, ClientAuthGuard, PrismaService],
   exports: [ClientAuthService, ClientAuthGuard],

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WebhookTriggerService } from '../tenant-webhooks/webhook-trigger.service';
 
@@ -11,7 +12,12 @@ export class AutomationsService {
   private readonly logger = new Logger(AutomationsService.name);
   private rules: Rule[] = []; private logs: Log[] = []; private nextRuleId = 1; private nextLogId = 1;
 
-  constructor(private readonly prisma: PrismaService, private readonly notifications: NotificationsService, private readonly webhooks: WebhookTriggerService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityTimeline: ActivityTimelineService,
+    private readonly notifications: NotificationsService,
+    private readonly webhooks: WebhookTriggerService,
+  ) {}
 
   getRules(tenantId: string) { return this.rules.filter(r => r.tenantId === tenantId); }
   createRule(tenantId: string, data: { nombre: string; trigger: string; action: { type: string; config: any } }) {
@@ -32,6 +38,21 @@ export class AutomationsService {
         }
         this.logs.push({ id: this.nextLogId++, ruleId: rule.id, tenantId, trigger: evento, result: 'ok', createdAt: new Date().toISOString() });
         this.logger.log(`Rule #${rule.id} '${rule.nombre}' triggered: ${evento}`);
+        try {
+          await this.activityTimeline.publish({
+            eventType: 'automatizacion.ejecutada',
+            tenantId,
+            entityType: 'automation',
+            entityId: String(rule.id),
+            actor: 'system',
+            sourceModule: 'automations',
+            severity: 'info',
+            category: 'automation',
+            payload: { nombre: rule.nombre, trigger: evento, actionType: rule.action.type },
+          });
+        } catch (pErr) {
+          this.logger.warn(`Failed to publish automatizacion.ejecutada: ${(pErr as Error).message}`);
+        }
       } catch (err: any) {
         this.logs.push({ id: this.nextLogId++, ruleId: rule.id, tenantId, trigger: evento, result: `error: ${err.message}`, createdAt: new Date().toISOString() });
       }

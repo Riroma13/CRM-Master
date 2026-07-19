@@ -5,6 +5,7 @@ import {
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../common/prisma.service';
+import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
 import { LoginDto, AuthResponseDto, MeDto } from './dto';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class AuthService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly activityTimeline: ActivityTimelineService,
   ) {}
 
   async login(dto: LoginDto): Promise<AuthResponseDto> {
@@ -78,6 +80,22 @@ export class AuthService {
     );
 
     this.logger.log(`Login exitoso: ${user.email} en ${tenant.slug}`);
+
+    try {
+      await this.activityTimeline.publish({
+        eventType: 'login.realizado',
+        tenantId: tenant.id,
+        entityType: 'user',
+        entityId: user.id,
+        actor: user.email,
+        sourceModule: 'auth',
+        severity: 'info',
+        category: 'auth',
+        payload: { email: user.email, role: user.role },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to publish login.realizado: ${(e as Error).message}`);
+    }
 
     return {
       user: {

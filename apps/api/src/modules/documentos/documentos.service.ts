@@ -7,13 +7,17 @@ import {
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../../common/prisma.service';
+import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
 import type { DocumentDto, ShareLinkDto } from './dto';
 
 @Injectable()
 export class DocumentosService {
   private readonly logger = new Logger(DocumentosService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityTimeline: ActivityTimelineService,
+  ) {}
 
   async create(
     tenantId: string,
@@ -40,6 +44,23 @@ export class DocumentosService {
         uploadedBy: data.uploadedBy,
       },
     });
+
+    try {
+      await this.activityTimeline.publish({
+        eventType: 'documento.generado',
+        tenantId,
+        clienteId: data.clienteId,
+        entityType: 'documento',
+        entityId: doc.id,
+        actor: data.uploadedBy,
+        sourceModule: 'documentos',
+        severity: 'info',
+        category: 'crm',
+        payload: { filename: doc.filename, category: doc.category },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to publish documento.generado: ${(e as Error).message}`);
+    }
 
     return this.toDocumentDto(doc);
   }

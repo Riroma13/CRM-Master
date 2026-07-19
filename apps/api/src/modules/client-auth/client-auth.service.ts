@@ -6,6 +6,7 @@ import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../common/prisma.service';
+import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
 import { ClientLoginDto, ClientAuthResponseDto, ClientMeDto, RegisterDto, RegisterResponseDto } from './dto/client-auth.dto';
 
 const JWT_SECRET = process.env.CLIENT_JWT_SECRET || 'client-jwt-dev-secret-change-in-prod';
@@ -39,7 +40,10 @@ export class ClientAuthService implements OnModuleDestroy {
   private readonly CLEANUP_INTERVAL = 300_000;
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityTimeline: ActivityTimelineService,
+  ) {
     this.cleanupTimer = setInterval(() => this.cleanupRateLimit(), this.CLEANUP_INTERVAL);
   }
 
@@ -181,6 +185,23 @@ export class ClientAuthService implements OnModuleDestroy {
     ]);
 
     this.logger.log(`[AUTH] client-register success email=<${this.hashEmail(dto.email)}> clienteId=${clienteId}`);
+
+    try {
+      await this.activityTimeline.publish({
+        eventType: 'usuario.registrado',
+        tenantId,
+        clienteId,
+        entityType: 'clientUser',
+        entityId: clientUserId,
+        actor: dto.email,
+        sourceModule: 'client-auth',
+        severity: 'info',
+        category: 'auth',
+        payload: { email: dto.email, nombre: dto.nombre },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to publish usuario.registrado: ${(e as Error).message}`);
+    }
 
     return { id: clientUser.id, nombre: clientUser.nombre!, email: clientUser.email };
   }

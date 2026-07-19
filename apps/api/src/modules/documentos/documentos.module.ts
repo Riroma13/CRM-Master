@@ -4,10 +4,12 @@ import { DocumentosController } from './documentos.controller';
 import { SharedController } from './shared.controller';
 import { DocumentosService } from './documentos.service';
 import { StorageService } from './storage.service';
+import { ActivityTimelineModule } from '../activity-timeline/activity-timeline.module';
 import { PrismaService } from '../../common/prisma.service';
 
 @Module({
   imports: [
+    ActivityTimelineModule,
     MulterModule.register({
       limits: {
         fileSize: 50 * 1024 * 1024, // 50MB
