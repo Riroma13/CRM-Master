@@ -321,7 +321,25 @@ Preferir reducir exploración sobre aumentar complejidad de orquestación.
 
 ---
 
-## 8. References
+## 8. Future Roadmap
+
+The future evolution of the SDD platform is documented in
+
+`docs/roadmaps/future-roadmap.md`
+
+This roadmap is informational only. It does not authorize any automatic
+modification to the SDD workflow, prompts, agents, or commands.
+
+Review triggers, procedures, and candidate improvements are defined there.
+No changes may occur without:
+1. Review trigger activation (≥40 implementations or PRs)
+2. Historical metrics from `/sdd-metrics`
+3. Pattern identification (≥20% recurrence)
+4. ADR proposal and acceptance
+
+---
+
+## 9. References
 
 - `docs/SDD-WORKFLOW.md` — full workflow documentation (v2.0+)
 - `docs/architecture/module-composition.md` — NestJS module composition standard
