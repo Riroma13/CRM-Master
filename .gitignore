@@ -29,6 +29,10 @@ yarn-error.log*
 # Prisma
 packages/database/src/generated/
 
+# Skill registry (generated)
+.atl/
+.skill-registry*
+
 # Testing
 coverage/
 .env
