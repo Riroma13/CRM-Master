@@ -9,21 +9,21 @@
 
 | Metric | Value |
 |--------|-------|
-| Total SPECs | 17 |
-| Completed SPECs | 17 |
-| Archived SPECs | 17 |
+| Total SPECs | 18 |
+| Completed SPECs | 18 |
+| Archived SPECs | 18 |
 | Average Working Set Accuracy | **~98%** |
 | Average Prediction Accuracy | **~96%** |
 | Average Tests Added per SPEC | ~30 |
-| Architecture Reviews Passed | 16/16 |
+| Architecture Reviews Passed | 17/17 |
 | Critical Discoveries | 0 |
 | Major Discoveries | 0 |
-| Minor Discoveries | 8 |
+| Minor Discoveries | 9 |
 | Average Files Created per SPEC | ~26 |
 | Average Files Modified per SPEC | ~3 |
-| Unexpected Files | 17 |
+| Unexpected Files | 19 |
 | Unexpected Dependencies | 1 (cmdk) |
-| Build Success | 16/16 |
+| Build Success | 17/17 |
 
 ---
 
@@ -48,6 +48,7 @@
 | SPEC-0017 | 2026-07-20 | 100% | 24 | 0/0/0 | ✅ Archived |
 | SPEC-0018 | 2026-07-20 | 100% | 83 | 0/0/0 | ✅ Archived |
 | SPEC-0019 | 2026-07-20 | ~96% | 142 | 0/0/1 | ✅ Archived |
+| SPEC-0020 | 2026-07-20 | 100% | 103 | 0/0/1 | ✅ Archived |
 
 ---
 
@@ -81,6 +82,11 @@
 | Content snapshot on instance for immutability | SPEC-0016 | — |
 | RoutingStrategy rule-based with override | SPEC-0016 | — |
 | EAV table for notification preferences | SPEC-0016 | — |
+| RAG pipeline (pgvector + ONNX + AiProvider) | SPEC-0020 | — |
+| Recursive chunking (256t, 20% overlap) | SPEC-0020 | — |
+| HNSW + hybrid (vector + keyword) search | SPEC-0020 | — |
+| KnowledgePublisher interface for module adoption | SPEC-0020 | — |
+| Embedding LRU cache + contentHash dedup | SPEC-0020 | — |
 
 ---
 
@@ -101,6 +107,8 @@
 | Doorbell tests + backward compat essential for contract evolution | SPEC-0017 |
 | Pre-existing build errors must be tracked independently of current PR scope | SPEC-0018 |
 | Audit consumes should use convenience methods (log()) to avoid circular DI | SPEC-0018 |
+| ONNX Runtime via @xenova/transformers works well but worker_threads needs non-null parentPort | SPEC-0020 |
+| KnowledgePublisher adoption pattern works cleanly with @Global() modules | SPEC-0020 |
 
 ---
 
@@ -112,5 +120,5 @@
 | Platform Baseline | `sdd-v2.1-baseline` ✅ |
 | Enterprise Design | ACTIVE ✅ |
 | Feature Freeze | ACTIVE ✅ |
-| Total archived SPECs | 17 |
+| Total archived SPECs | 18 |
 | Pending SPECs | 2 (SPEC-0004, SPEC-0013) |

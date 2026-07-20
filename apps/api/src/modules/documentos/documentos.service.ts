@@ -8,7 +8,9 @@ import {
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../../common/prisma.service';
 import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
+import { KnowledgeService } from '../knowledge/knowledge.service';
 import type { DocumentDto, ShareLinkDto } from './dto';
+import type { SourceType } from '@shared/knowledge';
 
 @Injectable()
 export class DocumentosService {
@@ -17,6 +19,7 @@ export class DocumentosService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly activityTimeline: ActivityTimelineService,
+    private readonly knowledgeService: KnowledgeService,
   ) {}
 
   async create(
@@ -62,6 +65,19 @@ export class DocumentosService {
       this.logger.warn(`Failed to publish documento.generado: ${(e as Error).message}`);
     }
 
+    try {
+      const content = `${doc.filename} ${doc.description ?? ''} ${doc.category}`;
+      await this.knowledgeService.indexContent(
+        tenantId,
+        'document' as SourceType,
+        doc.id,
+        content,
+        { filename: doc.filename, category: doc.category, mimeType: doc.mimeType },
+      );
+    } catch (e) {
+      this.logger.warn(`Failed to index document in KB: ${(e as Error).message}`);
+    }
+
     return this.toDocumentDto(doc);
   }
 
@@ -103,6 +119,19 @@ export class DocumentosService {
       data,
     });
 
+    try {
+      const content = `${doc.filename} ${data.description ?? doc.description ?? ''} ${data.category ?? doc.category}`;
+      await this.knowledgeService.indexContent(
+        tenantId,
+        'document' as SourceType,
+        doc.id,
+        content,
+        { filename: doc.filename, category: doc.category, mimeType: doc.mimeType },
+      );
+    } catch (e) {
+      this.logger.warn(`Failed to index updated document in KB: ${(e as Error).message}`);
+    }
+
     return this.toDocumentDto(doc);
   }
 
@@ -111,6 +140,12 @@ export class DocumentosService {
       where: { id },
       data: { isDeleted: true },
     });
+
+    try {
+      await this.knowledgeService.deleteSource(tenantId, 'document' as SourceType, id);
+    } catch (e) {
+      this.logger.warn(`Failed to delete document from KB: ${(e as Error).message}`);
+    }
   }
 
   async createShareLink(

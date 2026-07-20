@@ -24,8 +24,9 @@ interface TerminateMessage {
   type: 'terminate';
 }
 
-if (parentPort) {
-  parentPort.on('message', async (message: EmbedMessage | TerminateMessage) => {
+const pp = parentPort;
+if (pp) {
+  pp.on('message', async (message: EmbedMessage | TerminateMessage) => {
     try {
       if (message.type === 'terminate') {
         process.exit(0);
@@ -46,14 +47,14 @@ if (parentPort) {
           embeddings.push(slice);
         }
 
-        parentPort.postMessage({
+        pp.postMessage({
           id: message.id,
           type: 'result',
           embeddings,
         });
       }
     } catch (error: any) {
-      parentPort.postMessage({
+      pp.postMessage({
         id: (message as EmbedMessage).id,
         type: 'error',
         error: error?.message ?? 'Unknown error',
