@@ -9,21 +9,21 @@
 
 | Metric | Value |
 |--------|-------|
-| Total SPECs | 14 |
-| Completed SPECs | 14 |
-| Archived SPECs | 14 |
+| Total SPECs | 15 |
+| Completed SPECs | 15 |
+| Archived SPECs | 15 |
 | Average Working Set Accuracy | **~98%** |
 | Average Prediction Accuracy | **~96%** |
 | Average Tests Added per SPEC | ~25 |
-| Architecture Reviews Passed | 14/14 |
+| Architecture Reviews Passed | 15/15 |
 | Critical Discoveries | 0 |
 | Major Discoveries | 0 |
 | Minor Discoveries | 7 |
 | Average Files Created per SPEC | ~26 |
 | Average Files Modified per SPEC | ~3 |
-| Unexpected Files | 14 |
+| Unexpected Files | 16 |
 | Unexpected Dependencies | 1 (cmdk) |
-| Build Success | 14/14 |
+| Build Success | 15/15 |
 
 ---
 
@@ -45,6 +45,7 @@
 | add-portalurl-to-findone | 2026-07-18 | 100% | — | 0/0/0 | ✅ Archived |
 | SPEC-0015 | 2026-07-20 | 100% | 33 | 0/0/2 | ✅ Archived |
 | SPEC-0016 | 2026-07-20 | ~95% | 35 | 0/0/1 | ✅ Archived |
+| SPEC-0017 | 2026-07-20 | 100% | 24 | 0/0/0 | ✅ Archived |
 
 ---
 
@@ -91,6 +92,7 @@
 | Doorbell tests catch tenant isolation gaps effectively | SPEC-0015 |
 | Migration SQL fallback needed for CI-like environments | SPEC-0016 |
 | Testing files should be predicted in Working Set or explicitly deferred | SPEC-0016 |
+| Doorbell tests + backward compat essential for contract evolution | SPEC-0017 |
 
 ---
 
@@ -102,5 +104,5 @@
 | Platform Baseline | `sdd-v2.1-baseline` ✅ |
 | Enterprise Design | ACTIVE ✅ |
 | Feature Freeze | ACTIVE ✅ |
-| Total archived SPECs | 14 |
+| Total archived SPECs | 15 |
 | Pending SPECs | 2 (SPEC-0004, SPEC-0013) |
