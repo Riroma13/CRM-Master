@@ -21,6 +21,19 @@ export const knownEventTypes = [
   'encuesta.respondida',
   'usuario.registrado',
   'notificacion.enviada',
+  'workflow.iniciado',
+  'workflow.completado',
+  'workflow.error',
+  'workflow.pausado',
+  'notificacion.leida',
+  'notificacion.error',
+  'notificacion.programada',
+  'documento.subido',
+  'documento.eliminado',
+  'documento.compartido',
+  'integracion.conectada',
+  'integracion.desconectada',
+  'integracion.error',
 ] as const;
 
 export const EventType = z.enum(knownEventTypes);
