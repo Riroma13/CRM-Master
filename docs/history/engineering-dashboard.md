@@ -1,6 +1,6 @@
 # Engineering Dashboard
 
-> **Última actualización:** 2026-07-20 (SPEC-0021)
+> **Última actualización:** 2026-07-20 (SPEC-0022)
 > **Este documento se actualiza automáticamente al archivar cada SPEC.**
 
 ---
@@ -9,21 +9,21 @@
 
 | Metric | Value |
 |--------|-------|
-| Total SPECs | 19 |
-| Completed SPECs | 19 |
-| Archived SPECs | 19 |
+| Total SPECs | 20 |
+| Completed SPECs | 20 |
+| Archived SPECs | 20 |
 | Average Working Set Accuracy | **~98%** |
 | Average Prediction Accuracy | **~96%** |
-| Average Tests Added per SPEC | ~30 |
-| Architecture Reviews Passed | 18/18 |
+| Average Tests Added per SPEC | ~32 |
+| Architecture Reviews Passed | 19/19 |
 | Critical Discoveries | 0 |
 | Major Discoveries | 0 |
-| Minor Discoveries | 10 |
+| Minor Discoveries | 12 |
 | Average Files Created per SPEC | ~26 |
 | Average Files Modified per SPEC | ~3 |
-| Unexpected Files | 19 |
+| Unexpected Files | 21 |
 | Unexpected Dependencies | 1 (cmdk) |
-| Build Success | 18/18 |
+| Build Success | 19/19 |
 
 ---
 
@@ -50,6 +50,7 @@
 | SPEC-0019 | 2026-07-20 | ~96% | 142 | 0/0/1 | ✅ Archived |
 | SPEC-0020 | 2026-07-20 | 100% | 103 | 0/0/1 | ✅ Archived |
 | SPEC-0021 | 2026-07-20 | ~96% | 152 | 0/0/1 | ✅ Archived |
+| SPEC-0022 | 2026-07-20 | ~95% | 90 | 0/0/2 | ✅ Archived |
 
 ---
 
@@ -89,6 +90,11 @@
 | KnowledgePublisher interface for module adoption | SPEC-0020 | — |
 | Embedding LRU cache + contentHash dedup | SPEC-0020 | — |
 | Bearer token auth with SHA-256 hashed storage | SPEC-0021 | — |
+| Worker thread plugin sandbox (pool + LRU + resource limits) | SPEC-0022 | — |
+| Runtime PermissionGuard for Extension API | SPEC-0022 | — |
+| Domain allowlist for HTTP outbound | SPEC-0022 | — |
+| SHA-256 contentHash for package integrity | SPEC-0022 | — |
+| EventBridge pattern (event subscription → plugin dispatch) | SPEC-0022 | — |
 | Scopes resource:action (granular + wildcard) | SPEC-0021 | — |
 | In-memory sliding window rate limiting per endpoint | SPEC-0021 | — |
 | HMAC-SHA256 webhook signing with deliveryId anti-replay | SPEC-0021 | — |
@@ -126,9 +132,9 @@
 
 | Component | Status |
 |-----------|--------|
-| ADR | 0001–0008 ✅ |
+| ADR | 0001–0019 ✅ |
 | Platform Baseline | `sdd-v2.1-baseline` ✅ |
 | Enterprise Design | ACTIVE ✅ |
 | Feature Freeze | ACTIVE ✅ |
-| Total archived SPECs | 19 |
+| Total archived SPECs | 20 |
 | Pending SPECs | 2 (SPEC-0004, SPEC-0013) |

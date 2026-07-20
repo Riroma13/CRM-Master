@@ -165,6 +165,9 @@ This analysis happens AFTER Tasks Review confirms the tasks are sound.
 **The recommendation is advisory.** The user makes the final decision.
 If the user overrides the recommendation, record the override and reason.
 
+**Default chain strategy:** When the recommendation is Chained PRs and the user
+does not specify a strategy, default to **stacked-to-main**.
+
 ---
 
 ## Guard Execution Order (MANDATORY)
