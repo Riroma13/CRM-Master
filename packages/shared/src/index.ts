@@ -114,3 +114,19 @@ export type {
   ServiceTaskContext, ServiceTaskResult, ServiceTaskGateway,
   NodeExecutor, WorkflowExecutionContext, WorkflowExecutionResult, NodeExecutorRegistry,
 } from './workflow';
+
+// ─── Audit & Compliance Platform (SPEC-0018) ────────────────────────────
+
+export type {
+  ActorType, ResourceType, Action, Outcome, AuditEvent,
+} from './audit';
+
+export type { AuditPublisher } from './audit';
+
+export type {
+  ComplianceFramework, ComplianceViolation, ComplianceContext, ComplianceRule, ExpectationRule,
+} from './audit';
+
+export type {
+  RetentionPolicy, AuditExporter,
+} from './audit';

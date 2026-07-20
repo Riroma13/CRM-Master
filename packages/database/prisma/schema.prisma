@@ -1203,3 +1203,108 @@ model IntegrationExecution {
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("integration_executions")
 }
+
+// ─── Audit & Compliance Platform (SPEC-0018) ─────────────────────────
+
+model AuditEvent {
+  id             String    @id @default(uuid())
+  tenantId       String    @map("tenant_id")
+  actorType      String    @map("actor_type")
+  actorId        String    @map("actor_id")
+  actorName      String?   @map("actor_name")
+  resourceType   String    @map("resource_type")
+  resourceId     String    @map("resource_id")
+  resourceName   String?   @map("resource_name")
+  action         String
+  outcome        String
+  ipAddress      String?   @map("ip_address")
+  userAgent      String?   @map("user_agent")
+  correlationId  String?   @map("correlation_id")
+  occurredAt     DateTime  @map("occurred_at")
+  receivedAt     DateTime  @default(now()) @map("received_at")
+  metadata       Json      @default("{}")
+  hash           String
+  prevHash       String    @map("prev_hash")
+  sequence       Int
+  legalHold      Boolean   @default(false) @map("legal_hold")
+  legalHoldUntil DateTime? @map("legal_hold_until")
+
+  @@unique([tenantId, sequence])
+  @@index([tenantId, sequence])
+  @@index([tenantId, occurredAt(sort: Desc)])
+  @@index([tenantId, actorType, actorId])
+  @@index([tenantId, resourceType, resourceId])
+  @@index([tenantId, action, outcome])
+  @@index([tenantId, correlationId])
+  @@index([occurredAt], type: Brin)
+  @@map("audit_events")
+}
+
+model TenantAuditState {
+  id             String   @id @default(uuid())
+  tenantId       String   @unique @map("tenant_id")
+  lastEventId    String   @map("last_event_id")
+  lastHash       String   @map("last_hash")
+  lastSequence   Int      @map("last_sequence")
+  lastOccurredAt DateTime @map("last_occurred_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("tenant_audit_state")
+}
+
+model AuditRetentionPolicy {
+  id               String    @id @default(uuid())
+  tenantId         String    @unique @map("tenant_id")
+  retentionDays    Int       @default(365) @map("retention_days")
+  archiveAfterDays Int?      @map("archive_after_days")
+  purgeAfterDays   Int?      @map("purge_after_days")
+  legalHold        Boolean   @default(false) @map("legal_hold")
+  legalHoldReason  String?   @map("legal_hold_reason")
+  legalHoldUntil   DateTime? @map("legal_hold_until")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@map("audit_retention_policies")
+}
+
+model AuditEventLegalHold {
+  id         String    @id @default(uuid())
+  tenantId   String    @map("tenant_id")
+  reason     String
+  dateFrom   DateTime  @map("date_from")
+  dateTo     DateTime? @map("date_to")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  releasedAt DateTime? @map("released_at")
+
+  @@index([tenantId])
+  @@map("audit_event_legal_holds")
+}
+
+model ComplianceViolation {
+  id          String    @id @default(uuid())
+  tenantId    String    @map("tenant_id")
+  ruleName    String    @map("rule_name")
+  framework   String
+  eventId     String?   @map("event_id")
+  severity    String    @default("medium")
+  description String
+  detectedAt  DateTime  @default(now()) @map("detected_at")
+  resolvedAt  DateTime? @map("resolved_at")
+  notes       String?
+
+  @@index([tenantId, framework])
+  @@index([tenantId, severity])
+  @@map("compliance_violations")
+}
+
+model ComplianceExpectationRun {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  ruleName        String   @map("rule_name")
+  evaluatedAt     DateTime @map("evaluated_at")
+  violationsCount Int      @default(0) @map("violations_count")
+  error           String?
+
+  @@index([tenantId, ruleName])
+  @@map("compliance_expectation_runs")
+}
