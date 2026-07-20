@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma.service';
 import { KpiEngine } from '../kpi/kpi-engine';
 
-interface DashboardWidgetData {
+export interface DashboardWidgetData {
   id: string;
   type: string;
   title: string;
@@ -13,7 +13,7 @@ interface DashboardWidgetData {
   data?: unknown;
 }
 
-interface HydratedDashboard {
+export interface HydratedDashboard {
   id: string;
   tenantId: string;
   name: string;
