@@ -84,3 +84,7 @@ export * from './search';
 
 export * from './automation';
 
+// ─── Communication (Communication Platform) ────────────────────────────
+
+export * from './communication';
+

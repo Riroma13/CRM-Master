@@ -6,6 +6,7 @@ import { CitasModule } from '../citas/citas.module';
 import { ClientAuthModule } from '../client-auth/client-auth.module';
 import { ClientUserManagementModule } from '../client-user-management/client-user-management.module';
 import { ClientsModule } from '../clients/clients.module';
+import { CommunicationModule } from '../communication/communication.module';
 import { CommunicationsModule } from '../communications/communications.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DocumentosModule } from '../documentos/documentos.module';
@@ -27,6 +28,7 @@ import { TenantsModule } from '../tenants/tenant.module';
     AuthModule,
     AutomationModule,
     CitasModule,
+    CommunicationModule,
     ClientAuthModule,
     ClientUserManagementModule,
     ClientsModule,
