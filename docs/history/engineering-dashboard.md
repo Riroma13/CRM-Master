@@ -9,12 +9,12 @@
 
 | Metric | Value |
 |--------|-------|
-| Total SPECs | 15 |
-| Completed SPECs | 15 |
-| Archived SPECs | 15 |
+| Total SPECs | 16 |
+| Completed SPECs | 16 |
+| Archived SPECs | 16 |
 | Average Working Set Accuracy | **~98%** |
 | Average Prediction Accuracy | **~96%** |
-| Average Tests Added per SPEC | ~25 |
+| Average Tests Added per SPEC | ~29 |
 | Architecture Reviews Passed | 15/15 |
 | Critical Discoveries | 0 |
 | Major Discoveries | 0 |
@@ -46,6 +46,7 @@
 | SPEC-0015 | 2026-07-20 | 100% | 33 | 0/0/2 | ✅ Archived |
 | SPEC-0016 | 2026-07-20 | ~95% | 35 | 0/0/1 | ✅ Archived |
 | SPEC-0017 | 2026-07-20 | 100% | 24 | 0/0/0 | ✅ Archived |
+| SPEC-0018 | 2026-07-20 | 100% | 83 | 0/0/0 | ✅ Archived |
 
 ---
 
@@ -72,6 +73,10 @@
 | SubWorkflow async suspend/resume | SPEC-0015 | — |
 | NotificationCenter definition pattern (Definition → Instance → Routing → Delivery) | SPEC-0016 | — |
 | Double-checkpoint preference evaluation | SPEC-0016 | — |
+| SHA-256 hash chain per tenant (monotonic sequence) | SPEC-0018 | — |
+| Append-only enforcement (middleware + trigger + roles) | SPEC-0018 | — |
+| ComplianceRule + ExpectationRule interfaces | SPEC-0018 | — |
+| Cryptographic redaction (GDPR) preserving hash chain | SPEC-0018 | — |
 | Content snapshot on instance for immutability | SPEC-0016 | — |
 | RoutingStrategy rule-based with override | SPEC-0016 | — |
 | EAV table for notification preferences | SPEC-0016 | — |
@@ -93,6 +98,8 @@
 | Migration SQL fallback needed for CI-like environments | SPEC-0016 |
 | Testing files should be predicted in Working Set or explicitly deferred | SPEC-0016 |
 | Doorbell tests + backward compat essential for contract evolution | SPEC-0017 |
+| Pre-existing build errors must be tracked independently of current PR scope | SPEC-0018 |
+| Audit consumes should use convenience methods (log()) to avoid circular DI | SPEC-0018 |
 
 ---
 
@@ -104,5 +111,5 @@
 | Platform Baseline | `sdd-v2.1-baseline` ✅ |
 | Enterprise Design | ACTIVE ✅ |
 | Feature Freeze | ACTIVE ✅ |
-| Total archived SPECs | 15 |
+| Total archived SPECs | 16 |
 | Pending SPECs | 2 (SPEC-0004, SPEC-0013) |

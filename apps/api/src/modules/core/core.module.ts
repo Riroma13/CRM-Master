@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ActivityTimelineModule } from '../activity-timeline/activity-timeline.module';
+import { AuditModule } from '../audit/audit.module';
 import { AuthModule } from '../auth/auth.module';
 import { AutomationModule } from '../automation/automation.module';
 import { CitasModule } from '../citas/citas.module';
@@ -29,6 +30,7 @@ import { WorkflowModule } from '../workflow/workflow.module';
 @Module({
   imports: [
     ActivityTimelineModule,
+    AuditModule,
     AuthModule,
     AutomationModule,
     CitasModule,

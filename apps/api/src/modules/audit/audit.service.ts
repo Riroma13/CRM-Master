@@ -1,4 +1,7 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../common/prisma.service';
 import { AuditEventQuery, PaginatedResult } from './dto';
 
@@ -30,7 +33,10 @@ export interface AuditEventRow {
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() @InjectQueue('audit:ingestion') private readonly ingestionQueue?: Queue,
+  ) {}
 
   async getEvents(tenantId: string, filters: AuditEventQuery): Promise<PaginatedResult<AuditEventRow>> {
     const page = filters.page ?? 1;
@@ -91,5 +97,34 @@ export class AuditService {
     }
 
     return event as unknown as AuditEventRow;
+  }
+
+  async log(data: {
+    tenantId: string;
+    action: string;
+    resource: string;
+    resourceId?: string;
+    userId?: string;
+    userEmail?: string;
+    details?: string;
+    outcome?: string;
+  }): Promise<void> {
+    if (!this.ingestionQueue) {
+      this.logger.warn(`Audit queue not available, skipping audit log: ${data.action} ${data.resource}`);
+      return;
+    }
+    await this.ingestionQueue.add('event', {
+      eventId: randomUUID(),
+      tenantId: data.tenantId,
+      actorType: 'user',
+      actorId: data.userId ?? 'system',
+      actorName: data.userEmail,
+      resourceType: data.resource,
+      resourceId: data.resourceId ?? 'unknown',
+      action: data.action,
+      outcome: data.outcome ?? 'success',
+      metadata: data.details ? { details: data.details } : {},
+      occurredAt: new Date().toISOString(),
+    });
   }
 }

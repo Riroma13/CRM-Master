@@ -6,6 +6,7 @@ export interface ComplianceContext {
     actorId?: string;
     action?: string;
     outcome?: string;
+    resourceId?: string;
     dateFrom?: string;
     dateTo?: string;
   }): Promise<any[]>;
