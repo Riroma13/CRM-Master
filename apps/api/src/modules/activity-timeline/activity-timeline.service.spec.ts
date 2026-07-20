@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { getQueueToken } from '@nestjs/bullmq';
 import { ActivityTimelineService } from './activity-timeline.service';
 import { PrismaService } from '../../common/prisma.service';
 import { ActivityEventEnvelope } from '../../../../../packages/shared/src/activity-timeline';
@@ -6,6 +7,7 @@ import { ActivityEventEnvelope } from '../../../../../packages/shared/src/activi
 describe('ActivityTimelineService', () => {
   let service: ActivityTimelineService;
   let prisma: any;
+  let mockQueue: any;
 
   const mockPrisma = {
     admin: {
@@ -18,12 +20,16 @@ describe('ActivityTimelineService', () => {
   };
 
   beforeEach(async () => {
+    mockQueue = {
+      add: jest.fn().mockResolvedValue(undefined),
+    };
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ActivityTimelineService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: getQueueToken('activity-timeline:ingestion'), useValue: mockQueue },
       ],
     }).compile();
 
@@ -45,44 +51,45 @@ describe('ActivityTimelineService', () => {
       payload: { nombre: 'Test' },
     };
 
-    it('should create an activity event', async () => {
-      prisma.admin.activityEvent.create.mockResolvedValue({ id: 1 });
-
+    it('should enqueue a valid event to BullMQ', async () => {
       await service.publish(validEnvelope);
 
-      expect(prisma.admin.activityEvent.create).toHaveBeenCalledWith(
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        'ingest',
         expect.objectContaining({
-          data: expect.objectContaining({
-            tenantId: 'tenant-1',
-            clienteId: 'cliente-1',
-            entityType: 'cliente',
-            entityId: 'cliente-1',
-            eventType: 'cliente.creado',
-            actor: 'admin@test.com',
-            sourceModule: 'clientes',
-            severity: 'info',
-            category: 'crm',
-            payload: { nombre: 'Test' },
-          }),
+          tenantId: 'tenant-1',
+          clienteId: 'cliente-1',
+          entityType: 'cliente',
+          entityId: 'cliente-1',
+          eventType: 'cliente.creado',
+          actor: 'admin@test.com',
+          sourceModule: 'clientes',
+          severity: 'info',
+          category: 'crm',
+          payload: { nombre: 'Test' },
+        }),
+        expect.objectContaining({
+          removeOnComplete: true,
+          removeOnFail: 100,
         }),
       );
     });
 
-    it('should not throw on Prisma error', async () => {
-      prisma.admin.activityEvent.create.mockRejectedValue(new Error('DB down'));
+    it('should not throw on queue error', async () => {
+      mockQueue.add.mockRejectedValue(new Error('Redis down'));
 
       await expect(service.publish(validEnvelope)).resolves.toBeUndefined();
     });
 
-    it('should reject invalid envelopes silently', async () => {
+    it('should reject invalid envelopes without queueing', async () => {
       const invalid = { ...validEnvelope, severity: 'unknown' };
 
       await service.publish(invalid as any);
 
-      expect(prisma.admin.activityEvent.create).not.toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
     });
 
-    it('should set null for missing optional fields', async () => {
+    it('should omit optional fields when not present in envelope', async () => {
       const minimal: ActivityEventEnvelope = {
         eventType: 'login.realizado',
         tenantId: 't-1',
@@ -94,21 +101,22 @@ describe('ActivityTimelineService', () => {
         payload: {},
       };
 
-      prisma.admin.activityEvent.create.mockResolvedValue({ id: 2 });
-
       await service.publish(minimal);
 
-      expect(prisma.admin.activityEvent.create).toHaveBeenCalledWith(
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        'ingest',
         expect.objectContaining({
-          data: expect.objectContaining({
-            clienteId: null,
-            entityId: null,
-          }),
+          tenantId: 't-1',
+          eventType: 'login.realizado',
         }),
+        expect.any(Object),
       );
+      const callData = (mockQueue.add as jest.Mock).mock.calls[0][1];
+      expect(callData.clienteId).toBeUndefined();
+      expect(callData.entityId).toBeUndefined();
     });
 
-    it('should map new optional fields when present in envelope', async () => {
+    it('should pass optional fields when present in envelope', async () => {
       const enriched: ActivityEventEnvelope = {
         ...validEnvelope,
         eventId: '550e8400-e29b-41d4-a716-446655440000',
@@ -120,36 +128,32 @@ describe('ActivityTimelineService', () => {
         occurredAt: '2024-06-15T10:00:00.000Z',
       };
 
-      prisma.admin.activityEvent.create.mockResolvedValue({ id: 3 });
-
       await service.publish(enriched);
 
-      expect(prisma.admin.activityEvent.create).toHaveBeenCalledWith(
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        'ingest',
         expect.objectContaining({
-          data: expect.objectContaining({
-            eventId: '550e8400-e29b-41d4-a716-446655440000',
-            correlationId: 'corr-123',
-            causationId: 'cause-456',
-            visibility: 'public',
-            subjectName: 'Cliente Test',
-            actorName: 'Admin User',
-          }),
+          eventId: '550e8400-e29b-41d4-a716-446655440000',
+          correlationId: 'corr-123',
+          causationId: 'cause-456',
+          visibility: 'public',
+          subjectName: 'Cliente Test',
+          actorName: 'Admin User',
         }),
+        expect.any(Object),
       );
     });
 
-    it('should omit new optional fields when not present in envelope', async () => {
-      prisma.admin.activityEvent.create.mockResolvedValue({ id: 4 });
-
+    it('should pass envelope without optional fields when they are absent', async () => {
       await service.publish(validEnvelope);
 
-      const callArg = (prisma.admin.activityEvent.create as jest.Mock).mock.calls[0][0];
-      expect(callArg.data.eventId).toBeUndefined();
-      expect(callArg.data.correlationId).toBeUndefined();
-      expect(callArg.data.causationId).toBeUndefined();
-      expect(callArg.data.subjectName).toBeUndefined();
-      expect(callArg.data.actorName).toBeUndefined();
-      expect(callArg.data.occurredAt).toBeUndefined();
+      const callArg = (mockQueue.add as jest.Mock).mock.calls[0][1];
+      expect(callArg.eventId).toBeUndefined();
+      expect(callArg.correlationId).toBeUndefined();
+      expect(callArg.causationId).toBeUndefined();
+      expect(callArg.subjectName).toBeUndefined();
+      expect(callArg.actorName).toBeUndefined();
+      expect(callArg.occurredAt).toBeUndefined();
     });
   });
 

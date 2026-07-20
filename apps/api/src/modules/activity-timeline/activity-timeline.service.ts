@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../common/prisma.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { ActivityEventEnvelope, ActivityEventEnvelopeSchema } from '../../../../../packages/shared/src/activity-timeline';
+import { PrismaService } from '../../common/prisma.service';
 import { TimelineQuery, PaginatedResult, ActivityEventRow } from './dto';
 import { Prisma } from '@prisma/client';
 
@@ -8,7 +10,10 @@ import { Prisma } from '@prisma/client';
 export class ActivityTimelineService {
   private readonly logger = new Logger(ActivityTimelineService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @InjectQueue('activity-timeline:ingestion') private readonly ingestionQueue: Queue,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async publish(envelope: ActivityEventEnvelope): Promise<void> {
     const parsed = ActivityEventEnvelopeSchema.safeParse(envelope);
@@ -18,29 +23,12 @@ export class ActivityTimelineService {
     }
 
     try {
-      await this.prisma.admin.activityEvent.create({
-        data: {
-          tenantId: parsed.data.tenantId,
-          clienteId: parsed.data.clienteId ?? null,
-          entityType: parsed.data.entityType,
-          entityId: parsed.data.entityId ?? null,
-          eventType: parsed.data.eventType,
-          actor: parsed.data.actor,
-          sourceModule: parsed.data.sourceModule,
-          severity: parsed.data.severity,
-          category: parsed.data.category,
-          payload: parsed.data.payload as Prisma.InputJsonValue,
-          eventId: parsed.data.eventId ?? undefined,
-          correlationId: parsed.data.correlationId ?? undefined,
-          causationId: parsed.data.causationId ?? undefined,
-          visibility: parsed.data.visibility,
-          subjectName: parsed.data.subjectName ?? undefined,
-          actorName: parsed.data.actorName ?? undefined,
-          occurredAt: parsed.data.occurredAt ? new Date(parsed.data.occurredAt) : undefined,
-        },
+      await this.ingestionQueue.add('ingest', parsed.data, {
+        removeOnComplete: true,
+        removeOnFail: 100,
       });
     } catch (error) {
-      this.logger.error(`Failed to publish event: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(`Failed to enqueue event: ${(error as Error).message}`, (error as Error).stack);
     }
   }
 
