@@ -3,7 +3,8 @@ import { Logger } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../common/prisma.service';
-import { ActivityEventEnvelope, ActivityEventEnvelopeSchema } from '../../../../../packages/shared/src/activity-timeline';
+import { ActivityEventEnvelope, ActivityEventEnvelopeSchema, EnrichmentContext } from '../../../../../packages/shared/src/activity-timeline';
+import { EnricherRegistryService } from './enrichment/enricher-registry.service';
 import { Prisma } from '@prisma/client';
 
 @Processor('activity-timeline:ingestion')
@@ -12,6 +13,7 @@ export class ActivityTimelineProcessor extends WorkerHost {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly enricherRegistry: EnricherRegistryService,
     @InjectQueue('activity-timeline:dlq') private readonly dlqQueue: Queue,
   ) {
     super();
@@ -33,8 +35,9 @@ export class ActivityTimelineProcessor extends WorkerHost {
     const eventId = parsed.data.eventId ?? randomUUID();
     const { tenantId } = parsed.data;
 
+    let persistedId: number;
     try {
-      await this.prisma.forTenant(tenantId).activityEvent.create({
+      const event = await this.prisma.forTenant(tenantId).activityEvent.create({
         data: {
           tenantId: parsed.data.tenantId,
           clienteId: parsed.data.clienteId ?? null,
@@ -55,6 +58,7 @@ export class ActivityTimelineProcessor extends WorkerHost {
           occurredAt: parsed.data.occurredAt ? new Date(parsed.data.occurredAt) : undefined,
         },
       });
+      persistedId = event.id;
     } catch (error: any) {
       if (error?.code === 'P2002') {
         this.logger.warn(`Duplicate eventId: ${eventId}, skipping`);
@@ -62,6 +66,35 @@ export class ActivityTimelineProcessor extends WorkerHost {
       }
       this.logger.error(`Failed to persist event ${eventId} for tenant ${tenantId}: ${error.message}`, error.stack);
       throw error;
+    }
+
+    try {
+      const enrichContext: EnrichmentContext = {
+        eventId,
+        entityType: parsed.data.entityType,
+        entityId: parsed.data.entityId ?? null,
+        actor: parsed.data.actor,
+        tenantId,
+      };
+
+      const enrichment = await this.enricherRegistry.runEnrichers(enrichContext);
+
+      if (enrichment.subjectName !== undefined || enrichment.actorName !== undefined) {
+        await this.prisma.forTenant(tenantId).activityEvent.update({
+          where: { id: persistedId },
+          data: {
+            ...(enrichment.subjectName !== undefined ? { subjectName: enrichment.subjectName } : {}),
+            ...(enrichment.actorName !== undefined ? { actorName: enrichment.actorName } : {}),
+            enriched: true,
+            enrichedAt: new Date(),
+          },
+        });
+      }
+    } catch (error) {
+      this.logger.error(
+        `Enrichment pipeline failed for event ${eventId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
     }
 
     this.logger.debug(`Persisted activity event ${eventId} for tenant ${tenantId}`);

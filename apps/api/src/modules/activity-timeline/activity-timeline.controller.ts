@@ -1,7 +1,7 @@
 import { Controller, Get, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ActivityTimelineService } from './activity-timeline.service';
-import { TimelineQuery, TimelineQuerySchema, PaginatedResult, ActivityEventRow } from './dto';
+import { TimelineQuery, TimelineQuerySchema, PaginatedResult, ActivityEventRow, SearchQuery, SearchQuerySchema, CursorPaginatedResult } from './dto';
 
 @ApiTags('Activity Timeline')
 @Controller('api/v1/timeline')
@@ -32,5 +32,31 @@ export class ActivityTimelineController {
   ): Promise<PaginatedResult<ActivityEventRow>> {
     const parsed = TimelineQuerySchema.parse(query);
     return this.service.getTimeline(parsed);
+  }
+
+  @Get('search')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Full-text search on activity timeline with cursor-based pagination' })
+  @ApiQuery({ name: 'tenantId', required: true })
+  @ApiQuery({ name: 'q', required: false, description: 'Full-text search query' })
+  @ApiQuery({ name: 'eventType', required: false })
+  @ApiQuery({ name: 'severity', required: false, enum: ['info', 'warning', 'error', 'critical'] })
+  @ApiQuery({ name: 'category', required: false, enum: ['crm', 'scheduling', 'communication', 'automation', 'auth'] })
+  @ApiQuery({ name: 'sourceModule', required: false })
+  @ApiQuery({ name: 'clienteId', required: false })
+  @ApiQuery({ name: 'entityType', required: false })
+  @ApiQuery({ name: 'entityId', required: false })
+  @ApiQuery({ name: 'actor', required: false })
+  @ApiQuery({ name: 'correlationId', required: false })
+  @ApiQuery({ name: 'dateFrom', required: false })
+  @ApiQuery({ name: 'dateTo', required: false })
+  @ApiQuery({ name: 'visibility', required: false, enum: ['public', 'internal', 'private', 'tenant-only'] })
+  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor for pagination' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async search(
+    @Query() query: Record<string, unknown>,
+  ): Promise<CursorPaginatedResult<ActivityEventRow>> {
+    const parsed = SearchQuerySchema.parse(query);
+    return this.service.search(parsed);
   }
 }

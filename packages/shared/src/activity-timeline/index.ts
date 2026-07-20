@@ -15,4 +15,5 @@ export type { EventType as EventTypeType } from './event-types';
 export { EventTypeRegistry } from './event-type-registry';
 export type { EventTypeMetadata } from './event-type-registry';
 
-export type { EventEnricher } from './event-enricher';
+export { EventEnricher } from './event-enricher';
+export type { EnrichmentContext, EnrichmentResult } from './event-enricher';

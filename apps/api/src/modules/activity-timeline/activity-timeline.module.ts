@@ -3,6 +3,10 @@ import { BullModule } from '@nestjs/bullmq';
 import { ActivityTimelineController } from './activity-timeline.controller';
 import { ActivityTimelineService } from './activity-timeline.service';
 import { ActivityTimelineProcessor } from './activity-timeline.processor';
+import { EnricherRegistryService } from './enrichment/enricher-registry.service';
+import { EntityNameEnricher } from './enrichment/entity-name-enricher';
+import { ActorNameEnricher } from './enrichment/actor-name-enricher';
+import { EventTypeRegistryService } from './event-type-registry.service';
 import { PrismaService } from '../../common/prisma.service';
 
 @Module({
@@ -34,7 +38,15 @@ import { PrismaService } from '../../common/prisma.service';
     ),
   ],
   controllers: [ActivityTimelineController],
-  providers: [ActivityTimelineService, ActivityTimelineProcessor, PrismaService],
+  providers: [
+    ActivityTimelineService,
+    ActivityTimelineProcessor,
+    EnricherRegistryService,
+    EntityNameEnricher,
+    ActorNameEnricher,
+    EventTypeRegistryService,
+    PrismaService,
+  ],
   exports: [ActivityTimelineService],
 })
 export class ActivityTimelineModule {}

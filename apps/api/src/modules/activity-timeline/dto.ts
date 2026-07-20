@@ -60,3 +60,29 @@ export interface PaginatedResult<T> {
     hasMore: boolean;
   };
 }
+
+export const SearchQuerySchema = z.object({
+  tenantId: z.string(),
+  q: z.string().optional(),
+  eventType: z.string().optional(),
+  severity: Severity.optional(),
+  category: Category.optional(),
+  sourceModule: z.string().optional(),
+  clienteId: z.string().optional(),
+  entityType: z.string().optional(),
+  entityId: z.string().optional(),
+  actor: z.string().optional(),
+  correlationId: z.string().optional(),
+  dateFrom: z.string().datetime().optional(),
+  dateTo: z.string().datetime().optional(),
+  visibility: z.enum(['public', 'internal', 'private', 'tenant-only']).optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50).optional(),
+});
+
+export type SearchQuery = z.infer<typeof SearchQuerySchema>;
+
+export interface CursorPaginatedResult<T> {
+  data: T[];
+  nextCursor?: string;
+}
