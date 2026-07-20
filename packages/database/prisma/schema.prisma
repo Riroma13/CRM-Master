@@ -23,8 +23,10 @@ model Tenant {
   updatedAt               DateTime @updatedAt @map("updated_at")
 
   activityEvents ActivityEvent[]
-  searchEntries  SearchEntry[]
-  users          User[]
+  searchEntries    SearchEntry[]
+  automationRules  AutomationRule[]
+  tenantSecrets    TenantSecret[]
+  users            User[]
   clients         Cliente[]
   sistemas        Sistema[]
   items    ItemInventario[]
@@ -638,4 +640,86 @@ model SearchEntry {
   @@unique([entityType, entityId, tenantId])
   @@index([tenantId, entityType])
   @@map("search_entries")
+}
+
+// ─── TenantSecrets (encrypted credentials) ──────────────────────────
+
+model TenantSecret {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  key       String
+  value     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, key])
+  @@map("tenant_secrets")
+}
+
+// ─── Automation Hub ─────────────────────────────────────────────────
+
+model AutomationRule {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  description String?
+  trigger     String
+  actions     String[]
+  filters     Json?    @default("{}")
+  config      Json?    @default("{}")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant     Tenant               @relation(fields: [tenantId], references: [id])
+  executions AutomationExecution[] @relation("ruleExecutions")
+
+  @@index([tenantId, trigger])
+  @@map("automation_rules")
+}
+
+model AutomationExecution {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  ruleId        String   @map("rule_id")
+  trigger       String
+  status        String   @default("pending")
+  actionsTotal  Int      @map("actions_total")
+  actionsOk     Int      @map("actions_ok")
+  actionsFailed Int      @map("actions_failed")
+  startedAt     DateTime @default(now()) @map("started_at")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  error         String?
+
+  rule   AutomationRule @relation("ruleExecutions", fields: [ruleId], references: [id])
+  steps  AutomationExecutionStep[]
+
+  @@index([ruleId])
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("automation_executions")
+}
+
+model AutomationExecutionStep {
+  id            String   @id @default(uuid())
+  executionId   String   @map("execution_id")
+  actionId      String   @map("action_id")
+  status        String   @default("pending")
+  attempt       Int      @default(1)
+  maxAttempts   Int      @default(3)
+  input         Json?
+  output        Json?
+  error         String?
+  startedAt     DateTime? @map("started_at")
+  completedAt   DateTime? @map("completed_at")
+  durationMs    Int?     @map("duration_ms")
+
+  execution AutomationExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@index([executionId])
+  @@map("automation_execution_steps")
 }

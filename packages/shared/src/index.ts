@@ -80,3 +80,7 @@ export * from './client-auth';
 
 export * from './search';
 
+// ─── Automation (AI Automation Hub) ────────────────────────────────────
+
+export * from './automation';
+

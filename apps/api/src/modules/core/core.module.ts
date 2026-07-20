@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ActivityTimelineModule } from '../activity-timeline/activity-timeline.module';
 import { AuthModule } from '../auth/auth.module';
+import { AutomationModule } from '../automation/automation.module';
 import { CitasModule } from '../citas/citas.module';
 import { ClientAuthModule } from '../client-auth/client-auth.module';
 import { ClientUserManagementModule } from '../client-user-management/client-user-management.module';
@@ -24,6 +25,7 @@ import { TenantsModule } from '../tenants/tenant.module';
   imports: [
     ActivityTimelineModule,
     AuthModule,
+    AutomationModule,
     CitasModule,
     ClientAuthModule,
     ClientUserManagementModule,
