@@ -11,6 +11,12 @@ import { ComplianceEngine } from './compliance/compliance-engine';
 import { ComplianceRuleRegistry } from './compliance/compliance-rule-registry';
 import { GDPRComplianceRule, SOC2ComplianceRule } from './compliance/default-rules';
 import { LoginMFAExpectationRule } from './compliance/expectation-rules/login-mfa-rule';
+import { RetentionEngine } from './retention/retention-engine';
+import { LegalHoldService } from './retention/legal-hold.service';
+import { RedactionService } from './retention/redaction.service';
+import { ExportService } from './export/export.service';
+import { JsonExporter } from './export/json-exporter';
+import { CsvExporter } from './export/csv-exporter';
 
 @Injectable()
 class AuditAppendOnlyRegistrar implements OnModuleInit {
@@ -42,6 +48,15 @@ class AuditAppendOnlyRegistrar implements OnModuleInit {
           removeOnComplete: true,
         },
       },
+      {
+        name: 'audit:retention',
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+          removeOnComplete: true,
+          removeOnFail: 100,
+        },
+      },
     ),
   ],
   controllers: [AuditController],
@@ -57,6 +72,12 @@ class AuditAppendOnlyRegistrar implements OnModuleInit {
     GDPRComplianceRule,
     SOC2ComplianceRule,
     LoginMFAExpectationRule,
+    RetentionEngine,
+    LegalHoldService,
+    RedactionService,
+    ExportService,
+    JsonExporter,
+    CsvExporter,
   ],
   exports: [AuditService],
 })
