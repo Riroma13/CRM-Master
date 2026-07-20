@@ -8,6 +8,9 @@ import { KnowledgeService } from './knowledge.service';
 import { IngestionService, ReindexService } from './ingestion/ingestion.service';
 import { GarbageCollectorService } from './ingestion/garbage-collector.service';
 import { PrismaService } from '../../common/prisma.service';
+import { RetrievalEngine } from './retrieval/retrieval-engine';
+import { GenerationEngine } from './generation/generation-engine';
+import { ProviderRegistry } from '../automation/ai/provider-registry';
 
 @Injectable()
 class GarbageCollectorScheduler implements OnModuleInit {
@@ -80,12 +83,17 @@ class GarbageCollectorScheduler implements OnModuleInit {
     GarbageCollectorService,
     GarbageCollectorScheduler,
     PrismaService,
+    RetrievalEngine,
+    GenerationEngine,
+    ProviderRegistry,
   ],
   exports: [
     ChunkingService,
     EmbeddingCache,
     EmbeddingService,
     KnowledgeService,
+    RetrievalEngine,
+    GenerationEngine,
   ],
 })
 export class KnowledgeModule {}
