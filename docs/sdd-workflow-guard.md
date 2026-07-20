@@ -94,7 +94,7 @@ Tasks Review → Tasks Refinement), check the condition BEFORE delegating:
   - `APPROVED` → proceed to Tasks.
 - Tasks Review: read the review output.
   - If conditions exist → Tasks Refinement required.
-  - If clean → proceed to Apply.
+  - If clean → run Review Workload Guard (Rule 5) BEFORE authorizing Apply.
 
 ### Rule 3 — No Skipping
 
@@ -114,6 +114,107 @@ A phase cannot be re-entered unless the preceding review demands it:
 - Tasks Refinement → Tasks Review (re-enters review)
 
 Direct re-entrance (e.g., Design → Design) is ALWAYS invalid.
+
+### Rule 5 — Review Workload Guard (Execution Order & Bounded Context Analysis)
+
+**IMPORTANT — Execution order.** The Review Workload Guard runs AFTER
+Tasks Review (and only if the review is clean), NOT after Tasks.
+
+Correct sequence:
+
+```
+Tasks → Tasks Review → [if clean] → Review Workload Guard → Apply decision
+```
+
+If the Review Workload Guard executes after Tasks (before Tasks Review),
+it violates the official workflow. BLOCK the transition.
+
+When the Review Workload Forecast exceeds 400 lines, the orchestrator MUST
+analyze the change's scope before recommending Size Exception or Chained PRs.
+This analysis happens AFTER Tasks Review confirms the tasks are sound.
+
+**Apply this decision logic:**
+
+```
+IF (Single bounded context)
+AND (Single SPEC)
+AND (Cohesive domain — all files serve one capability)
+→ Recommend Size Exception
+
+ELSE IF (Multiple bounded contexts)
+OR (Multiple modules with independent deliverables)
+OR (Changes span non-cohesive domains)
+→ Recommend Chained PRs
+```
+
+**Guidance for evaluation:**
+
+- **Single bounded context**: one `WorkflowModule`, one `NotificationModule`,
+  one `CommunicationModule`. The change lives entirely inside one module's
+  boundary with its own data, contracts, and API.
+- **Cohesive domain**: every file in the Working Set directly serves the
+  same capability. No shared infrastructure changes, no cross-module
+  refactors, no changes to platform plumbing.
+- **Multiple bounded contexts**: the change touches 2+ modules that own
+  different data (e.g., NotificationModule + CommunicationModule for
+  idempotencyKey changes).
+- **Independent deliverables**: the change COULD be split into standalone
+  PRs that each provide value on their own (e.g., schema-only PR, then
+  engine PR, then API PR).
+
+**The recommendation is advisory.** The user makes the final decision.
+If the user overrides the recommendation, record the override and reason.
+
+---
+
+## Guard Execution Order (MANDATORY)
+
+The guards execute in a fixed order. Violating this order is a workflow
+violation.
+
+### Rule 6 — Workflow Guard Priority
+
+Workflow validity ALWAYS has higher priority than workload analysis.
+
+The Review Workload Guard must NEVER bypass the Workflow Guard.
+
+### Execution sequence
+
+```
+After Tasks:
+
+  1. Generate tasks.md.
+  2. STOP.
+  3. Do NOT execute Review Workload Guard.
+  4. Do NOT forecast Apply.
+  5. Wait for Tasks Review.
+
+After Tasks Review (conditions exist):
+
+  1. Wait for Tasks Refinement.
+  2. After refinement, repeat Tasks Review.
+  3. Only after clean review → continue below.
+
+After Tasks Review (clean — no conditions):
+
+  1. ✅ Workflow Guard authorizes the transition Tasks Review → Apply.
+  2. ▶️ THEN execute Review Workload Guard (Rule 5):
+     a. Read Review Workload Forecast from tasks.md.
+     b. If ≤ 400 lines → proceed to Apply.
+     c. If > 400 lines → apply Bounded Context Analysis:
+        - Single BC + Single SPEC + Cohesive → recommend Size Exception.
+        - Otherwise → recommend Chained PRs.
+     d. Ask user for decision.
+  3. Wait for user confirmation before Apply.
+```
+
+### Summary
+
+| Step | Action | Guard |
+|------|--------|-------|
+| After Tasks | STOP. No workload analysis. | Workflow Guard blocks Apply |
+| After Tasks Review (clean) | Run Workload Guard. Ask user. | Workflow Guard authorizes → Workload Guard advises |
+| User confirms | Launch Apply | Both guards satisfied |
 
 ---
 
