@@ -1308,3 +1308,198 @@ model ComplianceExpectationRun {
   @@index([tenantId, ruleName])
   @@map("compliance_expectation_runs")
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// Reporting & Analytics (SPEC-0019) — Read-Only Platform
+//
+// ALL models here are consumed by the ReportingModule only.
+// A Prisma middleware blocks queries to models OUTSIDE the allowlist:
+//
+//   ['AnalyticsDataset', 'AnalyticsSnapshot', 'Kpi',
+//    'Dashboard', 'DashboardWidget', 'ReportDefinition',
+//    'ReportExecution', 'ExportJob', 'DatasetIngestionLog']
+//
+// Logical definition only — actual tables created via raw SQL with
+// PARTITION BY RANGE in packages/database/scripts/reporting-partitions.sql.
+// ═══════════════════════════════════════════════════════════════════════
+
+// ─── AnalyticsDataset ──────────────────────────────────────────────
+// Logical definition only. Actual table:
+//   CREATE TABLE analytics_datasets (...) PARTITION BY RANGE (window_start);
+model AnalyticsDataset {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  datasetName String   @map("dataset_name")
+  metricName  String   @map("metric_name")
+  granularity String   // hour | day | week | month
+  windowStart DateTime @map("window_start")
+  value       Float
+  dimensions  Json     @default("{}")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, datasetName, metricName, granularity, windowStart])
+  @@index([tenantId, datasetName, granularity, windowStart(sort: Desc)])
+  @@index([tenantId, metricName, windowStart(sort: Desc)])
+  @@index([tenantId])
+  @@map("analytics_datasets")
+}
+
+// ─── AnalyticsSnapshot ─────────────────────────────────────────────
+// Logical definition only. Actual table:
+//   CREATE TABLE analytics_snapshots (...) PARTITION BY RANGE (window_start);
+// TTL-based expiration. Stale-while-revalidate: serve expired while refreshing.
+model AnalyticsSnapshot {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  datasetName String   @map("dataset_name")
+  granularity String   // hour | day | week | month
+  windowStart DateTime @map("window_start")
+  windowEnd   DateTime @map("window_end")
+  data        Json
+  ttl         Int      @default(300) // seconds
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, name, expiresAt])
+  @@index([tenantId])
+  @@map("analytics_snapshots")
+}
+
+// ─── Kpi ───────────────────────────────────────────────────────────
+model Kpi {
+  id                 String    @id @default(uuid())
+  tenantId           String    @map("tenant_id")
+  name               String
+  displayName        String    @map("display_name")
+  formula            String
+  target             Float?
+  upperThreshold     Float?    @map("upper_threshold")
+  lowerThreshold     Float?    @map("lower_threshold")
+  unit               String?
+  ttl                Int       @default(300)
+  cachedValue        Float?    @map("cached_value")
+  cachedStatus       String?   @map("cached_status")
+  cachedAt           DateTime? @map("cached_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("kpis")
+}
+
+// ─── Dashboard ─────────────────────────────────────────────────────
+model Dashboard {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  description String?
+  layout      Json     @default("{\"columns\":12,\"gap\":16}")
+  shared      Boolean  @default(false)
+  roles       String[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  widgets DashboardWidget[]
+
+  @@index([tenantId])
+  @@map("dashboards")
+}
+
+// ─── DashboardWidget ───────────────────────────────────────────────
+model DashboardWidget {
+  id          String   @id @default(uuid())
+  dashboardId String   @map("dashboard_id")
+  tenantId    String   @map("tenant_id")
+  type        String   // kpi-card | line-chart | bar-chart | pie-chart | table | trend
+  title       String
+  config      Json     @default("{}")
+  position    Json     // { x, y, w, h }
+  kpiName     String?  @map("kpi_name")
+  datasetName String?  @map("dataset_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  dashboard Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  @@index([dashboardId])
+  @@index([tenantId])
+  @@map("dashboard_widgets")
+}
+
+// ─── ReportDefinition ──────────────────────────────────────────────
+model ReportDefinition {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  datasetName String   @map("dataset_name")
+  dimensions  String[]
+  metrics     Json     // Array<{ name, aggregation }>
+  filters     Json?
+  dateRange   Json?    @map("date_range")
+  granularity String?
+  schedule    String?  // cron expression
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  executions ReportExecution[]
+
+  @@index([tenantId])
+  @@map("report_definitions")
+}
+
+// ─── ReportExecution ───────────────────────────────────────────────
+model ReportExecution {
+  id          String    @id @default(uuid())
+  reportId    String    @map("report_id")
+  tenantId    String    @map("tenant_id")
+  status      String    @default("pending") // pending | running | completed | failed
+  result      Json?
+  error       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  report ReportDefinition @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId, createdAt(sort: Desc)])
+  @@index([tenantId])
+  @@map("report_executions")
+}
+
+// ─── ExportJob ─────────────────────────────────────────────────────
+model ExportJob {
+  id          String    @id @default(uuid())
+  tenantId    String    @map("tenant_id")
+  type        String    // dashboard | report | kpi
+  format      String    // pdf | excel | csv | json
+  status      String    @default("pending") // pending | processing | completed | failed
+  config      Json?
+  filePath    String?   @map("file_path")
+  error       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@index([tenantId, status])
+  @@index([tenantId])
+  @@map("export_jobs")
+}
+
+// ─── DatasetIngestionLog (append-only) ─────────────────────────────
+model DatasetIngestionLog {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  datasetName String   @map("dataset_name")
+  metricName  String   @map("metric_name")
+  value       Float
+  windowStart DateTime @map("window_start")
+  status      String   @default("received") // received | processed | skipped | failed
+  eventId     String?  @map("event_id")
+  error       String?
+  timestamp   DateTime @default(now())
+
+  @@index([tenantId, datasetName, windowStart])
+  @@index([tenantId])
+  @@map("dataset_ingestion_logs")
+}

@@ -15,6 +15,7 @@ import { IntegrationModule } from '../integration/integration.module';
 import { DocumentosModule } from '../documentos/documentos.module';
 import { EventosModule } from '../eventos/eventos.module';
 import { NotificationModule } from '../notification/notification.module';
+import { ReportingModule } from '../reporting/reporting.module';
 import { SearchModule } from '../search/search.module';
 import { TareasModule } from '../tareas/tareas.module';
 import { TenantsModule } from '../tenants/tenant.module';
@@ -45,6 +46,7 @@ import { WorkflowModule } from '../workflow/workflow.module';
     IntegrationModule,
     EventosModule,
     NotificationModule,
+    ReportingModule,
     SearchModule,
     TareasModule,
     TenantsModule,

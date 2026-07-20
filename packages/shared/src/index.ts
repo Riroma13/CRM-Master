@@ -126,7 +126,29 @@ export type { AuditPublisher } from './audit';
 export type {
   ComplianceFramework, ComplianceViolation, ComplianceContext, ComplianceRule, ExpectationRule,
 } from './audit';
+export type {
+  RetentionPolicy,
+  AuditExporter,
+} from './audit';
+
+// ─── Reporting & Analytics (SPEC-0019) ─────────────────────────────────
 
 export type {
-  RetentionPolicy, AuditExporter,
-} from './audit';
+  MetricAggregation,
+  TimeGranularity,
+  KpiStatus,
+  WidgetType,
+  ExportFormat,
+  AnalyticsDataset,
+  KpiDefinition,
+  KpiValue,
+  ReportDefinition,
+  ReportExecution,
+  Dashboard,
+  DashboardWidget,
+  DashboardLayout,
+  DatasetEvent,
+  DatasetPublisher,
+  ExportContext,
+  Exporter,
+} from './reporting';
