@@ -18,7 +18,10 @@ describe('ReportingController — replay', () => {
 
     mockReporting = {};
     mockPrisma = { forTenant: jest.fn().mockReturnValue(scopedClient) };
-    controller = new ReportingController(mockReporting, mockPrisma);
+    const mockDashboardEngine = {};
+    const mockExportService = {};
+    const mockScheduling = {};
+    controller = new ReportingController(mockReporting, mockPrisma, mockDashboardEngine as any, mockExportService as any, mockScheduling as any);
   });
 
   it('re-processes events from ingestion log', async () => {

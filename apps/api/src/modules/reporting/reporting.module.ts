@@ -9,6 +9,13 @@ import { createReportingReadOnlyMiddleware } from './reporting-read-only.middlew
 import { KpiEngine } from './kpi/kpi-engine';
 import { ReportEngine } from './report/report-engine';
 import { ReportingGuard } from './guards/reporting.guard';
+import { DashboardEngine } from './dashboard/dashboard-engine';
+import { DashboardHydrator } from './dashboard/dashboard-hydrator';
+import { SnapshotService } from './snapshot/snapshot.service';
+import { ExportService } from './export/export.service';
+import { CsvExporter } from './export/csv-exporter';
+import { JsonExporter } from './export/json-exporter';
+import { SchedulingService } from './scheduling/scheduling.service';
 
 @Injectable()
 class ReportingReadOnlyRegistrar implements OnModuleInit {
@@ -49,6 +56,24 @@ class ReportingReadOnlyRegistrar implements OnModuleInit {
           removeOnFail: 50,
         },
       },
+      {
+        name: 'reporting:export',
+        defaultJobOptions: {
+          attempts: 2,
+          backoff: { type: 'exponential', delay: 2000 },
+          removeOnComplete: true,
+          removeOnFail: 50,
+        },
+      },
+      {
+        name: 'reporting:schedule',
+        defaultJobOptions: {
+          attempts: 2,
+          backoff: { type: 'exponential', delay: 2000 },
+          removeOnComplete: true,
+          removeOnFail: 50,
+        },
+      },
     ),
   ],
   controllers: [ReportingController],
@@ -61,7 +86,23 @@ class ReportingReadOnlyRegistrar implements OnModuleInit {
     KpiEngine,
     ReportEngine,
     ReportingGuard,
+    DashboardEngine,
+    DashboardHydrator,
+    SnapshotService,
+    ExportService,
+    CsvExporter,
+    JsonExporter,
+    SchedulingService,
   ],
-  exports: [ReportingService, KpiEngine, ReportEngine],
+  exports: [
+    ReportingService,
+    KpiEngine,
+    ReportEngine,
+    DashboardEngine,
+    DashboardHydrator,
+    SnapshotService,
+    ExportService,
+    SchedulingService,
+  ],
 })
 export class ReportingModule {}
