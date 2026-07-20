@@ -1623,3 +1623,69 @@ model ApiQuota {
 
   @@map("api_quotas")
 }
+
+// ─── Plugin Platform (SPEC-0022) ─────────────────────────────────────────
+
+model Plugin {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  name         String
+  version      String
+  manifest     Json
+  status       String   @default("active")
+  enabled      Boolean  @default(true)
+  schemaVersion Int     @default(1) @map("schema_version")
+  contentHash  String   @map("content_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  hooks PluginHook[]
+  store PluginStore[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, status])
+  @@map("plugins")
+}
+
+model PluginHook {
+  id        String @id @default(uuid())
+  tenantId  String @map("tenant_id")
+  pluginId  String @map("plugin_id")
+  eventType String @map("event_type")
+  handler   String
+  priority  Int    @default(0)
+
+  plugin Plugin @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, pluginId, eventType])
+  @@index([tenantId, eventType, priority])
+  @@map("plugin_hooks")
+}
+
+model PluginStore {
+  id            String @id @default(uuid())
+  tenantId      String @map("tenant_id")
+  pluginId      String @map("plugin_id")
+  key           String
+  value         Json
+  schemaVersion Int    @default(1) @map("schema_version")
+
+  plugin Plugin @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, pluginId, key])
+  @@index([tenantId, pluginId])
+  @@map("plugin_store")
+}
+
+model PluginEvent {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  pluginId  String   @map("plugin_id")
+  eventType String   @map("event_type")
+  payload   Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, eventType, createdAt(sort: Desc)])
+  @@index([createdAt])
+  @@map("plugin_events")
+}

@@ -154,6 +154,16 @@ export type {
 
 export type { PublicApiResponse } from './public-api';
 
+// ─── Plugin Platform (SPEC-0022) ─────────────────────────────────────────
+
+export type {
+  PluginStatus, Permission, PluginManifest, PluginMetadata, EventEnvelope,
+} from './plugin';
+
+export type { ExtensionAPIV1 } from './plugin';
+export { PluginManifestSchema, PermissionSchema, validatePluginManifest } from './plugin';
+export type { PluginManifestInput, PluginManifestOutput } from './plugin';
+
 // ─── Reporting & Analytics (SPEC-0019) ─────────────────────────────────
 
 export type {

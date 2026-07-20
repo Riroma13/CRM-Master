@@ -16,6 +16,7 @@ import { DocumentosModule } from '../documentos/documentos.module';
 import { EventosModule } from '../eventos/eventos.module';
 import { KnowledgeModule } from '../knowledge/knowledge.module';
 import { NotificationModule } from '../notification/notification.module';
+import { PluginModule } from '../plugin/plugin.module';
 import { PublicApiModule } from '../public-api/public-api.module';
 import { ReportingModule } from '../reporting/reporting.module';
 import { SearchModule } from '../search/search.module';
@@ -42,6 +43,7 @@ import { WorkflowModule } from '../workflow/workflow.module';
     EventosModule,
     KnowledgeModule,
     NotificationModule,
+    PluginModule,
     PublicApiModule,
     ReportingModule,
     SearchModule,
