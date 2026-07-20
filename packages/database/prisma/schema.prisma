@@ -849,3 +849,41 @@ model DocumentTrash {
   @@index([expiresAt])
   @@map("document_trash")
 }
+
+// ─── Integration Platform ─────────────────────────────────────────
+
+model IntegrationConnector {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  provider  String
+  name      String
+  authType  String   // 'oauth' | 'api-key'
+  config    Json?    @default("{}")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, provider])
+  @@index([tenantId])
+  @@map("integration_connectors")
+}
+
+model IntegrationExecution {
+  id          String   @id @default(uuid())
+  connectorId String   @map("connector_id")
+  tenantId    String   @map("tenant_id")
+  operation   String
+  status      String   @default("pending")
+  attempts    Int      @default(1)
+  maxAttempts Int      @default(3)
+  input       Json?
+  output      Json?
+  error       String?
+  dlq         Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("integration_executions")
+}

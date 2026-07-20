@@ -92,3 +92,7 @@ export * from './communication';
 
 export * from './document';
 
+// ─── Integration (Integration Platform) ────────────────────────────────
+
+export * from './integration';
+
