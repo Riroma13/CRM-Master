@@ -237,6 +237,38 @@ ADR-0004 (Feature Freeze).
 
 ---
 
+## Apply Phase — Standard Execution Report
+
+Every Apply phase MUST end with the standard execution summary format.
+This is mandatory engineering practice established after SPEC-0010, SPEC-0011
+and SPEC-0012.
+
+```markdown
+=== PHASE X COMPLETE ===
+
+Files created:
+Files modified:
+
+Working Set:
+- Planned
+- Actual
+- Accuracy
+
+Unexpected Files:
+Unexpected Dependencies:
+
+Acceptance Criteria:
+(checklist)
+
+Build:
+
+Tests:
+
+Ready for Phase X+1.
+```
+
+---
+
 ## Filosofía
 
 > **24 proyectos/año. Hecho bien desde el principio.**

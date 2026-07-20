@@ -21,6 +21,7 @@ Establecer un flujo de fases claro, repetible y riguroso para el desarrollo de f
 │   IDEA   │   │  DRAFT   │   │ APROBADA │   │  DESIGN   │   │   RED    │   │  GREEN   │   │ REFACTOR │   │  ARCHIVE  │
 │          │   │  SPEC    │   │          │   │ +Working  │   │  (TDD)   │   │          │   │          │   │ +Learning │
 │          │   │          │   │          │   │   Set     │   │          │   │          │   │          │   │ +JSON     │
+│          │   │          │   │          │   │           │   │          │   │          │   │          │   │ +PR Desc  │
 └──────────┘   └──────────┘   └──────────┘   └───────────┘   └──────────┘   └──────────┘   └──────────┘   └───────────┘
 ```
 
@@ -172,7 +173,8 @@ Establecer un flujo de fases claro, repetible y riguroso para el desarrollo de f
   2. Mover change folder a archive
   3. **Generar Learning section**
   4. **Generar JSON artifact** con métricas estructuradas
-  5. Commit con Conventional Commit
+  5. **Generar PR description** (`pr-description.md`) lista para copiar en GitHub
+  6. Commit con Conventional Commit
   6. Actualizar `docs/decisions-log.md` si hubo ADR
 - **Entregable:**
   - Spec con estado `implemented`
@@ -225,6 +227,8 @@ Archive
     → Lessons Learned
     → Future Recommendations
   → JSON artifact (machine-readable metrics)
+  → PR Description (GitHub-ready markdown)
+  → Architecture Decisions (historical record)
 ```
 
 ### Metrics tracked over time

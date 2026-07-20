@@ -131,6 +131,45 @@ Si algún modelo falta, registrar advertencia pero continuar con fallback.
 |---|---|---|
 | `sdd-apply` | `sdd-apply-pro` | Cambios que tocan tenant_id, guards, auth, raw SQL, o frontera entre tenants |
 
+## Apply Phase — Standard Execution Summary
+
+Every Apply phase MUST conclude with the standard execution summary.
+After three complete implementations (SPEC-0010, SPEC-0011, SPEC-0012)
+this format is now mandatory engineering practice.
+
+```markdown
+=== PHASE X COMPLETE ===
+
+Files created:
+Files modified:
+
+Working Set:
+- Planned
+- Actual
+- Accuracy
+
+Unexpected Files:
+Unexpected Dependencies:
+
+Acceptance Criteria:
+(checklist)
+
+Build:
+
+Tests:
+
+Ready for Phase X+1.
+```
+
+## Apply Summary
+
+After all 5 Apply phases are complete, generate a consolidated Apply Summary
+using `docs/templates/apply-summary-template.md`. This document does NOT
+replace the individual phase summaries — it consolidates them into a single
+overview.
+
+---
+
 ## Antes de marcar una tarea como hecha
 - [ ] Tests pasan (`pnpm test`)
 - [ ] Lint limpio (`pnpm lint`)

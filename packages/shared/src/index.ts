@@ -88,3 +88,7 @@ export * from './automation';
 
 export * from './communication';
 
+// ─── Document (Document Management Platform) ───────────────────────────
+
+export * from './document';
+

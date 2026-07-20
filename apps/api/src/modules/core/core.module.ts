@@ -9,6 +9,7 @@ import { ClientsModule } from '../clients/clients.module';
 import { CommunicationModule } from '../communication/communication.module';
 import { CommunicationsModule } from '../communications/communications.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
+import { DocumentEngineModule } from '../document-engine/document-engine.module';
 import { DocumentosModule } from '../documentos/documentos.module';
 import { EventosModule } from '../eventos/eventos.module';
 import { SearchModule } from '../search/search.module';
@@ -34,6 +35,7 @@ import { TenantsModule } from '../tenants/tenant.module';
     ClientsModule,
     CommunicationsModule,
     DashboardModule,
+    DocumentEngineModule,
     DocumentosModule,
     EventosModule,
     SearchModule,

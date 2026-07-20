@@ -768,3 +768,84 @@ model MessageDelivery {
   @@index([tenantId, createdAt(sort: Desc)])
   @@map("message_deliveries")
 }
+
+// ─── Document Platform ────────────────────────────────────────────
+
+model DocumentFolder {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  parentId  String?  @map("parent_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  parent    DocumentFolder? @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children  DocumentFolder[] @relation("FolderHierarchy")
+  documents Document[]
+
+  @@unique([tenantId, parentId, name])
+  @@index([tenantId])
+  @@map("document_folders")
+}
+
+model Document {
+  id            String   @id @default(uuid())
+  documentId    String   @map("document_id")
+  tenantId      String   @map("tenant_id")
+  folderId      String?  @map("folder_id")
+  name          String
+  mimeType      String   @map("mime_type")
+  sizeBytes     Int      @map("size_bytes")
+  hash          String
+  tags          String[]
+  metadata      Json     @default("{}")
+  status        String   @default("scanning")
+  isDeleted     Boolean  @default(false) @map("is_deleted")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String   @map("created_by")
+  retentionDays Int?     @map("retention_days")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  folder   DocumentFolder?   @relation(fields: [folderId], references: [id])
+  versions DocumentVersion[]
+
+  @@unique([tenantId, hash])
+  @@index([tenantId, folderId])
+  @@index([tenantId, isDeleted])
+  @@index([tenantId, status])
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id            String   @id @default(uuid())
+  documentId    String   @map("document_id")
+  versionNumber Int      @map("version_number")
+  storageKey    String   @map("storage_key")
+  hash          String
+  sizeBytes     Int      @map("size_bytes")
+  mimeType      String   @map("mime_type")
+  metadata      Json?    @default("{}")
+  createdBy     String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([documentId, versionNumber])
+  @@map("document_versions")
+}
+
+model DocumentTrash {
+  id          String   @id @default(uuid())
+  documentId  String   @map("document_id")
+  tenantId    String   @map("tenant_id")
+  name        String
+  deletedAt   DateTime @default(now()) @map("deleted_at")
+  expiresAt   DateTime @map("expires_at")
+  restoredAt  DateTime? @map("restored_at")
+
+  @@index([tenantId])
+  @@index([expiresAt])
+  @@map("document_trash")
+}
