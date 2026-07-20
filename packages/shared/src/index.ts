@@ -131,6 +131,13 @@ export type {
   AuditExporter,
 } from './audit';
 
+// ─── Knowledge Base (SPEC-0020) ─────────────────────────────────────────
+
+export type {
+  SourceType, KbChunk, KbSource, KbQuery, KbChunkResult, KbCitation, KbAnswer,
+} from './knowledge';
+export type { KnowledgePublisher } from './knowledge';
+
 // ─── Reporting & Analytics (SPEC-0019) ─────────────────────────────────
 
 export type {

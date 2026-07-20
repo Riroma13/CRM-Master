@@ -1297,6 +1297,62 @@ model ComplianceViolation {
   @@map("compliance_violations")
 }
 
+// ─── AI Knowledge Base (SPEC-0020) ───────────────────────────────────
+//
+// pgvector extension required: CREATE EXTENSION IF NOT EXISTS vector;
+// HNSW index on embedding: CREATE INDEX ON kb_chunks USING hnsw (embedding vector_cosine_ops)
+// Embedding model: all-MiniLM-L6-v2 (384-dim) via @xenova/transformers
+
+model KbChunk {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  sourceType  String   @map("source_type")
+  sourceId    String   @map("source_id")
+  chunkIndex  Int      @map("chunk_index")
+  content     String
+  contentHash String   @map("content_hash")
+  metadata    Json     @default("{}")
+  embedding   Unsupported("vector(384)")?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, sourceType, sourceId, chunkIndex])
+  @@index([tenantId, sourceType, sourceId])
+  @@index([tenantId, contentHash])
+  @@map("kb_chunks")
+}
+
+model KbSourceIndex {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  sourceType    String    @map("source_type")
+  sourceId      String    @map("source_id")
+  chunkCount    Int       @default(0) @map("chunk_count")
+  status        String    @default("pending")
+  lastIndexedAt DateTime? @map("last_indexed_at")
+  error         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@unique([tenantId, sourceType, sourceId])
+  @@map("kb_source_indexes")
+}
+
+model KbQueryLog {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  query       String
+  sourceTypes String[] @map("source_types")
+  topK        Int      @default(5) @map("top_k")
+  resultCount Int      @map("result_count")
+  latencyMs   Int      @map("latency_ms")
+  feedback    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("kb_query_logs")
+}
+
 model ComplianceExpectationRun {
   id              String   @id @default(uuid())
   tenantId        String   @map("tenant_id")
