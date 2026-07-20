@@ -1689,3 +1689,102 @@ model PluginEvent {
   @@index([createdAt])
   @@map("plugin_events")
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// Billing & Subscription Platform (SPEC-0023)
+// ═══════════════════════════════════════════════════════════════════════
+
+model Plan {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  description   String?
+  price         Int
+  currency      String   @default("usd")
+  billingPeriod String   @default("monthly")
+  pricingModel  String
+  limits        Json
+  features      String[]
+  trialDays     Int      @default(14)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                   String    @id @default(uuid())
+  tenantId             String    @unique @map("tenant_id")
+  planId               String    @map("plan_id")
+  pendingPlanId        String?   @map("pending_plan_id")
+  status               String    @default("trialing")
+  currentPeriodStart   DateTime  @map("current_period_start")
+  currentPeriodEnd     DateTime  @map("current_period_end")
+  trialEnd             DateTime? @map("trial_end")
+  cancelledAt          DateTime? @map("cancelled_at")
+  gracePeriodEnd       DateTime? @map("grace_period_end")
+  suspendedUntil       DateTime? @map("suspended_until")
+  stripeCustomerId     String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?   @map("stripe_subscription_id")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  plan     Plan      @relation(fields: [planId], references: [id])
+  invoices Invoice[]
+
+  @@index([tenantId, status])
+  @@map("subscriptions")
+}
+
+model UsageMeter {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  metric      String
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  value       Float    @default(0)
+  isFinalized Boolean  @default(false) @map("is_finalized")
+
+  @@unique([tenantId, metric, periodStart])
+  @@index([tenantId, metric, periodStart, periodEnd])
+  @@map("usage_meters")
+}
+
+model Invoice {
+  id              String    @id @default(uuid())
+  subscriptionId  String    @map("subscription_id")
+  tenantId        String    @map("tenant_id")
+  status          String    @default("draft")
+  periodStart     DateTime  @map("period_start")
+  periodEnd       DateTime  @map("period_end")
+  lines           Json
+  planSnapshot    Json?     @map("plan_snapshot")
+  subtotal        Int
+  total           Int
+  stripeInvoiceId String?   @unique @map("stripe_invoice_id")
+  paidAt          DateTime? @map("paid_at")
+  dueDate         DateTime  @map("due_date")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([tenantId, status])
+  @@index([subscriptionId, periodStart, periodEnd])
+  @@map("invoices")
+}
+
+model StripeWebhookEvent {
+  id             String    @id
+  type           String
+  data           Json
+  status         String    @default("pending")
+  processedAt    DateTime? @map("processed_at")
+  failureReason  String?   @map("failure_reason")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)])
+  @@map("stripe_webhook_events")
+}

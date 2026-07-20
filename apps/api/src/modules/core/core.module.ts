@@ -3,6 +3,7 @@ import { ActivityTimelineModule } from '../activity-timeline/activity-timeline.m
 import { AuditModule } from '../audit/audit.module';
 import { AuthModule } from '../auth/auth.module';
 import { AutomationModule } from '../automation/automation.module';
+import { BillingModule } from '../billing/billing.module';
 import { CitasModule } from '../citas/citas.module';
 import { ClientAuthModule } from '../client-auth/client-auth.module';
 import { ClientUserManagementModule } from '../client-user-management/client-user-management.module';
@@ -30,6 +31,7 @@ import { WorkflowModule } from '../workflow/workflow.module';
     AuditModule,
     AuthModule,
     AutomationModule,
+    BillingModule,
     CitasModule,
     CommunicationModule,
     ClientAuthModule,

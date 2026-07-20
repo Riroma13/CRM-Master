@@ -1,6 +1,6 @@
 # Engineering Dashboard
 
-> **Última actualización:** 2026-07-20 (SPEC-0022)
+> **Última actualización:** 2026-07-20 (SPEC-0023)
 > **Este documento se actualiza automáticamente al archivar cada SPEC.**
 
 ---
@@ -9,19 +9,19 @@
 
 | Metric | Value |
 |--------|-------|
-| Total SPECs | 20 |
-| Completed SPECs | 20 |
-| Archived SPECs | 20 |
+| Total SPECs | 21 |
+| Completed SPECs | 21 |
+| Archived SPECs | 21 |
 | Average Working Set Accuracy | **~98%** |
 | Average Prediction Accuracy | **~96%** |
-| Average Tests Added per SPEC | ~32 |
-| Architecture Reviews Passed | 19/19 |
+| Average Tests Added per SPEC | ~35 |
+| Architecture Reviews Passed | 20/20 |
 | Critical Discoveries | 0 |
 | Major Discoveries | 0 |
-| Minor Discoveries | 12 |
-| Average Files Created per SPEC | ~26 |
+| Minor Discoveries | 13 |
+| Average Files Created per SPEC | ~27 |
 | Average Files Modified per SPEC | ~3 |
-| Unexpected Files | 21 |
+| Unexpected Files | 24 |
 | Unexpected Dependencies | 1 (cmdk) |
 | Build Success | 19/19 |
 
@@ -51,6 +51,7 @@
 | SPEC-0020 | 2026-07-20 | 100% | 103 | 0/0/1 | ✅ Archived |
 | SPEC-0021 | 2026-07-20 | ~96% | 152 | 0/0/1 | ✅ Archived |
 | SPEC-0022 | 2026-07-20 | ~95% | 90 | 0/0/2 | ✅ Archived |
+| SPEC-0023 | 2026-07-20 | ~96% | 234 | 0/0/1 | ✅ Archived |
 
 ---
 
@@ -91,6 +92,10 @@
 | Embedding LRU cache + contentHash dedup | SPEC-0020 | — |
 | Bearer token auth with SHA-256 hashed storage | SPEC-0021 | — |
 | Worker thread plugin sandbox (pool + LRU + resource limits) | SPEC-0022 | — |
+| BullMQ saga with compensating actions | SPEC-0015 | SPEC-0023 |
+| Circuit breaker pattern (in-memory, fail-open) | SPEC-0023 | — |
+| Cumulative UPSERT metering (self-correcting) | SPEC-0023 | — |
+| Local-first creation (unpaid before external push) | SPEC-0023 | — |
 | Runtime PermissionGuard for Extension API | SPEC-0022 | — |
 | Domain allowlist for HTTP outbound | SPEC-0022 | — |
 | SHA-256 contentHash for package integrity | SPEC-0022 | — |
@@ -136,5 +141,5 @@
 | Platform Baseline | `sdd-v2.1-baseline` ✅ |
 | Enterprise Design | ACTIVE ✅ |
 | Feature Freeze | ACTIVE ✅ |
-| Total archived SPECs | 20 |
+| Total archived SPECs | 21 |
 | Pending SPECs | 2 (SPEC-0004, SPEC-0013) |

@@ -164,6 +164,17 @@ export type { ExtensionAPIV1 } from './plugin';
 export { PluginManifestSchema, PermissionSchema, validatePluginManifest } from './plugin';
 export type { PluginManifestInput, PluginManifestOutput } from './plugin';
 
+// ─── Billing & Subscription (SPEC-0023) ───────────────────────────────
+
+export type {
+  BillingPeriod, LimitType, PlanLimit, Plan,
+  SubscriptionStatus, Subscription,
+  UsageMeter, CheckLimitResult,
+  InvoiceStatus, InvoiceLine, Invoice,
+  WebhookEventStatus, StripeWebhookEvent,
+  MeteringCollector, PricingStrategy,
+} from './billing';
+
 // ─── Reporting & Analytics (SPEC-0019) ─────────────────────────────────
 
 export type {
