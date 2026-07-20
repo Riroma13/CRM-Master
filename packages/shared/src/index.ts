@@ -138,6 +138,22 @@ export type {
 } from './knowledge';
 export type { KnowledgePublisher } from './knowledge';
 
+// ─── Public API (SPEC-0021) ─────────────────────────────────────────────
+
+export type {
+  ApiKeyScope, ApiKeyPayload, CreateTokenResult,
+} from './public-api';
+
+export type {
+  WebhookSubscription, WebhookEvent, WebhookDelivery,
+} from './public-api';
+
+export type {
+  RateLimitResult, QuotaResult,
+} from './public-api';
+
+export type { PublicApiResponse } from './public-api';
+
 // ─── Reporting & Analytics (SPEC-0019) ─────────────────────────────────
 
 export type {

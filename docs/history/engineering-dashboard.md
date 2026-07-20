@@ -1,6 +1,6 @@
 # Engineering Dashboard
 
-> **Última actualización:** 2026-07-20
+> **Última actualización:** 2026-07-20 (SPEC-0021)
 > **Este documento se actualiza automáticamente al archivar cada SPEC.**
 
 ---
@@ -9,21 +9,21 @@
 
 | Metric | Value |
 |--------|-------|
-| Total SPECs | 18 |
-| Completed SPECs | 18 |
-| Archived SPECs | 18 |
+| Total SPECs | 19 |
+| Completed SPECs | 19 |
+| Archived SPECs | 19 |
 | Average Working Set Accuracy | **~98%** |
 | Average Prediction Accuracy | **~96%** |
 | Average Tests Added per SPEC | ~30 |
-| Architecture Reviews Passed | 17/17 |
+| Architecture Reviews Passed | 18/18 |
 | Critical Discoveries | 0 |
 | Major Discoveries | 0 |
-| Minor Discoveries | 9 |
+| Minor Discoveries | 10 |
 | Average Files Created per SPEC | ~26 |
 | Average Files Modified per SPEC | ~3 |
 | Unexpected Files | 19 |
 | Unexpected Dependencies | 1 (cmdk) |
-| Build Success | 17/17 |
+| Build Success | 18/18 |
 
 ---
 
@@ -49,6 +49,7 @@
 | SPEC-0018 | 2026-07-20 | 100% | 83 | 0/0/0 | ✅ Archived |
 | SPEC-0019 | 2026-07-20 | ~96% | 142 | 0/0/1 | ✅ Archived |
 | SPEC-0020 | 2026-07-20 | 100% | 103 | 0/0/1 | ✅ Archived |
+| SPEC-0021 | 2026-07-20 | ~96% | 152 | 0/0/1 | ✅ Archived |
 
 ---
 
@@ -87,6 +88,12 @@
 | HNSW + hybrid (vector + keyword) search | SPEC-0020 | — |
 | KnowledgePublisher interface for module adoption | SPEC-0020 | — |
 | Embedding LRU cache + contentHash dedup | SPEC-0020 | — |
+| Bearer token auth with SHA-256 hashed storage | SPEC-0021 | — |
+| Scopes resource:action (granular + wildcard) | SPEC-0021 | — |
+| In-memory sliding window rate limiting per endpoint | SPEC-0021 | — |
+| HMAC-SHA256 webhook signing with deliveryId anti-replay | SPEC-0021 | — |
+| URL path versioning with deprecation lifecycle | SPEC-0021 | — |
+| AES-256-GCM encrypted webhook secrets at rest | SPEC-0021 | — |
 
 ---
 
@@ -109,6 +116,9 @@
 | Audit consumes should use convenience methods (log()) to avoid circular DI | SPEC-0018 |
 | ONNX Runtime via @xenova/transformers works well but worker_threads needs non-null parentPort | SPEC-0020 |
 | KnowledgePublisher adoption pattern works cleanly with @Global() modules | SPEC-0020 |
+| Doorbell + integration tests prove tenant isolation and scope enforcement | SPEC-0021 |
+| Route path matching critical for rate limit key consistency in tests | SPEC-0021 |
+| Controllers should use `request.tenantId` from auth context, not query params | SPEC-0021 |
 
 ---
 
@@ -120,5 +130,5 @@
 | Platform Baseline | `sdd-v2.1-baseline` ✅ |
 | Enterprise Design | ACTIVE ✅ |
 | Feature Freeze | ACTIVE ✅ |
-| Total archived SPECs | 18 |
+| Total archived SPECs | 19 |
 | Pending SPECs | 2 (SPEC-0004, SPEC-0013) |

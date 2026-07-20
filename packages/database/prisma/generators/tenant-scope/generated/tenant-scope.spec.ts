@@ -1,7 +1,7 @@
 // ⚡ AUTO-GENERATED — DO NOT EDIT
 // Source: prisma/schema.prisma
 // Generator: prisma/generators/tenant-scope/generator.ts
-// Generated: 2026-07-20T17:21:47.451Z
+// Generated: 2026-07-20T21:31:04.141Z
 
 import { describe, it, expect } from 'vitest';
 import {

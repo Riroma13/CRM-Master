@@ -5,7 +5,9 @@ export interface DatasetEvent {
   value: number;
   timestamp: string;
   dimensions?: Record<string, string>;
-  eventId?: string; // for dedup
+  eventId?: string;
+  aggregation?: 'count' | 'sum' | 'avg' | 'min' | 'max';
+  granularity?: 'hour' | 'day';
 }
 
 export interface DatasetPublisher {
