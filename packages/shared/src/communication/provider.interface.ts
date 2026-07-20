@@ -24,6 +24,7 @@ export interface SendMessageInput {
   attachments?: Array<{ filename: string; content: string; contentType: string }>;
   priority?: 'high' | 'normal' | 'low';
   metadata?: Record<string, unknown>;
+  idempotencyKey?: string;
 }
 
 export interface SendResult {

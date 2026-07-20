@@ -13,6 +13,7 @@ import { DocumentEngineModule } from '../document-engine/document-engine.module'
 import { IntegrationModule } from '../integration/integration.module';
 import { DocumentosModule } from '../documentos/documentos.module';
 import { EventosModule } from '../eventos/eventos.module';
+import { NotificationModule } from '../notification/notification.module';
 import { SearchModule } from '../search/search.module';
 import { TareasModule } from '../tareas/tareas.module';
 import { TenantsModule } from '../tenants/tenant.module';
@@ -41,6 +42,7 @@ import { WorkflowModule } from '../workflow/workflow.module';
     DocumentosModule,
     IntegrationModule,
     EventosModule,
+    NotificationModule,
     SearchModule,
     TareasModule,
     TenantsModule,

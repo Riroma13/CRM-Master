@@ -9,21 +9,21 @@
 
 | Metric | Value |
 |--------|-------|
-| Total SPECs | 13 |
-| Completed SPECs | 13 |
-| Archived SPECs | 13 |
+| Total SPECs | 14 |
+| Completed SPECs | 14 |
+| Archived SPECs | 14 |
 | Average Working Set Accuracy | **~98%** |
-| Average Prediction Accuracy | **~99%** |
-| Average Tests Added per SPEC | ~23 |
-| Architecture Reviews Passed | 13/13 |
+| Average Prediction Accuracy | **~96%** |
+| Average Tests Added per SPEC | ~25 |
+| Architecture Reviews Passed | 14/14 |
 | Critical Discoveries | 0 |
 | Major Discoveries | 0 |
-| Minor Discoveries | 6 |
-| Average Files Created per SPEC | ~25 |
+| Minor Discoveries | 7 |
+| Average Files Created per SPEC | ~26 |
 | Average Files Modified per SPEC | ~3 |
-| Unexpected Files | 4 |
+| Unexpected Files | 14 |
 | Unexpected Dependencies | 1 (cmdk) |
-| Build Success | 13/13 |
+| Build Success | 14/14 |
 
 ---
 
@@ -44,6 +44,7 @@
 | client-self-registration | 2026-07-19 | — | — | — | ✅ Archived |
 | add-portalurl-to-findone | 2026-07-18 | 100% | — | 0/0/0 | ✅ Archived |
 | SPEC-0015 | 2026-07-20 | 100% | 33 | 0/0/2 | ✅ Archived |
+| SPEC-0016 | 2026-07-20 | ~95% | 35 | 0/0/1 | ✅ Archived |
 
 ---
 
@@ -68,6 +69,11 @@
 | Saga orchestrated compensation | SPEC-0015 | — |
 | ParallelSplit + ParallelJoin | SPEC-0015 | — |
 | SubWorkflow async suspend/resume | SPEC-0015 | — |
+| NotificationCenter definition pattern (Definition → Instance → Routing → Delivery) | SPEC-0016 | — |
+| Double-checkpoint preference evaluation | SPEC-0016 | — |
+| Content snapshot on instance for immutability | SPEC-0016 | — |
+| RoutingStrategy rule-based with override | SPEC-0016 | — |
+| EAV table for notification preferences | SPEC-0016 | — |
 
 ---
 
@@ -80,9 +86,11 @@
 | Shared contracts reduce drift | SPEC-0009, SPEC-0010, SPEC-0011, SPEC-0012 |
 | Abstractions first prevent coupling | SPEC-0011, SPEC-0012 |
 | Deferred tests follow consistent pattern | SPEC-0010, SPEC-0011, SPEC-0012 |
-| Shared package re-exports must be in Working Set | SPEC-0015 |
+| Shared package re-exports must be in Working Set | SPEC-0015, SPEC-0016 |
 | Implementation improves design proactively | SPEC-0015 |
 | Doorbell tests catch tenant isolation gaps effectively | SPEC-0015 |
+| Migration SQL fallback needed for CI-like environments | SPEC-0016 |
+| Testing files should be predicted in Working Set or explicitly deferred | SPEC-0016 |
 
 ---
 
@@ -94,5 +102,5 @@
 | Platform Baseline | `sdd-v2.1-baseline` ✅ |
 | Enterprise Design | ACTIVE ✅ |
 | Feature Freeze | ACTIVE ✅ |
-| Total archived SPECs | 13 |
+| Total archived SPECs | 14 |
 | Pending SPECs | 2 (SPEC-0004, SPEC-0013) |

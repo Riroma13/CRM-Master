@@ -96,6 +96,15 @@ export * from './document';
 
 export * from './integration';
 
+// ─── Notification (Notification Center) ────────────────────────────────
+
+export type {
+  NotificationStatus, ChannelType, Priority, Severity, DigestFrequency,
+  NotificationDefinition, RoutingRule, NotificationTemplate,
+  NotificationPreference, QuietHours,
+  RoutingContext, RoutingResult, RoutingStrategy, BatchPolicy, DeliveryRequest, DeliveryReceipt,
+} from './notification';
+
 // ─── Workflow (BPM Engine) ──────────────────────────────────────────────
 
 export type {

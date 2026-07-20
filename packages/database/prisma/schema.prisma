@@ -1011,6 +1011,147 @@ model WorkflowActiveBranch {
   @@map("workflow_active_branches")
 }
 
+// ─── Notification Center (SPEC-0016) ────────────────────────────────
+
+model NotificationDefinition {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  name            String
+  category        String
+  channels        String[]
+  defaultPriority String   @default("normal") @map("default_priority")
+  defaultSeverity String   @default("info") @map("default_severity")
+  rules           Json?
+  template        Json?
+  isPublished     Boolean  @default(false) @map("is_published")
+  version         Int      @default(1)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  instances NotificationInstance[]
+
+  @@index([tenantId])
+  @@index([tenantId, category])
+  @@map("notification_definitions")
+}
+
+model NotificationInstance {
+  id                      String    @id @default(uuid())
+  tenantId                String    @map("tenant_id")
+  definitionId            String    @map("definition_id")
+  userId                  String    @map("user_id")
+  status                  String    @default("pending")
+  channel                 String?
+  priority                String    @default("normal")
+  severity                String    @default("info")
+  content                 Json?
+  contentSnapshot         Json?     @map("content_snapshot")
+  idempotencyKey          String?   @unique @map("idempotency_key")
+  correlationId           String?   @map("correlation_id")
+  scheduledAt             DateTime? @map("scheduled_at")
+  expiresAt               DateTime? @map("expires_at")
+  deliveredAt             DateTime? @map("delivered_at")
+  readAt                  DateTime? @map("read_at")
+  error                   String?
+  preferencesLastCheckedAt DateTime? @map("preferences_last_checked_at")
+  version                 Int       @default(1)
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  receipts    NotificationReceipt[]
+  definition  NotificationDefinition @relation(fields: [definitionId], references: [id])
+
+  @@index([tenantId, status])
+  @@index([tenantId, userId, status])
+  @@index([tenantId, correlationId])
+  @@index([tenantId, scheduledAt])
+  @@map("notification_instances")
+}
+
+model NotificationPreference {
+  id                String   @id @default(uuid())
+  tenantId          String   @map("tenant_id")
+  userId            String   @map("user_id")
+  category          String?
+  enabled           Boolean  @default(true)
+  preferredChannels String[] @map("preferred_channels")
+  quietHoursStart   String?  @map("quiet_hours_start")
+  quietHoursEnd     String?  @map("quiet_hours_end")
+  quietHoursTz      String?  @map("quiet_hours_timezone")
+  digestFrequency   String   @default("never") @map("digest_frequency")
+  timezone          String?
+  language          String?  @default("en")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, userId, category])
+  @@index([tenantId, userId])
+  @@map("notification_preferences")
+}
+
+model NotificationBatch {
+  id          String    @id @default(uuid())
+  tenantId    String    @map("tenant_id")
+  userId      String    @map("user_id")
+  category    String?
+  batchKey    String    @map("batch_key")
+  windowStart DateTime  @map("window_start")
+  windowEnd   DateTime  @map("window_end")
+  status      String    @default("open")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  closedAt    DateTime? @map("closed_at")
+
+  @@index([tenantId, userId, status])
+  @@index([batchKey])
+  @@map("notification_batches")
+}
+
+model NotificationReceipt {
+  id                String   @id @default(uuid())
+  notificationId    String   @map("notification_id")
+  tenantId          String   @map("tenant_id")
+  channel           String
+  status            String
+  providerMessageId String?  @map("provider_message_id")
+  error             String?
+  receivedAt        DateTime @default(now()) @map("received_at")
+
+  notification NotificationInstance @relation(fields: [notificationId], references: [id])
+
+  @@index([notificationId])
+  @@index([tenantId, status])
+  @@map("notification_receipts")
+}
+
+model NotificationAudit {
+  id             String   @id @default(uuid())
+  notificationId String   @map("notification_id")
+  tenantId       String   @map("tenant_id")
+  eventType      String   @map("event_type")
+  data           Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([notificationId])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("notification_audit")
+}
+
+model NotificationDigest {
+  id                String    @id @default(uuid())
+  tenantId          String    @map("tenant_id")
+  userId            String    @map("user_id")
+  category          String?
+  batchKey          String    @map("batch_key")
+  scheduledAt       DateTime? @map("scheduled_at")
+  sentAt            DateTime? @map("sent_at")
+  notificationCount Int       @default(0) @map("notification_count")
+  status            String    @default("pending")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId, userId])
+  @@map("notification_digests")
+}
+
 // ─── Integration Platform ─────────────────────────────────────────
 
 model IntegrationConnector {
