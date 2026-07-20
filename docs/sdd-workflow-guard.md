@@ -133,34 +133,34 @@ When the Review Workload Forecast exceeds 400 lines, the orchestrator MUST
 analyze the change's scope before recommending Size Exception or Chained PRs.
 This analysis happens AFTER Tasks Review confirms the tasks are sound.
 
-**Apply this decision logic:**
+**Apply the Complexity Score:**
 
-```
-IF (Single bounded context)
-AND (Single SPEC)
-AND (Cohesive domain — all files serve one capability)
-→ Recommend Size Exception
+| Criterion | Points | Reason |
+|-----------|--------|--------|
+| > 1500 estimated LOC | +2 | Large change, hard to review |
+| Multiple bounded contexts | +2 | Touches 2+ modules with independent ownership |
+| Shared contracts modified | +2 | Changes in `packages/shared/` affect all consumers |
+| Existing consumers | +2 | Migration risk for current callers |
+| Migration required | +2 | Schema migration, data migration, or breaking change |
+| Multiple repositories/modules | +1 | Cross-package coordination |
+| Backward compatibility | +1 | Must preserve existing behavior |
 
-ELSE IF (Multiple bounded contexts)
-OR (Multiple modules with independent deliverables)
-OR (Changes span non-cohesive domains)
-→ Recommend Chained PRs
-```
+**Score interpretation:**
 
-**Guidance for evaluation:**
+| Score | Recommendation |
+|-------|---------------|
+| ≤ 3 | Size Exception (single PR) |
+| ≥ 4 | Chained PRs |
 
-- **Single bounded context**: one `WorkflowModule`, one `NotificationModule`,
-  one `CommunicationModule`. The change lives entirely inside one module's
-  boundary with its own data, contracts, and API.
-- **Cohesive domain**: every file in the Working Set directly serves the
-  same capability. No shared infrastructure changes, no cross-module
-  refactors, no changes to platform plumbing.
+**How to score:**
+- Sum points for each criterion that applies to the current SPEC.
+- Base the estimate on the Tasks Review Workload Forecast.
 - **Multiple bounded contexts**: the change touches 2+ modules that own
-  different data (e.g., NotificationModule + CommunicationModule for
-  idempotencyKey changes).
-- **Independent deliverables**: the change COULD be split into standalone
-  PRs that each provide value on their own (e.g., schema-only PR, then
-  engine PR, then API PR).
+  different data (e.g., NotificationModule + CommunicationModule).
+- **Existing consumers**: 1+ modules currently depend on the code being
+  changed. Migration planning required.
+- **Migration required**: Prisma migration, data backfill, or breaking
+  API change. Not just adding new optional columns.
 
 **The recommendation is advisory.** The user makes the final decision.
 If the user overrides the recommendation, record the override and reason.
