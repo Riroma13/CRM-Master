@@ -5,6 +5,8 @@ import { ChunkingService } from './ingestion/chunking.service';
 import { EmbeddingCache } from './embeddings/embedding-cache';
 import { EmbeddingService } from './embeddings/embedding.service';
 import { KnowledgeService } from './knowledge.service';
+import { KnowledgeController } from './knowledge.controller';
+import { KnowledgeGuard } from './guards/knowledge.guard';
 import { IngestionService, ReindexService } from './ingestion/ingestion.service';
 import { GarbageCollectorService } from './ingestion/garbage-collector.service';
 import { PrismaService } from '../../common/prisma.service';
@@ -73,11 +75,13 @@ class GarbageCollectorScheduler implements OnModuleInit {
       },
     ),
   ],
+  controllers: [KnowledgeController],
   providers: [
     ChunkingService,
     EmbeddingCache,
     EmbeddingService,
     KnowledgeService,
+    KnowledgeGuard,
     IngestionService,
     ReindexService,
     GarbageCollectorService,
@@ -92,6 +96,7 @@ class GarbageCollectorScheduler implements OnModuleInit {
     EmbeddingCache,
     EmbeddingService,
     KnowledgeService,
+    KnowledgeGuard,
     RetrievalEngine,
     GenerationEngine,
   ],

@@ -14,6 +14,7 @@ import { DocumentEngineModule } from '../document-engine/document-engine.module'
 import { IntegrationModule } from '../integration/integration.module';
 import { DocumentosModule } from '../documentos/documentos.module';
 import { EventosModule } from '../eventos/eventos.module';
+import { KnowledgeModule } from '../knowledge/knowledge.module';
 import { NotificationModule } from '../notification/notification.module';
 import { ReportingModule } from '../reporting/reporting.module';
 import { SearchModule } from '../search/search.module';
@@ -21,13 +22,6 @@ import { TareasModule } from '../tareas/tareas.module';
 import { TenantsModule } from '../tenants/tenant.module';
 import { WorkflowModule } from '../workflow/workflow.module';
 
-/**
- * Aggregation module for the platform's core business context.
- *
- * Mission Control / admin back-office modules plus shared domain
- * capabilities (appointments, documents, auth) that are consumed
- * by the tenant layer and infrastructure alike.
- */
 @Module({
   imports: [
     ActivityTimelineModule,
@@ -45,6 +39,7 @@ import { WorkflowModule } from '../workflow/workflow.module';
     DocumentosModule,
     IntegrationModule,
     EventosModule,
+    KnowledgeModule,
     NotificationModule,
     ReportingModule,
     SearchModule,
