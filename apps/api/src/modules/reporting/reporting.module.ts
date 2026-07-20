@@ -6,6 +6,9 @@ import { DatasetIngestionService } from './ingestion/dataset-ingestion.service';
 import { ReconciliationService } from './ingestion/reconciliation.service';
 import { PrismaService } from '../../common/prisma.service';
 import { createReportingReadOnlyMiddleware } from './reporting-read-only.middleware';
+import { KpiEngine } from './kpi/kpi-engine';
+import { ReportEngine } from './report/report-engine';
+import { ReportingGuard } from './guards/reporting.guard';
 
 @Injectable()
 class ReportingReadOnlyRegistrar implements OnModuleInit {
@@ -37,6 +40,15 @@ class ReportingReadOnlyRegistrar implements OnModuleInit {
           removeOnComplete: true,
         },
       },
+      {
+        name: 'reporting:report:generate',
+        defaultJobOptions: {
+          attempts: 2,
+          backoff: { type: 'exponential', delay: 2000 },
+          removeOnComplete: true,
+          removeOnFail: 50,
+        },
+      },
     ),
   ],
   controllers: [ReportingController],
@@ -46,7 +58,10 @@ class ReportingReadOnlyRegistrar implements OnModuleInit {
     ReconciliationService,
     PrismaService,
     ReportingReadOnlyRegistrar,
+    KpiEngine,
+    ReportEngine,
+    ReportingGuard,
   ],
-  exports: [ReportingService],
+  exports: [ReportingService, KpiEngine, ReportEngine],
 })
 export class ReportingModule {}

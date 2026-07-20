@@ -4,6 +4,7 @@ describe('ReportingController — replay', () => {
   let controller: ReportingController;
   let mockPrisma: any;
   let scopedClient: any;
+  let mockReporting: any;
 
   beforeEach(() => {
     scopedClient = {
@@ -15,8 +16,9 @@ describe('ReportingController — replay', () => {
       },
     };
 
+    mockReporting = {};
     mockPrisma = { forTenant: jest.fn().mockReturnValue(scopedClient) };
-    controller = new ReportingController(mockPrisma);
+    controller = new ReportingController(mockReporting, mockPrisma);
   });
 
   it('re-processes events from ingestion log', async () => {
