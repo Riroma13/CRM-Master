@@ -30,6 +30,13 @@ export class ActivityTimelineService {
           severity: parsed.data.severity,
           category: parsed.data.category,
           payload: parsed.data.payload as Prisma.InputJsonValue,
+          eventId: parsed.data.eventId ?? undefined,
+          correlationId: parsed.data.correlationId ?? undefined,
+          causationId: parsed.data.causationId ?? undefined,
+          visibility: parsed.data.visibility,
+          subjectName: parsed.data.subjectName ?? undefined,
+          actorName: parsed.data.actorName ?? undefined,
+          occurredAt: parsed.data.occurredAt ? new Date(parsed.data.occurredAt) : undefined,
         },
       });
     } catch (error) {
@@ -54,6 +61,9 @@ export class ActivityTimelineService {
     if (filters.severity) where.severity = filters.severity;
     if (filters.category) where.category = filters.category;
     if (filters.eventType) where.eventType = filters.eventType;
+    if (filters.correlationId) where.correlationId = filters.correlationId;
+    if (filters.eventId) where.eventId = filters.eventId;
+    if (filters.visibility) where.visibility = filters.visibility;
 
     if (filters.dateFrom || filters.dateTo) {
       where.createdAt = {};
@@ -64,7 +74,7 @@ export class ActivityTimelineService {
     const [data, total] = await Promise.all([
       this.prisma.admin.activityEvent.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { receivedAt: 'desc' }],
         skip,
         take: limit,
       }),

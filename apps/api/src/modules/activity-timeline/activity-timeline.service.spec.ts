@@ -50,20 +50,22 @@ describe('ActivityTimelineService', () => {
 
       await service.publish(validEnvelope);
 
-      expect(prisma.admin.activityEvent.create).toHaveBeenCalledWith({
-        data: {
-          tenantId: 'tenant-1',
-          clienteId: 'cliente-1',
-          entityType: 'cliente',
-          entityId: 'cliente-1',
-          eventType: 'cliente.creado',
-          actor: 'admin@test.com',
-          sourceModule: 'clientes',
-          severity: 'info',
-          category: 'crm',
-          payload: { nombre: 'Test' },
-        },
-      });
+      expect(prisma.admin.activityEvent.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            tenantId: 'tenant-1',
+            clienteId: 'cliente-1',
+            entityType: 'cliente',
+            entityId: 'cliente-1',
+            eventType: 'cliente.creado',
+            actor: 'admin@test.com',
+            sourceModule: 'clientes',
+            severity: 'info',
+            category: 'crm',
+            payload: { nombre: 'Test' },
+          }),
+        }),
+      );
     });
 
     it('should not throw on Prisma error', async () => {
@@ -96,19 +98,65 @@ describe('ActivityTimelineService', () => {
 
       await service.publish(minimal);
 
-      expect(prisma.admin.activityEvent.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          clienteId: null,
-          entityId: null,
+      expect(prisma.admin.activityEvent.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            clienteId: null,
+            entityId: null,
+          }),
         }),
-      });
+      );
+    });
+
+    it('should map new optional fields when present in envelope', async () => {
+      const enriched: ActivityEventEnvelope = {
+        ...validEnvelope,
+        eventId: '550e8400-e29b-41d4-a716-446655440000',
+        correlationId: 'corr-123',
+        causationId: 'cause-456',
+        visibility: 'public',
+        subjectName: 'Cliente Test',
+        actorName: 'Admin User',
+        occurredAt: '2024-06-15T10:00:00.000Z',
+      };
+
+      prisma.admin.activityEvent.create.mockResolvedValue({ id: 3 });
+
+      await service.publish(enriched);
+
+      expect(prisma.admin.activityEvent.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            eventId: '550e8400-e29b-41d4-a716-446655440000',
+            correlationId: 'corr-123',
+            causationId: 'cause-456',
+            visibility: 'public',
+            subjectName: 'Cliente Test',
+            actorName: 'Admin User',
+          }),
+        }),
+      );
+    });
+
+    it('should omit new optional fields when not present in envelope', async () => {
+      prisma.admin.activityEvent.create.mockResolvedValue({ id: 4 });
+
+      await service.publish(validEnvelope);
+
+      const callArg = (prisma.admin.activityEvent.create as jest.Mock).mock.calls[0][0];
+      expect(callArg.data.eventId).toBeUndefined();
+      expect(callArg.data.correlationId).toBeUndefined();
+      expect(callArg.data.causationId).toBeUndefined();
+      expect(callArg.data.subjectName).toBeUndefined();
+      expect(callArg.data.actorName).toBeUndefined();
+      expect(callArg.data.occurredAt).toBeUndefined();
     });
   });
 
   describe('getTimeline', () => {
     it('should return paginated results', async () => {
       prisma.admin.activityEvent.findMany.mockResolvedValue([
-        { id: 1, tenantId: 't-1', eventType: 'test', createdAt: new Date() },
+        { id: 1, tenantId: 't-1', eventType: 'test', createdAt: new Date(), receivedAt: new Date() },
       ]);
       prisma.admin.activityEvent.count.mockResolvedValue(1);
 
@@ -166,20 +214,22 @@ describe('ActivityTimelineService', () => {
       );
     });
 
-    it('should order by createdAt descending', async () => {
+    it('should order by createdAt descending then receivedAt descending', async () => {
       prisma.admin.activityEvent.findMany.mockResolvedValue([]);
       prisma.admin.activityEvent.count.mockResolvedValue(0);
 
       await service.getTimeline({ tenantId: 't-1' });
 
       expect(prisma.admin.activityEvent.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ orderBy: { createdAt: 'desc' } }),
+        expect.objectContaining({
+          orderBy: [{ createdAt: 'desc' }, { receivedAt: 'desc' }],
+        }),
       );
     });
 
     it('should compute hasMore correctly', async () => {
       prisma.admin.activityEvent.findMany.mockResolvedValue(
-        Array(10).fill({ id: 1, tenantId: 't-1', createdAt: new Date() }),
+        Array(10).fill({ id: 1, tenantId: 't-1', createdAt: new Date(), receivedAt: new Date() }),
       );
       prisma.admin.activityEvent.count.mockResolvedValue(25);
 
@@ -198,6 +248,45 @@ describe('ActivityTimelineService', () => {
       expect(result.data).toHaveLength(0);
       expect(result.meta.total).toBe(0);
       expect(result.meta.hasMore).toBe(false);
+    });
+
+    it('should filter by correlationId', async () => {
+      prisma.admin.activityEvent.findMany.mockResolvedValue([]);
+      prisma.admin.activityEvent.count.mockResolvedValue(0);
+
+      await service.getTimeline({ tenantId: 't-1', correlationId: 'corr-123' });
+
+      expect(prisma.admin.activityEvent.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ correlationId: 'corr-123' }),
+        }),
+      );
+    });
+
+    it('should filter by eventId', async () => {
+      prisma.admin.activityEvent.findMany.mockResolvedValue([]);
+      prisma.admin.activityEvent.count.mockResolvedValue(0);
+
+      await service.getTimeline({ tenantId: 't-1', eventId: '550e8400-e29b-41d4-a716-446655440000' });
+
+      expect(prisma.admin.activityEvent.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ eventId: '550e8400-e29b-41d4-a716-446655440000' }),
+        }),
+      );
+    });
+
+    it('should filter by visibility', async () => {
+      prisma.admin.activityEvent.findMany.mockResolvedValue([]);
+      prisma.admin.activityEvent.count.mockResolvedValue(0);
+
+      await service.getTimeline({ tenantId: 't-1', visibility: 'public' });
+
+      expect(prisma.admin.activityEvent.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ visibility: 'public' }),
+        }),
+      );
     });
   });
 });

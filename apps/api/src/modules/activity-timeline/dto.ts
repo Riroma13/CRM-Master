@@ -15,6 +15,17 @@ export interface ActivityEventRow {
   category: string;
   payload: Prisma.JsonValue;
   createdAt: Date;
+  eventId: string | null;
+  correlationId: string | null;
+  causationId: string | null;
+  visibility: string;
+  subjectName: string | null;
+  actorName: string | null;
+  searchVector: unknown;
+  enriched: boolean;
+  enrichedAt: Date | null;
+  occurredAt: Date | null;
+  receivedAt: Date;
 }
 
 export const TimelineQuerySchema = z.object({
@@ -27,6 +38,10 @@ export const TimelineQuerySchema = z.object({
   severity: Severity.optional(),
   category: Category.optional(),
   eventType: z.string().optional(),
+  correlationId: z.string().optional(),
+  eventId: z.string().optional(),
+  visibility: z.enum(['public', 'internal', 'private', 'tenant-only']).optional(),
+  searchQuery: z.string().optional(),
   dateFrom: z.string().datetime().optional(),
   dateTo: z.string().datetime().optional(),
   page: z.coerce.number().int().min(1).default(1).optional(),

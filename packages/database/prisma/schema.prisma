@@ -576,6 +576,18 @@ model ActivityEvent {
   payload      Json     @default("{}")
   createdAt    DateTime @default(now()) @map("created_at")
 
+  eventId       String?  @unique @map("event_id")
+  correlationId String?  @map("correlation_id")
+  causationId   String?  @map("causation_id")
+  visibility    String   @default("tenant-only")
+  subjectName   String?  @map("subject_name")
+  actorName     String?  @map("actor_name")
+  searchVector  Unsupported("tsvector")? @map("search_vector")
+  enriched      Boolean  @default(false)
+  enrichedAt    DateTime? @map("enriched_at")
+  occurredAt    DateTime? @map("occurred_at")
+  receivedAt    DateTime @default(now()) @map("received_at")
+
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId, createdAt(sort: Desc)], map: "timeline_tenant_created")
@@ -584,6 +596,8 @@ model ActivityEvent {
   @@index([tenantId, eventType, createdAt(sort: Desc)], map: "timeline_event_type")
   @@index([tenantId, sourceModule, createdAt(sort: Desc)], map: "timeline_source_module")
   @@index([tenantId, severity, createdAt(sort: Desc)], map: "timeline_severity")
+  @@index([tenantId, correlationId], map: "timeline_correlation")
+  @@index([searchVector], type: Gin, map: "timeline_search_vector")
   @@map("activity_events")
 }
 
