@@ -850,6 +850,167 @@ model DocumentTrash {
   @@map("document_trash")
 }
 
+// ─── Workflow / BPM Engine ───────────────────────────────────────
+
+model WorkflowDefinition {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  versions  WorkflowDefinitionVersion[]
+  instances WorkflowInstance[]
+
+  @@index([tenantId])
+  @@map("workflow_definitions")
+}
+
+model WorkflowDefinitionVersion {
+  id           String   @id @default(uuid())
+  definitionId String   @map("definition_id")
+  version      Int
+  nodes        Json
+  startNode    String   @map("start_node")
+  isPublished  Boolean  @default(false) @map("is_published")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  definition WorkflowDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@unique([definitionId, version])
+  @@map("workflow_definition_versions")
+}
+
+model WorkflowInstance {
+  id                  String    @id @default(uuid())
+  definitionId        String    @map("definition_id")
+  definitionVersion   Int       @map("definition_version")
+  tenantId            String    @map("tenant_id")
+  correlationId       String?   @map("correlation_id")
+  status              String    @default("running")
+  version             Int       @default(1)
+  maxInstanceLifetime Int       @default(604800000)
+  startedAt           DateTime  @default(now()) @map("started_at")
+  completedAt         DateTime? @map("completed_at")
+  error               String?
+
+  definition     WorkflowDefinition      @relation(fields: [definitionId], references: [id])
+  executions     WorkflowExecution[]
+  userTasks      WorkflowUserTask[]
+  timers         WorkflowTimer[]
+  audits         WorkflowAudit[]
+  variables      WorkflowVariable[]
+  activeBranches WorkflowActiveBranch[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, correlationId])
+  @@map("workflow_instances")
+}
+
+model WorkflowExecution {
+  id          String    @id @default(uuid())
+  instanceId  String    @map("instance_id")
+  nodeId      String    @map("node_id")
+  tenantId    String    @map("tenant_id")
+  status      String    @default("pending")
+  input       Json?
+  output      Json?
+  error       String?
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  instance WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId])
+  @@index([tenantId])
+  @@map("workflow_executions")
+}
+
+model WorkflowUserTask {
+  id          String    @id @default(uuid())
+  instanceId  String    @map("instance_id")
+  nodeId      String    @map("node_id")
+  tenantId    String    @map("tenant_id")
+  assignee    String?
+  status      String    @default("pending")
+  input       Json?
+  output      Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+
+  instance WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId])
+  @@index([tenantId, status])
+  @@map("workflow_user_tasks")
+}
+
+model WorkflowTimer {
+  id         String   @id @default(uuid())
+  instanceId String   @map("instance_id")
+  nodeId     String   @map("node_id")
+  tenantId   String   @map("tenant_id")
+  fireAt     DateTime @map("fire_at")
+  fired      Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  instance WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([fireAt, fired])
+  @@index([tenantId])
+  @@map("workflow_timers")
+}
+
+model WorkflowAudit {
+  id         String   @id @default(uuid())
+  instanceId String   @map("instance_id")
+  nodeId     String?  @map("node_id")
+  tenantId   String   @map("tenant_id")
+  eventType  String   @map("event_type")
+  data       Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  instance WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId])
+  @@index([createdAt(sort: Desc)])
+  @@index([tenantId])
+  @@map("workflow_audit")
+}
+
+model WorkflowVariable {
+  id         String   @id @default(uuid())
+  instanceId String   @map("instance_id")
+  tenantId   String   @map("tenant_id")
+  key        String
+  value      Json
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  instance WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@unique([instanceId, key])
+  @@index([tenantId])
+  @@map("workflow_variables")
+}
+
+model WorkflowActiveBranch {
+  id          String   @id @default(uuid())
+  instanceId  String   @map("instance_id")
+  tenantId    String   @map("tenant_id")
+  branchGroup String   @map("branch_group")
+  nodeId      String   @map("node_id")
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  instance WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId, branchGroup])
+  @@index([tenantId])
+  @@map("workflow_active_branches")
+}
+
 // ─── Integration Platform ─────────────────────────────────────────
 
 model IntegrationConnector {

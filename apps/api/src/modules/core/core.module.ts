@@ -16,6 +16,7 @@ import { EventosModule } from '../eventos/eventos.module';
 import { SearchModule } from '../search/search.module';
 import { TareasModule } from '../tareas/tareas.module';
 import { TenantsModule } from '../tenants/tenant.module';
+import { WorkflowModule } from '../workflow/workflow.module';
 
 /**
  * Aggregation module for the platform's core business context.
@@ -43,6 +44,7 @@ import { TenantsModule } from '../tenants/tenant.module';
     SearchModule,
     TareasModule,
     TenantsModule,
+    WorkflowModule,
   ],
 })
 export class CoreModule {}

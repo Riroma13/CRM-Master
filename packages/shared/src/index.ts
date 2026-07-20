@@ -96,3 +96,12 @@ export * from './document';
 
 export * from './integration';
 
+// ─── Workflow (BPM Engine) ──────────────────────────────────────────────
+
+export type {
+  NodeType, WorkflowNode,
+  WorkflowDefinition,
+  InstanceStatus, WorkflowInstance,
+  ServiceTaskContext, ServiceTaskResult, ServiceTaskGateway,
+  NodeExecutor, WorkflowExecutionContext, WorkflowExecutionResult, NodeExecutorRegistry,
+} from './workflow';
