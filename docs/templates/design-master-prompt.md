@@ -105,7 +105,7 @@ Do not execute commands. Only predict.
 | Files to create | N | New files |
 | Files to modify | N | Existing files to edit |
 
-### 5. Architecture Review (MANDATORY)
+### 5. Architecture Review Preparation (MANDATORY)
 
 Evaluate ALL 7 topics. This section CANNOT be omitted.
 
@@ -225,11 +225,11 @@ orchestrator (openspec, engram, hybrid, or none).
    existing pattern unless the change specifically addresses it.
 5. Keep ASCII diagrams simple. Clarity over beauty.
 6. If you have open questions that BLOCK the design, say so clearly.
-7. The Architecture Review section is MANDATORY. Do not skip it.
+7. The Architecture Review Preparation section is MANDATORY. Do not skip it.
 8. If you cannot achieve High Design Confidence, explain why and what
    information would close the gap.
 9. Return the complete Design document. Do not return a summary only.
-10. The Architecture Review (7 topics A-G) is not optional. A Design without
+10. The Architecture Review Preparation (7 topics A-G) is not optional. A Design without
     it is incomplete and will be rejected.
 
 ---

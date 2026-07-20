@@ -333,7 +333,7 @@ Common mistakes:
 
 ---
 
-## Architecture Review (MANDATORY)
+## Architecture Review Preparation (MANDATORY)
 
 <!--
 Cada Design DEBE evaluar explícitamente los 7 temas siguientes.
