@@ -1788,3 +1788,53 @@ model StripeWebhookEvent {
   @@index([createdAt(sort: Desc)])
   @@map("stripe_webhook_events")
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// Monitoring & Observability (SPEC-0024)
+// ═══════════════════════════════════════════════════════════════════════
+
+// ─── AlertRule (read-only metadata — rules defined in Prometheus files) ──
+model AlertRule {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  description     String?
+  severity        String   @default("warning")
+  promqlExpression String  @map("promql_expression")
+  threshold       Float
+  duration        Int      @default(60)
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("alert_rules")
+}
+
+// ─── AlertEvent (from AlertManager webhook) ──
+model AlertEvent {
+  id          String   @id @default(uuid())
+  ruleName    String   @map("rule_name")
+  severity    String
+  status      String   @default("firing")
+  value       Float?
+  threshold   Float?
+  message     String?
+  startedAt   DateTime @map("started_at")
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([ruleName, startedAt(sort: Desc)])
+  @@index([status, severity])
+  @@map("alert_events")
+}
+
+// ─── HealthCheckLog ──
+model HealthCheckLog {
+  id         String   @id @default(uuid())
+  status     String
+  summary    String?
+  checks     Json
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)])
+  @@map("health_check_logs")
+}

@@ -4,6 +4,7 @@ import { AuditModule } from '../audit/audit.module';
 import { ExportModule } from '../export/export.module';
 import { HealthModule } from '../health/health.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ObservabilityModule } from '../observability/observability.module';
 import { SearchModule } from '../search/search.module';
 
 /**
@@ -19,6 +20,7 @@ import { SearchModule } from '../search/search.module';
     ExportModule,
     HealthModule,
     NotificationsModule,
+    ObservabilityModule,
     SearchModule,
   ],
 })

@@ -1,15 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../common/prisma.service';
 import { NotificationsService } from './notifications.service';
+import { PinoLoggerService } from '../observability/logging/pino-logger.service';
 
 @Injectable()
 export class NotificationRemindersService {
-  private readonly logger = new Logger(NotificationRemindersService.name);
   // In-memory set of sent reminders (resets on restart — acceptable for MVP)
   private sentReminders = new Set<string>();
 
   constructor(
+    private readonly logger: PinoLoggerService,
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
   ) {}

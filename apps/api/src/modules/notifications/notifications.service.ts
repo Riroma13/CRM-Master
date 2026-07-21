@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
+import { PinoLoggerService } from '../observability/logging/pino-logger.service';
 
 export interface NotificationChannel {
   email?: { to: string; subject: string; text: string; html?: string };
@@ -9,11 +10,11 @@ export interface NotificationChannel {
 
 @Injectable()
 export class NotificationsService {
-  private readonly logger = new Logger(NotificationsService.name);
   private transporter: Transporter | null = null;
   private fromEmail = 'noreply@crm-master.com';
 
   constructor(
+    private readonly logger: PinoLoggerService,
     private readonly activityTimeline?: ActivityTimelineService,
   ) {}
 

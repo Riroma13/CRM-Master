@@ -1,14 +1,14 @@
-import { Injectable, Inject, Logger, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { DefinitionService } from './definition.service';
 import { NodeExecutorRegistry } from '../../../../../packages/shared/src/workflow';
 import type { InstanceStatus } from '../../../../../packages/shared/src/workflow';
+import { PinoLoggerService } from '../observability/logging/pino-logger.service';
 
 @Injectable()
 export class WorkflowService {
-  private readonly logger = new Logger(WorkflowService.name);
-
   constructor(
+    private readonly logger: PinoLoggerService,
     private readonly prisma: PrismaService,
     private readonly definitionService: DefinitionService,
     @Inject('NODE_EXECUTOR_REGISTRY') private readonly executorRegistry: NodeExecutorRegistry,

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WorkflowService } from './workflow.service';
 import { DefinitionService } from './definition.service';
 import { PrismaService } from '../../common/prisma.service';
+import { PinoLoggerService } from '../observability/logging/pino-logger.service';
 
 describe('Workflow Cross-Tenant Execution Isolation (Doorbell)', () => {
   let service: WorkflowService;
@@ -107,6 +108,7 @@ describe('Workflow Cross-Tenant Execution Isolation (Doorbell)', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: DefinitionService, useValue: mockDefinitionService },
         { provide: 'NODE_EXECUTOR_REGISTRY', useValue: mockExecutorRegistry },
+        { provide: PinoLoggerService, useValue: { log: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(), verbose: jest.fn() } },
       ],
     }).compile();
 

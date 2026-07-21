@@ -3,6 +3,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
 import { DefinitionService } from './definition.service';
 import { PrismaService } from '../../common/prisma.service';
+import { PinoLoggerService } from '../observability/logging/pino-logger.service';
 
 describe('WorkflowService', () => {
   let service: WorkflowService;
@@ -68,6 +69,7 @@ describe('WorkflowService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: DefinitionService, useValue: mockDefinitionService },
         { provide: 'NODE_EXECUTOR_REGISTRY', useValue: mockExecutorRegistry },
+        { provide: PinoLoggerService, useValue: { log: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(), verbose: jest.fn() } },
       ],
     }).compile();
 

@@ -2,13 +2,17 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { PrismaService } from '../../common/prisma.service';
 import { Public } from '../../common/decorators/public.decorator';
+import { HealthService } from '../observability/health/health.service';
 
 @ApiTags('Health')
 @Controller('api/v1/health')
 export class HealthController {
   private readonly startTime = Date.now();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly healthService: HealthService,
+  ) {}
 
   @Get()
   @Public()
@@ -25,9 +29,15 @@ export class HealthController {
     }
 
     // Redis check (via simple ping through any Redis call)
-    checks.redis = 'unknown'; // Will be implemented when Redis service is available
+    checks.redis = 'unknown';
 
-    const allOk = Object.values(checks).every((s) => s === 'ok' || s === 'unknown');
+    // Extended health indicators from HealthService
+    const indicators = await this.healthService.runAllChecks();
+    for (const indicator of indicators) {
+      checks[indicator.name] = indicator.status;
+    }
+
+    const allOk = Object.values(checks).every((s) => s === 'ok' || s === 'unknown' || s === 'healthy');
 
     return {
       status: allOk ? 'ok' : 'degraded',

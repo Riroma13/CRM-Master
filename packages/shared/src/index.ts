@@ -175,6 +175,14 @@ export type {
   MeteringCollector, PricingStrategy,
 } from './billing';
 
+// ─── Observability (SPEC-0024) ─────────────────────────────────────────
+
+export type { HttpMetricLabels } from './observability';
+export { METRIC_NAMES } from './observability';
+export type { LogLevel, LogEntry } from './observability';
+export type { HealthStatus, HealthIndicatorResult, HealthCheckResult } from './observability';
+export type { AlertSeverity, AlertStatus, AlertEvent } from './observability';
+
 // ─── Reporting & Analytics (SPEC-0019) ─────────────────────────────────
 
 export type {

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuditService } from '../audit.service';
 import { PrismaService } from '../../../common/prisma.service';
+import { PinoLoggerService } from '../../observability/logging/pino-logger.service';
 
 describe('Audit Cross-Tenant Isolation (Doorbell)', () => {
   let service: AuditService;
@@ -94,6 +95,7 @@ describe('Audit Cross-Tenant Isolation (Doorbell)', () => {
       providers: [
         AuditService,
         { provide: PrismaService, useValue: prisma },
+        { provide: PinoLoggerService, useValue: { log: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(), verbose: jest.fn() } },
       ],
     }).compile();
 

@@ -3,9 +3,11 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { PinoLoggerService } from './modules/observability/logging/pino-logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.useLogger(app.get(PinoLoggerService));
 
   // Controllers include full path (api/v1/...) — no global prefix or versioning needed
   // app.setGlobalPrefix('api');

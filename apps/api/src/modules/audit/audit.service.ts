@@ -1,9 +1,10 @@
-import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../common/prisma.service';
 import { AuditEventQuery, PaginatedResult } from './dto';
+import { PinoLoggerService } from '../observability/logging/pino-logger.service';
 
 export interface AuditEventRow {
   id: string;
@@ -31,9 +32,8 @@ export interface AuditEventRow {
 
 @Injectable()
 export class AuditService {
-  private readonly logger = new Logger(AuditService.name);
-
   constructor(
+    private readonly logger: PinoLoggerService,
     private readonly prisma: PrismaService,
     @Optional() @InjectQueue('audit:ingestion') private readonly ingestionQueue?: Queue,
   ) {}

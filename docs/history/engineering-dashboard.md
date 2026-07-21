@@ -1,6 +1,6 @@
 # Engineering Dashboard
 
-> **Última actualización:** 2026-07-20 (SPEC-0023)
+> **Última actualización:** 2026-07-20 (SPEC-0024)
 > **Este documento se actualiza automáticamente al archivar cada SPEC.**
 
 ---
@@ -9,9 +9,9 @@
 
 | Metric | Value |
 |--------|-------|
-| Total SPECs | 21 |
-| Completed SPECs | 21 |
-| Archived SPECs | 21 |
+| Total SPECs | 22 |
+| Completed SPECs | 22 |
+| Archived SPECs | 22 |
 | Average Working Set Accuracy | **~98%** |
 | Average Prediction Accuracy | **~96%** |
 | Average Tests Added per SPEC | ~35 |
@@ -23,7 +23,7 @@
 | Average Files Modified per SPEC | ~3 |
 | Unexpected Files | 24 |
 | Unexpected Dependencies | 1 (cmdk) |
-| Build Success | 19/19 |
+| Build Success | 20/20 |
 
 ---
 
@@ -52,6 +52,7 @@
 | SPEC-0021 | 2026-07-20 | ~96% | 152 | 0/0/1 | ✅ Archived |
 | SPEC-0022 | 2026-07-20 | ~95% | 90 | 0/0/2 | ✅ Archived |
 | SPEC-0023 | 2026-07-20 | ~96% | 234 | 0/0/1 | ✅ Archived |
+| SPEC-0024 | 2026-07-20 | ~96% | 258 | 0/0/0 | ✅ Archived |
 
 ---
 
@@ -105,6 +106,12 @@
 | HMAC-SHA256 webhook signing with deliveryId anti-replay | SPEC-0021 | — |
 | URL path versioning with deprecation lifecycle | SPEC-0021 | — |
 | AES-256-GCM encrypted webhook secrets at rest | SPEC-0021 | — |
+| Prometheus metrics instrumentation (interceptor + registry) | SPEC-0024 | — |
+| Route normalization (UUID/number → :param) | SPEC-0024 | — |
+| Pino structured logging as global LoggerService | SPEC-0024 | — |
+| AlertManager webhook integration pattern | SPEC-0024 | — |
+| @Global() module for cross-cutting infrastructure | SPEC-0024 | — |
+| AsyncLocalStorage correlation context | SPEC-0024 | — |
 
 ---
 
@@ -137,9 +144,9 @@
 
 | Component | Status |
 |-----------|--------|
-| ADR | 0001–0019 ✅ |
+| ADR | 0001–0024 ✅ |
 | Platform Baseline | `sdd-v2.1-baseline` ✅ |
 | Enterprise Design | ACTIVE ✅ |
 | Feature Freeze | ACTIVE ✅ |
-| Total archived SPECs | 21 |
+| Total archived SPECs | 22 |
 | Pending SPECs | 2 (SPEC-0004, SPEC-0013) |
