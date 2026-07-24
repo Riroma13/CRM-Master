@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "dispositions": ["Adopt", "Modify", "Document Only", "Defer", "Reject"],
+  "improvements": [
+    {"name":"Dependency Prediction Accuracy","disposition":"Defer","evidence":[]},
+    {"name":"Hot File Forecast","disposition":"Defer","evidence":[]},
+    {"name":"Read Order Quality Score","disposition":"Defer","evidence":[]},
+    {"name":"Review Time Prediction","disposition":"Defer","evidence":[]},
+    {"name":"Test Selection Accuracy","disposition":"Defer","evidence":[]},
+    {"name":"False Positive Verify Rate","disposition":"Defer","evidence":[]},
+    {"name":"Design Drift Detection","disposition":"Defer","evidence":[]},
+    {"name":"Guard-led authority/refinement","disposition":"Adopt","evidence":[{"archive_path":"openspec/changes/archive/2026-07-20-SPEC-0013-document-platform/archive-report.md","source_commit":"40d1d7354def85e52a94ec8a1186a22e4cb41eaf"},{"archive_path":"openspec/changes/archive/2026-07-20-SPEC-0014-integration-platform/archive-report.md","source_commit":"ab72fe647d46211f483f5f09eee934a075b12351"}]},
+    {"name":"Working Set exports/deferred tests","disposition":"Modify","evidence":[{"archive_path":"openspec/changes/archive/2026-07-20-SPEC-0015-workflow-engine/archive-report.md","source_commit":"b1d543bf2e8cf9d1c907c3459159c5ef0e15d4c7"},{"archive_path":"openspec/changes/archive/2026-07-20-SPEC-0016-notification-center/archive-report.md","source_commit":"41cfdefd71e3d034dad22f73c66d1a05ec702bb8"},{"archive_path":"openspec/changes/archive/2026-07-20-SPEC-0017-activity-timeline/archive-report.md","source_commit":"f47e55ab82ee7c9562febf492657201fb7c430e9"}]},
+    {"name":"Shared contract/lifecycle concerns","disposition":"Modify","evidence":[{"archive_path":"openspec/changes/archive/2026-07-20-SPEC-0016-notification-center/archive-report.md","source_commit":"41cfdefd71e3d034dad22f73c66d1a05ec702bb8"},{"archive_path":"openspec/changes/archive/2026-07-20-SPEC-0017-activity-timeline/archive-report.md","source_commit":"f47e55ab82ee7c9562febf492657201fb7c430e9"},{"archive_path":"openspec/changes/archive/2026-07-20-SPEC-0018-audit-platform/archive-report.md","source_commit":"cfe4d882a7771f411040aa0df7fd2be30378c997"},{"archive_path":"openspec/changes/archive/2026-07-20-SPEC-0019-reporting-analytics/archive-report.md","source_commit":"68ed43107f750ddaa24a315d24070ff605df75ec"}]},
+    {"name":"Observational metrics","disposition":"Document Only","evidence":[]},
+    {"name":"Constitution/index consolidation","disposition":"Document Only","evidence":[]},
+    {"name":"Hotfix skipping/new layers/product changes","disposition":"Reject","evidence":[]},
+    {"name":"v3.0 Stable release/tag","disposition":"Defer","evidence":[{"archive_path":"openspec/changes/archive/2026-07-20-SPEC-0020-ai-knowledge-base/archive-report.md","source_commit":"0000000000000000000000000000000000000000"}]}
+  ]
+}

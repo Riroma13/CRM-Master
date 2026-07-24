@@ -3,6 +3,7 @@
 > **Centralized transition validator for the SDD orchestrator.**
 > Do NOT duplicate these rules in individual skills or phase prompts.
 > The orchestrator is the sole enforcer.
+> The Workflow Guard is the sole workflow transition authority.
 
 ---
 

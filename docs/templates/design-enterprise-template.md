@@ -4,6 +4,7 @@
 > **SDD Compliance:** v2.1 (Feature Frozen)
 > **Estado:** Draft
 > **Documento de trabajo.** No modifica el pipeline SDD.
+> Template authority is limited to artifact shape. Workflow transitions belong exclusively to the Workflow Guard.
 
 ---
 
@@ -360,6 +361,12 @@ Para cada tema, documentar:
 
 **Decision:** <SCALABILITY_DECISION>
 
+**Rationale:** <SCALABILITY_RATIONALE>
+
+**Alternative:** <SCALABILITY_ALTERNATIVE>
+
+**Future impact:** <SCALABILITY_FUTURE_IMPACT>
+
 **Common mistake:** Asumir que "no va a escalar a 100×" sin datos. Si no se puede
 probar, documentar la suposición y el plan de monitoreo.
 
@@ -373,6 +380,12 @@ código existente?
 **What must change to add one more:** <LO_QUE_HAY_QUE_TOCAR>
 
 **Decision:** <OCP_DECISION>
+
+**Rationale:** <OCP_RATIONALE>
+
+**Alternative:** <OCP_ALTERNATIVE>
+
+**Future impact:** <OCP_FUTURE_IMPACT>
 
 **Common mistake:** Diseñar para OCP abstracto ("es extensible") sin mostrar el
 punto de extensión concreto. Demostrar con un ejemplo real.
@@ -389,6 +402,12 @@ solo consumen información?
 
 **Decision:** <OWNERSHIP_DECISION>
 
+**Rationale:** <OWNERSHIP_RATIONALE>
+
+**Alternative:** <OWNERSHIP_ALTERNATIVE>
+
+**Future impact:** <OWNERSHIP_FUTURE_IMPACT>
+
 **Common mistake:** Ownership implícito (asumir que todos entienden quién es
 propietario sin documentarlo explícitamente).
 
@@ -402,6 +421,12 @@ archivan o eliminan?
 | <DATA> | <TIME> | <METHOD> | <METHOD> |
 
 **Decision:** <RETENTION_DECISION>
+
+**Rationale:** <RETENTION_RATIONALE>
+
+**Alternative:** <RETENTION_ALTERNATIVE>
+
+**Future impact:** <RETENTION_FUTURE_IMPACT>
 
 **Common mistake:** No considerar retención hasta que la tabla crece lo
 suficiente como para degradar rendimiento. Decidirlo al diseñar.
@@ -417,6 +442,12 @@ protección contra duplicados?
 
 **Decision:** <IDEMPOTENCY_DECISION>
 
+**Rationale:** <IDEMPOTENCY_RATIONALE>
+
+**Alternative:** <IDEMPOTENCY_ALTERNATIVE>
+
+**Future impact:** <IDEMPOTENCY_FUTURE_IMPACT>
+
 **Common mistake:** Asumir que el cliente o el llamante nunca va a reintentar.
 Siempre diseñar para al menos un reintento.
 
@@ -430,6 +461,12 @@ módulos? ¿Debe estar tipado?
 | <TYPE/INTERFACE> | `<PATH>` | `<MODULES>` | `<MODULES>` |
 
 **Decision:** <SHARED_CONTRACT_DECISION>
+
+**Rationale:** <SHARED_CONTRACT_RATIONALE>
+
+**Alternative:** <SHARED_CONTRACT_ALTERNATIVE>
+
+**Future impact:** <SHARED_CONTRACT_FUTURE_IMPACT>
 
 **Common mistake:** Definir el mismo tipo en frontend y backend por separado
 (grietas de sincronización garantizadas).
@@ -446,6 +483,12 @@ módulos? ¿Debe estar tipado?
 | Volume | <RISK> | <STRATEGY> |
 
 **Decision:** <PARTITIONING_DECISION>
+
+**Rationale:** <PARTITIONING_RATIONALE>
+
+**Alternative:** <PARTITIONING_ALTERNATIVE>
+
+**Future impact:** <PARTITIONING_FUTURE_IMPACT>
 
 **Common mistake:** Posponer el particionado hasta que es necesario (migration
 dolorosa). Decidir la estrategia al diseñar, aunque se implemente después.

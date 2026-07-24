@@ -1,0 +1,125 @@
+{
+  "schema": "sdd-owned-path-scope/v1",
+  "change": "SPEC-SDD-0001-sdd-v3-stabilization",
+  "ownedPaths": [
+    "docs/sdd-workflow-guard.md",
+    "docs/templates/design-enterprise-template.md",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/design.md",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/evidence/architecture-review-approved.md",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/evidence/canonical-audit-governance-resolution.md",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/evidence/canonical-history-audit.md",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/evidence/evidence-ledger.json",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/evidence/improvement-inventory.json",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/evidence/readiness-report.md",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/fixtures/v2.1-field-map.json",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/fixtures/v2.1-manifest.json",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/fixtures/v3.0-sample.json",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/proposal.md",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/specs/sdd-v3-stabilization/spec.md",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/tasks-review.md",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/tasks.md",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/owned-path-scope.json",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/audit-canonical-history.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/reconcile-fixtures.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/test/audit-canonical-history.test.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/test/fixtures.test.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/test/readiness.test.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/test/reconciliation.test.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/test/safety.test.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/test/structure.test.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/validate-changed-paths.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/validate-fixtures.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/validate-readiness.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/validation/validate-structure.mjs",
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/verify-report.md"
+  ],
+  "excludedPaths": [
+    {
+      "path": "openspec/changes/SPEC-0025-identity-platform/architecture-review.md",
+      "reason": "Unrelated SPEC-0025 identity recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/SPEC-0025-identity-platform/design.md",
+      "reason": "Unrelated SPEC-0025 identity recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/SPEC-0025-identity-platform/tasks.md",
+      "reason": "Unrelated SPEC-0025 identity recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/archive/2026-07-21-SPEC-0027-feature-flags/design.md",
+      "reason": "Unrelated archived SPEC-0027 feature-flags recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/archive/2026-07-21-SPEC-0027-feature-flags/pr-description.md",
+      "reason": "Unrelated archived SPEC-0027 feature-flags recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/archive/2026-07-21-SPEC-0027-feature-flags/proposal.md",
+      "reason": "Unrelated archived SPEC-0027 feature-flags recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/archive/2026-07-21-SPEC-0027-feature-flags/tasks.md",
+      "reason": "Unrelated archived SPEC-0027 feature-flags recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/archive/2026-07-21-SPEC-0028-jobs-platform/archive-report.md",
+      "reason": "Unrelated archived SPEC-0028 jobs-platform recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/archive/2026-07-21-SPEC-0028-jobs-platform/design.md",
+      "reason": "Unrelated archived SPEC-0028 jobs-platform recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/archive/2026-07-21-SPEC-0028-jobs-platform/exploration.md",
+      "reason": "Unrelated archived SPEC-0028 jobs-platform recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/archive/2026-07-21-SPEC-0028-jobs-platform/pr-description.md",
+      "reason": "Unrelated archived SPEC-0028 jobs-platform recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/archive/2026-07-21-SPEC-0028-jobs-platform/proposal.md",
+      "reason": "Unrelated archived SPEC-0028 jobs-platform recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/changes/archive/2026-07-21-SPEC-0028-jobs-platform/tasks.md",
+      "reason": "Unrelated archived SPEC-0028 jobs-platform recovery artifact; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/specs/feature-flags/spec.md",
+      "reason": "Unrelated SPEC-0027 feature-flags recovery specification; outside SPEC-SDD-0001 documentation-governance scope."
+    },
+    {
+      "path": "openspec/specs/jobs-platform/spec.md",
+      "reason": "Unrelated SPEC-0028 jobs-platform recovery specification; outside SPEC-SDD-0001 documentation-governance scope."
+    }
+  ],
+  "excludedPathRules": [
+    {
+      "prefix": "apps/",
+      "reason": "Unrelated product/runtime recovery work; SPEC-SDD-0001 is documentation/governance-only."
+    },
+    {
+      "prefix": "packages/",
+      "reason": "Unrelated schema/shared-package recovery work; SPEC-SDD-0001 is documentation/governance-only."
+    },
+    {
+      "prefix": "docs/architecture/platform-roadmap.md",
+      "reason": "Unrelated product/platform recovery documentation; not owned by SPEC-SDD-0001."
+    },
+    {
+      "prefix": "docs/adr/",
+      "reason": "Unrelated product/platform recovery ADRs; not owned by SPEC-SDD-0001."
+    },
+    {
+      "prefix": "docs/identity/",
+      "reason": "Unrelated identity recovery documentation; not owned by SPEC-SDD-0001."
+    },
+    {
+      "prefix": "pnpm-lock.yaml",
+      "reason": "Unrelated dependency-lock recovery change; not owned by SPEC-SDD-0001."
+    }
+  ],
+  "excludedPathPolicy": "Only ownedPaths are attributed to SPEC-SDD-0001. Exact excludedPaths and excludedPathRules are recorded as unrelated recovery work and do not fail this verification. Any path matching neither set is an unclassified scope failure."
+}

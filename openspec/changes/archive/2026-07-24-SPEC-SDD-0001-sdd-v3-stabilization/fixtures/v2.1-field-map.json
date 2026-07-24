@@ -1,0 +1,14 @@
+{
+  "schema_version": "2.1-field-map",
+  "source_version": "v2.1",
+  "target_schema_version": "3.0",
+  "mappings": [
+    { "source_field": "spec_id", "target_field": "document_id", "transform": "logical_id(sdd-document-id/v1, spec_id, design)", "required": true, "absent_value": null, "value_type": "string" },
+    { "source_field": "archive_path", "target_field": "canonical_path", "transform": "copy", "required": true, "absent_value": null, "value_type": "string" },
+    { "source_field": "source_commit", "target_field": "source_commit", "transform": "copy", "required": true, "absent_value": null, "value_type": "40-lowercase-hex" },
+    { "source_field": "archived_at", "target_field": "audit.archived_at", "transform": "copy", "required": true, "absent_value": null, "value_type": "ISO-8601-UTC" },
+    { "source_field": "working_set_accuracy", "target_field": "audit.working_set_accuracy", "transform": "copy", "required": true, "absent_value": "N/A", "value_type": "number-or-N/A" },
+    { "source_field": "prediction_accuracy", "target_field": "audit.prediction_accuracy", "transform": "copy", "required": true, "absent_value": "N/A", "value_type": "number-or-N/A" },
+    { "source_field": "design_confidence", "target_field": "audit.design_confidence", "transform": "copy", "required": true, "absent_value": "N/A", "value_type": "High|Medium|Low|N/A" }
+  ]
+}

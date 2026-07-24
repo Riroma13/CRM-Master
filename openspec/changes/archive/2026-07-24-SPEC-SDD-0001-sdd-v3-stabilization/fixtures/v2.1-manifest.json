@@ -1,0 +1,37 @@
+{
+  "schema_version": "2.1",
+  "source_version": "v2.1",
+  "manifest": {
+    "record_count": 22,
+    "categories": {
+      "tenant": { "record_count": 4, "spec_ids": ["SPEC-0002", "SPEC-0005", "SPEC-0006", "SPEC-0008"] },
+      "mission-control": { "record_count": 2, "spec_ids": ["SPEC-0003", "SPEC-0009"] },
+      "platform": { "record_count": 14, "spec_ids": ["SPEC-0010", "SPEC-0011", "SPEC-0012", "SPEC-0013", "SPEC-0014", "SPEC-0015", "SPEC-0016", "SPEC-0017", "SPEC-0020", "SPEC-0021", "SPEC-0022", "SPEC-0023", "SPEC-0024", "SPEC-0028"] },
+      "audit-analytics": { "record_count": 2, "spec_ids": ["SPEC-0018", "SPEC-0019"] }
+    }
+  },
+  "records": [
+    {"spec_id":"SPEC-0002","archive_path":"openspec/changes/archive/2026-07-04-SPEC-0002-multi-tenant-isolation-auth/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-04T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0003","archive_path":"openspec/changes/archive/2026-07-19-SPEC-0003-dashboard-mission-control/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-19T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0005","archive_path":"openspec/changes/archive/2026-07-19-SPEC-0005-tenant-auth/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-19T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0006","archive_path":"openspec/changes/archive/2026-07-19-SPEC-0006-tenant-citas/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-19T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0008","archive_path":"openspec/changes/archive/2026-07-18-SPEC-0008-tenant-dashboard/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-18T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0009","archive_path":"openspec/changes/archive/2026-07-19-SPEC-0009-global-activity-feed/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-19T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0010","archive_path":"openspec/changes/archive/2026-07-19-SPEC-0010-universal-search/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-19T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0011","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0011-ai-automation-hub/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0012","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0012-communication-platform/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0013","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0013-document-platform/archive-report.md","source_commit":"40d1d7354def85e52a94ec8a1186a22e4cb41eaf","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0014","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0014-integration-platform/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0015","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0015-workflow-engine/archive-report.md","source_commit":"b1d543bf2e8cf9d1c907c3459159c5ef0e15d4c7","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0016","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0016-notification-center/archive-report.md","source_commit":"41cfdefd71e3d034dad22f73c66d1a05ec702bb8","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0017","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0017-activity-timeline/archive-report.md","source_commit":"f47e55ab82ee7c9562febf492657201fb7c430e9","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0018","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0018-audit-platform/archive-report.md","source_commit":"cfe4d882a7771f411040aa0df7fd2be30378c997","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0019","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0019-reporting-analytics/archive-report.md","source_commit":"68ed43107f750ddaa24a315d24070ff605df75ec","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0020","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0020-ai-knowledge-base/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0021","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0021-public-api/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0022","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0022-plugin-platform/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0023","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0023-billing-platform/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0024","archive_path":"openspec/changes/archive/2026-07-20-SPEC-0024-monitoring/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-20T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"},
+    {"spec_id":"SPEC-0028","archive_path":"openspec/changes/archive/2026-07-21-SPEC-0028-jobs-platform/archive-report.md","source_commit":"0000000000000000000000000000000000000000","archived_at":"2026-07-21T00:00:00Z","working_set_accuracy":"N/A","prediction_accuracy":"N/A","design_confidence":"N/A"}
+  ]
+}
