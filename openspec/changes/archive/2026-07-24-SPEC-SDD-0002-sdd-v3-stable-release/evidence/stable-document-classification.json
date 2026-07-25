@@ -1,0 +1,131 @@
+{
+  "schema": "sdd-v3-document-classification/v1",
+  "change": "SPEC-SDD-0002-sdd-v3-stable-release",
+  "phase": 1,
+  "release_state": "candidate",
+  "stable_declaration": "NOT_EXECUTED",
+  "freeze_state": "UNCHANGED",
+  "planned_tag_state": "NOT_PUBLISHED",
+  "allowed_statuses": [
+    "authoritative",
+    "historical-compatible",
+    "deprecated",
+    "superseded",
+    "historical-reference",
+    "not-in-release"
+  ],
+  "documents": [
+    {
+      "path": "docs/sdd-workflow-guard.md",
+      "status": "authoritative",
+      "role": "transition semantics",
+      "replacement": null,
+      "write_policy": "metadata/reference-only; preserve behavior"
+    },
+    {
+      "path": "docs/templates/design-enterprise-template.md",
+      "status": "authoritative",
+      "role": "18-section and A-G Design shape",
+      "replacement": null,
+      "write_policy": "preserve structure; no duplicate template"
+    },
+    {
+      "path": "docs/templates/design-master-prompt.md",
+      "status": "authoritative",
+      "role": "Design generation instructions",
+      "replacement": null,
+      "write_policy": "metadata/reference-only"
+    },
+    {
+      "path": "docs/architecture/platform-baseline.md",
+      "status": "authoritative",
+      "role": "current platform baseline pending candidate update",
+      "replacement": null,
+      "write_policy": "append candidate metadata; retain baseline history"
+    },
+    {
+      "path": "docs/architecture/sdd-infrastructure.md",
+      "status": "authoritative",
+      "role": "platform policy and infrastructure history",
+      "replacement": null,
+      "write_policy": "reference-only; no new workflow behavior"
+    },
+    {
+      "path": "docs/architecture/CHANGELOG.md",
+      "status": "authoritative",
+      "role": "append-only architecture history",
+      "replacement": null,
+      "write_policy": "append-only"
+    },
+    {
+      "path": "docs/architecture/sdd-v3.0-release-notes.md",
+      "status": "authoritative",
+      "role": "planned v3.0 compatibility manifest",
+      "replacement": null,
+      "write_policy": "planned; not published in Phase 1"
+    },
+    {
+      "path": "docs/architecture/adr/0021-sdd-v3-stable-release.md",
+      "status": "authoritative",
+      "role": "planned release and freeze policy",
+      "replacement": null,
+      "write_policy": "planned; final gate remains manual"
+    },
+    {
+      "path": "docs/SDD-WORKFLOW.md",
+      "status": "historical-compatible",
+      "role": "v2.0/v2.1 workflow context",
+      "replacement": "docs/sdd-workflow-guard.md",
+      "write_policy": "retain; never resolve transitions from this document"
+    },
+    {
+      "path": "docs/templates/design-prompt.md",
+      "status": "deprecated",
+      "role": "legacy Design prompt",
+      "replacement": "docs/templates/design-master-prompt.md",
+      "write_policy": "retain for historical v2.1 work only"
+    },
+    {
+      "path": "docs/architecture/sdd-v3-roadmap.md",
+      "status": "superseded",
+      "role": "pre-release v3.0 vision",
+      "replacement": "docs/architecture/sdd-v3.0-release-notes.md",
+      "write_policy": "retain evidence; do not treat future-state claims as current"
+    },
+    {
+      "path": "docs/roadmaps/**",
+      "status": "historical-reference",
+      "role": "future planning context",
+      "replacement": null,
+      "write_policy": "read-only reference"
+    },
+    {
+      "path": "docs/history/**",
+      "status": "historical-reference",
+      "role": "historical evidence",
+      "replacement": null,
+      "write_policy": "immutable reference"
+    },
+    {
+      "path": "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/**",
+      "status": "historical-reference",
+      "role": "verified v2.1 baseline evidence",
+      "replacement": null,
+      "write_policy": "immutable; outside this change"
+    },
+    {
+      "path": "product/runtime/**",
+      "status": "not-in-release",
+      "role": "product behavior",
+      "replacement": null,
+      "write_policy": "forbidden"
+    },
+    {
+      "path": ".opencode/**",
+      "status": "not-in-release",
+      "role": "Direct execution infrastructure",
+      "replacement": null,
+      "write_policy": "preserve existing work; forbidden in Phase 1"
+    }
+  ]
+}
