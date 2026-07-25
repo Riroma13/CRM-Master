@@ -1,0 +1,91 @@
+{
+  "schema": "sdd-v3-authority-inventory/v1",
+  "change": "SPEC-SDD-0002-sdd-v3-stable-release",
+  "phase": 1,
+  "release_state": "candidate",
+  "stable_declaration": "NOT_EXECUTED",
+  "baseline_commit": "c028537bae6fe1d8ecafc3974cd9cf0e46a673ce",
+  "authority_source": "design.md sections 3, 14, and 16",
+  "rules": [
+    "Each named responsibility has exactly one canonical authority.",
+    "The Workflow Guard remains the sole transition authority.",
+    "The Enterprise Design Template remains the sole artifact-shape authority.",
+    "The Design Master Prompt remains the sole Design-generation authority.",
+    "The release manifest adds compatibility metadata and does not replace existing authorities.",
+    "Consumers read governance authorities; they do not publish competing status."
+  ],
+  "authorities": [
+    {
+      "path": "docs/sdd-workflow-guard.md",
+      "responsibility": "transition-semantics",
+      "owner": "Workflow Guard owner",
+      "consumers": ["Direct orchestrator", "legacy orchestrator", "phase reviewers"],
+      "availability": "existing",
+      "planned_action": "metadata/reference-only; preserve transition semantics and Direct-mode section",
+      "rollback": "restore the prior Guard document revision without changing unrelated Direct work"
+    },
+    {
+      "path": "docs/templates/design-enterprise-template.md",
+      "responsibility": "design-artifact-shape",
+      "owner": "Template owner",
+      "consumers": ["Design authors", "Architecture Review", "Tasks"],
+      "availability": "existing",
+      "planned_action": "metadata/reference-only; preserve all 18 sections and A-G preparation",
+      "rollback": "restore the prior template revision without creating a second template"
+    },
+    {
+      "path": "docs/templates/design-master-prompt.md",
+      "responsibility": "design-generation",
+      "owner": "Template owner",
+      "consumers": ["Design executors", "Design reviewers"],
+      "availability": "existing",
+      "planned_action": "metadata/reference-only; keep the Enterprise Design Standard as the output contract",
+      "rollback": "restore the prior prompt revision"
+    },
+    {
+      "path": "docs/architecture/platform-baseline.md",
+      "responsibility": "platform-baseline",
+      "owner": "Platform architecture owner",
+      "consumers": ["Maintainers", "all SDD phases", "release verification"],
+      "availability": "existing",
+      "planned_action": "append candidate v3.0 identity only after the release evidence is complete",
+      "rollback": "restore the prior baseline metadata and retain the audit record"
+    },
+    {
+      "path": "docs/architecture/sdd-infrastructure.md",
+      "responsibility": "platform-policy",
+      "owner": "Platform architecture owner",
+      "consumers": ["Maintainers", "health reporting", "workflow operators"],
+      "availability": "existing",
+      "planned_action": "reference the candidate release without adding phases, checks, agents, or commands",
+      "rollback": "restore the prior infrastructure-policy revision"
+    },
+    {
+      "path": "docs/architecture/sdd-v3.0-release-notes.md",
+      "responsibility": "release-compatibility",
+      "owner": "SPEC-SDD-0002 release owner",
+      "consumers": ["Maintainers", "reviewers", "Direct agents"],
+      "availability": "planned",
+      "planned_action": "create the single candidate manifest in a later Apply phase",
+      "rollback": "remove only the unapproved manifest artifact before Repository Ready"
+    },
+    {
+      "path": "docs/architecture/adr/0021-sdd-v3-stable-release.md",
+      "responsibility": "release-policy",
+      "owner": "Release policy owner",
+      "consumers": ["Maintainers", "release verification"],
+      "availability": "planned",
+      "planned_action": "create the candidate policy record; final freeze restoration remains manual",
+      "rollback": "remove only the unapproved ADR before Repository Ready"
+    },
+    {
+      "path": "docs/architecture/CHANGELOG.md",
+      "responsibility": "release-history",
+      "owner": "Architecture history owner",
+      "consumers": ["Maintainers", "auditors", "release verification"],
+      "availability": "existing",
+      "planned_action": "append a candidate record only after cross-document validation",
+      "rollback": "restore the prior changelog revision; do not rewrite historical entries"
+    }
+  ]
+}

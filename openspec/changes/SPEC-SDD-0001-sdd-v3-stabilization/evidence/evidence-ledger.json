@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "authority": "canonical archived SPEC artifacts",
+  "records": [
+    {"change_id":"SPEC-SDD-0001","artifact_type":"fixture","logical_name":"v2.1-manifest","schema_version":"2.1","status":"active"},
+    {"change_id":"SPEC-SDD-0001","artifact_type":"fixture","logical_name":"v2.1-field-map","schema_version":"2.1-field-map","status":"active"},
+    {"change_id":"SPEC-SDD-0001","artifact_type":"fixture","logical_name":"v3.0-sample","schema_version":"3.0","status":"active"}
+  ],
+  "preservation": "Archive reports and source JSON remain immutable; reconciliation records supersession or duplicate state without deletion."
+}

@@ -1,0 +1,283 @@
+{
+  "schema": "sdd-direct-apply-scope/v1",
+  "change": "SPEC-SDD-0002-sdd-v3-stable-release",
+  "phase": 1,
+  "current_apply_phase": 5,
+  "current_direct_phase": "Verify",
+  "baseline_commit": "c028537bae6fe1d8ecafc3974cd9cf0e46a673ce",
+  "release_state": "candidate",
+  "stable_declaration": "NOT_EXECUTED",
+  "freeze_state": "UNCHANGED",
+  "freeze_state_after_final_gate": "PENDING",
+  "planned_tag_state": "NOT_PUBLISHED",
+  "baseline_capture": {
+    "captured_at": "2026-07-24T20:59:02+00:00",
+    "head_at_capture": "c028537bae6fe1d8ecafc3974cd9cf0e46a673ce",
+    "status_command": "git status --porcelain=v1 --untracked-files=all",
+    "dirty_path_count": 111,
+    "modified_path_count": 19,
+    "untracked_path_count": 92,
+    "classification_rule": "Every current path must be owned by the active Apply phase, preserved, deferred, or an explicitly excluded pre-existing path; anything else fails closed."
+  },
+  "phase_owned_paths": [
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/tasks.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/authority-inventory.json",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/stable-document-classification.json",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/phase-1-result.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/owned-path-scope.json",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase1.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/phase1-scope.test.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/release-contract.test.mjs"
+  ],
+  "phase2_owned_paths": [
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/tasks.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/phase-2-result.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/owned-path-scope.json",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase1.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-release.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/release-contract.test.mjs",
+    "docs/architecture/sdd-v3.0-release-notes.md",
+    "docs/architecture/adr/0021-sdd-v3-stable-release.md"
+  ],
+  "phase3_owned_paths": [
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/tasks.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/phase-3-result.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/owned-path-scope.json",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase1.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-release.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/release-contract.test.mjs",
+    "docs/sdd-workflow-guard.md",
+    "docs/templates/design-enterprise-template.md",
+    "docs/templates/design-master-prompt.md",
+    "docs/architecture/platform-baseline.md",
+    "docs/architecture/sdd-infrastructure.md",
+    "docs/architecture/CHANGELOG.md",
+    "docs/architecture/sdd-v3.0-release-notes.md",
+    "docs/architecture/adr/0021-sdd-v3-stable-release.md"
+  ],
+  "phase4_owned_paths": [
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/tasks.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/phase-4-result.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/owned-path-scope.json",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase1.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-release.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/release-contract.test.mjs",
+    "docs/architecture/sdd-v3.0-release-notes.md",
+    "docs/SDD-WORKFLOW.md",
+    "docs/templates/design-prompt.md",
+    "docs/architecture/sdd-v3-roadmap.md"
+  ],
+  "phase5_owned_paths": [
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/tasks.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/phase-5-result.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/owned-path-scope.json",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase1.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-release.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase5.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/phase5-readiness.test.mjs"
+  ],
+  "phase5_added_paths": [
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/phase-5-result.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase5.mjs",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/phase5-readiness.test.mjs"
+  ],
+  "pre_phase5_snapshot": {
+    "captured_at": "2026-07-24T22:35:00+00:00",
+    "head_at_capture": "c028537bae6fe1d8ecafc3974cd9cf0e46a673ce",
+    "status_command": "git status --porcelain=v1 --untracked-files=all",
+    "path_count": 132,
+    "path_set_sha256": "9983621833dd5d46795aa5b12ffd08d564d25847c04cffbf940ffefb629ff05f",
+    "guard_sha256": "c1f0e1396cca4f17658742b6e5408bcb3b6915c39e48007a2f012fa118ca6c8f",
+    "direct_mode_section_sha256": "7ff0a463c3771e6526932e7703a2e2c76636b77f80ecf602759e2ec51cd2b8d1",
+    "preserved_path_samples": [
+      ".opencode/agents/sdd-direct-apply.md",
+      "AGENTS.md",
+      "apps/api/src/app.module.ts",
+      "packages/database/prisma/schema.prisma",
+      "pnpm-lock.yaml",
+      "scripts/validate-sdd-direct.mjs"
+    ]
+  },
+  "preserved_paths": [
+    "AGENTS.md",
+    "docs/sdd-workflow-guard.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/architecture-review.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/design.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/proposal.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/specs/sdd-v3-stable-release/spec.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/tasks-review.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/workload-guard.md"
+  ],
+  "preserved_path_rules": [
+    {
+      "prefix": "docs/roadmaps/",
+      "reason": "Future roadmap reference material is outside the release implementation."
+    },
+    {
+      "prefix": "docs/history/",
+      "reason": "Historical evidence is immutable reference material."
+    },
+    {
+      "prefix": "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/",
+      "reason": "SPEC-SDD-0001 and its baseline evidence are immutable and outside this change."
+    }
+  ],
+  "deferred_paths": [
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/apply-summary.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/verify-report.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/archive-report.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/health-report.md",
+    "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/repository-ready.md"
+  ],
+  "excluded_path_rules": [
+    {
+      "prefix": ".opencode/",
+      "reason": "Pre-existing Direct execution infrastructure; preserve and do not attribute to this release phase."
+    },
+    {
+      "prefix": "apps/",
+      "reason": "Pre-existing product/runtime recovery work; outside documentation scope."
+    },
+    {
+      "prefix": "packages/",
+      "reason": "Pre-existing schema/shared-package recovery work; outside documentation scope."
+    },
+    {
+      "prefix": "scripts/",
+      "reason": "Pre-existing Direct validator infrastructure; outside this change's implementation surface."
+    },
+    {
+      "prefix": "docs/adr/",
+      "reason": "Pre-existing product/platform recovery ADRs; not the declared release ADR path."
+    },
+    {
+      "prefix": "docs/identity/",
+      "reason": "Pre-existing identity recovery documentation."
+    },
+    {
+      "path": "docs/architecture/platform-roadmap.md",
+      "reason": "Pre-existing product/platform recovery documentation."
+    },
+    {
+      "path": "docs/architecture/sdd-direct.md",
+      "reason": "Pre-existing Direct-mode documentation; outside this release implementation."
+    },
+    {
+      "path": "docs/templates/terminal-gates-template.md",
+      "reason": "Pre-existing Direct terminal-gate infrastructure."
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "reason": "Pre-existing dependency-lock recovery change."
+    },
+    {
+      "prefix": "openspec/changes/SPEC-0025-identity-platform/",
+      "reason": "Pre-existing unrelated identity recovery change."
+    },
+    {
+      "prefix": "openspec/changes/archive/2026-07-21-SPEC-0027-feature-flags/",
+      "reason": "Pre-existing unrelated archived recovery change."
+    },
+    {
+      "prefix": "openspec/changes/archive/2026-07-21-SPEC-0028-jobs-platform/",
+      "reason": "Pre-existing unrelated archived recovery change."
+    },
+    {
+      "prefix": "openspec/specs/feature-flags/",
+      "reason": "Pre-existing unrelated recovery specification."
+    },
+    {
+      "prefix": "openspec/specs/jobs-platform/",
+      "reason": "Pre-existing unrelated recovery specification."
+    },
+    {
+      "path": "AGENTS.md",
+      "reason": "Pre-existing project instruction change; preserve exactly."
+    }
+  ],
+  "forbidden_path_rules": [
+    "openspec/changes/SPEC-SDD-0001-sdd-v3-stabilization/",
+    "openspec/changes/archive/",
+    ".opencode/",
+    "scripts/",
+    "apps/",
+    "packages/",
+    "docs/history/",
+    "pnpm-lock.yaml"
+  ],
+  "ownership": [
+    {
+      "paths": [
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/authority-inventory.json",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/stable-document-classification.json"
+      ],
+      "owner": "SPEC-SDD-0002 release owner",
+      "rollback": "Remove only the unapproved Phase 1 evidence; retain all pre-existing paths."
+    },
+    {
+      "paths": [
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/owned-path-scope.json",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase1.mjs",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/phase1-scope.test.mjs",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/release-contract.test.mjs"
+      ],
+      "owner": "Apply/Verify scope owner",
+      "rollback": "Remove only the Phase 1 validator and tests; do not remove Direct infrastructure or SPEC-SDD-0001 evidence."
+    },
+    {
+      "paths": [
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/tasks.md",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/phase-1-result.md"
+      ],
+      "owner": "Direct Apply orchestrator",
+      "rollback": "Restore only Phase 1 checkbox/progress lines and its result artifact."
+    },
+    {
+      "paths": [
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/phase-3-result.md",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase1.mjs",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-release.mjs",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/release-contract.test.mjs",
+        "docs/sdd-workflow-guard.md",
+        "docs/templates/design-enterprise-template.md",
+        "docs/templates/design-master-prompt.md",
+        "docs/architecture/platform-baseline.md",
+        "docs/architecture/sdd-infrastructure.md",
+        "docs/architecture/CHANGELOG.md",
+        "docs/architecture/sdd-v3.0-release-notes.md",
+        "docs/architecture/adr/0021-sdd-v3-stable-release.md"
+      ],
+      "owner": "Direct Apply Phase 3 owner",
+      "rollback": "Restore only candidate metadata and cross-document validation changes; retain the historical v2.1 documents and pre-existing Direct/recovery work."
+    },
+    {
+      "paths": [
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/phase-4-result.md",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/owned-path-scope.json",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase1.mjs",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-release.mjs",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/release-contract.test.mjs",
+        "docs/architecture/sdd-v3.0-release-notes.md",
+        "docs/SDD-WORKFLOW.md",
+        "docs/templates/design-prompt.md",
+        "docs/architecture/sdd-v3-roadmap.md"
+      ],
+      "owner": "Direct Apply Phase 4 owner",
+      "rollback": "Restore only the Phase 4 legacy status, candidate safety validation, scope carry-forward, task progress, and evidence; retain prior v2.1 history and all pre-existing Direct/recovery work."
+    },
+    {
+      "paths": [
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/tasks.md",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/evidence/phase-5-result.md",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/owned-path-scope.json",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase1.mjs",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-release.mjs",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/validate-phase5.mjs",
+        "openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/validation/test/phase5-readiness.test.mjs"
+      ],
+      "owner": "Direct Apply Phase 5 owner",
+      "rollback": "Restore only Phase 5 reconciliation, task progress, validation carry-forward, and evidence; retain all prior phase artifacts, v2.1 history, and pre-existing Direct/recovery work."
+    }
+  ],
+  "rollback_boundary": "Only phase_owned_paths may be reverted for this slice. Preserved, deferred, excluded, SPEC-SDD-0001, recovery, Direct infrastructure, product, runtime, schema, dependency, and global configuration paths must not be reverted or modified."
+}
