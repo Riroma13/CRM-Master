@@ -1,0 +1,71 @@
+{
+  "schema": "sdd-v3-final-release/v1",
+  "change": "SPEC-SDD-0002-sdd-v3-stable-release",
+  "release_id": "sdd-v3.0-stable",
+  "version": "v3.0",
+  "implementation_baseline": "c028537bae6fe1d8ecafc3974cd9cf0e46a673ce",
+  "verified_commit": "03ecd9d18a329986f71214bb3ecd16b1b62ff264",
+  "release_state": "stable",
+  "stable_declaration": "EXECUTED",
+  "planned_baseline_tag": "sdd-v3.0-baseline",
+  "tag_state": "PENDING_FINAL_TAG",
+  "freeze_state_after_final_gate": "ACTIVE",
+  "final_gate": {
+    "status": "EXECUTED",
+    "authority": "manual-maintainer-release-tag",
+    "verified_commit": "03ecd9d18a329986f71214bb3ecd16b1b62ff264",
+    "automatic_transition": "FORBIDDEN",
+    "finalization_commit_hash": null,
+    "finalization_commit_policy": "bound by the final tag operation; not self-referenced"
+  },
+  "compatibility": {
+    "pre_v3_0": {
+      "status": "PASS_WITH_LEGACY_BASELINE",
+      "aggregate": "not-claimed",
+      "scope": "pre-v3.0 evidence only"
+    },
+    "v3_0_plus": {
+      "status": "STRICT",
+      "source_commit_required": true,
+      "source_commit_format": "40-lowercase-hex",
+      "aggregate": "canonical-v3-aggregate/v1",
+      "aggregate_definition": "qualifying_included / included_v3_records"
+    }
+  },
+  "candidate_preconditions": {
+    "candidate_commit": "03ecd9d18a329986f71214bb3ecd16b1b62ff264",
+    "verify_report": {
+      "status": "VERIFIED",
+      "decision": "VERIFIED"
+    },
+    "repository_ready": {
+      "status": "REPOSITORY_READY",
+      "gate_status": "PASS_WITH_WARNINGS",
+      "blocking_findings": []
+    },
+    "archive": {
+      "path": "openspec/changes/archive/2026-07-24-SPEC-SDD-0002-sdd-v3-stable-release/",
+      "status": "ARCHIVED",
+      "decision": "ARCHIVED_CANDIDATE_ONLY"
+    },
+    "pre_final_state": {
+      "release_state": "candidate",
+      "stable_declaration": "NOT_EXECUTED",
+      "freeze_state_after_final_gate": "PENDING",
+      "planned_tag_state": "NOT_PUBLISHED",
+      "final_gate_status": "NOT_EXECUTED"
+    }
+  },
+  "tag_binding": {
+    "target": "finalization_commit",
+    "candidate_commit_is_target": false,
+    "finalization_commit_hash": null,
+    "post_tag_check": "sdd-v3.0-baseline must resolve to the finalization commit, not the verified candidate commit"
+  },
+  "notes": [
+    "This declaration records the final manual Stable/freeze gate before tag creation.",
+    "The final tag will target the finalization commit, not the candidate commit.",
+    "No finalization commit hash is claimed because this declaration is part of that commit.",
+    "The declaration is limited to the SPEC-SDD-0002 documentation and validation boundary; it changes no runtime behavior."
+  ]
+}
