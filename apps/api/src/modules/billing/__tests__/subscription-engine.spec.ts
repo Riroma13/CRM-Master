@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma.service';
 import { SubscriptionEngine } from '../subscription/subscription-engine';
@@ -73,10 +74,26 @@ describe('SubscriptionEngine', () => {
       },
     };
 
+    const mockEventEmitter = {
+      emit: jest.fn(),
+      on: jest.fn(),
+      once: jest.fn(),
+      off: jest.fn(),
+      removeAllListeners: jest.fn(),
+      setMaxListeners: jest.fn(),
+      rawListeners: jest.fn(),
+      listeners: jest.fn(),
+      listenerCount: jest.fn(),
+      eventNames: jest.fn(),
+      emitAsync: jest.fn(),
+      waitFor: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SubscriptionEngine,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
       ],
     }).compile();
 

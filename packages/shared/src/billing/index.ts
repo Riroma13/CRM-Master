@@ -15,3 +15,5 @@ export type {
   MeteringCollector,
   PricingStrategy,
 } from './billing.types';
+
+export type { FeatureKey } from './feature-flags.types';

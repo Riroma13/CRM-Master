@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../../common/prisma.service';
 import type {
   Subscription,
@@ -31,7 +32,10 @@ interface ProrationResult {
 export class SubscriptionEngine {
   private readonly logger = new Logger(SubscriptionEngine.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async createSubscription(
     input: CreateSubscriptionInput,
@@ -138,6 +142,8 @@ export class SubscriptionEngine {
         },
       });
 
+      this.eventEmitter.emit('plan.changed', { tenantId });
+
       return this.toSubscription(updated);
     }
 
@@ -149,6 +155,8 @@ export class SubscriptionEngine {
     this.logger.log(
       `Downgrade scheduled: tenant=${tenantId} from=$${currentPrice} to=$${newPrice} (next period)`,
     );
+
+    this.eventEmitter.emit('plan.changed', { tenantId });
 
     return this.toSubscription(updated);
   }
@@ -176,6 +184,8 @@ export class SubscriptionEngine {
         ),
       },
     });
+
+    this.eventEmitter.emit('plan.changed', { tenantId });
 
     this.logger.log(
       `Pending plan applied: tenant=${tenantId} plan=${sub.pendingPlanId}`,
