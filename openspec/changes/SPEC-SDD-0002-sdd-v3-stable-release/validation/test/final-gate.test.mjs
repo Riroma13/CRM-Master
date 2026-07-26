@@ -26,16 +26,20 @@ test('binds the declaration to the exact verified candidate commit', () => {
   assert.notEqual(declaration.verified_commit, declaration.implementation_baseline);
 });
 
-test('records Stable, active freeze, executed manual gate, and pending tag state', () => {
+test('records Stable, active freeze, executed manual gate, published tag, and release', () => {
   assert.equal(declaration.release_state, 'stable');
   assert.equal(declaration.stable_declaration, 'EXECUTED');
   assert.equal(declaration.freeze_state_after_final_gate, 'ACTIVE');
   assert.equal(declaration.final_gate.status, 'EXECUTED');
   assert.equal(declaration.final_gate.authority, 'manual-maintainer-release-tag');
   assert.equal(declaration.final_gate.automatic_transition, 'FORBIDDEN');
-  assert.equal(declaration.tag_state, 'PENDING_FINAL_TAG');
+  assert.equal(declaration.tag_state, 'PUBLISHED');
+  assert.equal(declaration.release_publication.status, 'PUBLISHED');
+  assert.equal(declaration.release_publication.title, finalGate.RELEASE_TITLE);
+  assert.equal(declaration.final_gate.finalization_commit_hash, finalGate.FINALIZATION_COMMIT);
   assert.equal(declaration.tag_binding.target, 'finalization_commit');
   assert.equal(declaration.tag_binding.candidate_commit_is_target, false);
+  assert.equal(declaration.tag_binding.finalization_commit_hash, finalGate.FINALIZATION_COMMIT);
 });
 
 test('preserves legacy compatibility and strict v3.0+ evidence requirements', () => {
@@ -79,24 +83,17 @@ test('rejects a tag binding that self-references or targets the candidate', () =
   assert.match(finalGate.validateDeclaration(invalid).join('\n'), /tag-target|finalization commit hash|final tag targets/i);
 });
 
-test('validates committed candidate preconditions without requiring the final tag', async () => {
-  const result = await finalGate.runFinalGateValidation({ mode: 'pre-tag' });
+test('validates the published final state against committed candidate preconditions', async () => {
+  const result = await finalGate.runFinalGateValidation({ mode: 'post-tag' });
 
   assert.deepEqual(result.failures, []);
   assert.match(result.currentHead, /^[0-9a-f]{40}$/);
-  assert.equal(result.tagTarget, null);
+  assert.equal(result.tagTarget, finalGate.FINALIZATION_COMMIT);
 });
 
-test('keeps the tag boundary explicit before and after parent tag creation', async () => {
+test('rejects pre-tag mode after the existing tag was published', async () => {
   const preTag = await finalGate.runFinalGateValidation({ mode: 'pre-tag' });
-  const postTag = await finalGate.runFinalGateValidation({ mode: 'post-tag' });
 
-  if (preTag.failures.length === 0) {
-    assert.equal(preTag.tagTarget, null);
-    assert.match(postTag.failures.join('\n'), /required in post-tag mode/i);
-  } else {
-    assert.match(preTag.failures.join('\n'), /must not exist in pre-tag mode/i);
-    assert.deepEqual(postTag.failures, []);
-    assert.notEqual(postTag.tagTarget, finalGate.CANDIDATE_COMMIT);
-  }
+  assert.match(preTag.failures.join('\n'), /must not exist in pre-tag mode/i);
+  assert.equal(preTag.tagTarget, null);
 });

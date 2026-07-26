@@ -12,7 +12,9 @@ const REPOSITORY_ROOT = resolve(CHANGE_ROOT, '../../..');
 export const CHANGE_NAME = 'SPEC-SDD-0002-sdd-v3-stable-release';
 export const IMPLEMENTATION_BASELINE = 'c028537bae6fe1d8ecafc3974cd9cf0e46a673ce';
 export const CANDIDATE_COMMIT = '03ecd9d18a329986f71214bb3ecd16b1b62ff264';
+export const FINALIZATION_COMMIT = 'dad0024e25bfc9a44af2f4d61ea6b8d2d899e2a1';
 export const TAG_NAME = 'sdd-v3.0-baseline';
+export const RELEASE_TITLE = 'SDD v3.0 Stable';
 
 const DECLARATION_PATH = join(CHANGE_ROOT, 'stable-release-declaration.json');
 const CANDIDATE_ARCHIVE_PATH =
@@ -31,7 +33,8 @@ const CANDIDATE_FILES = {
   scope: `${'openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release'}/validation/owned-path-scope.json`,
 };
 
-const EXPECTED_NOTE = 'The final tag will target the finalization commit, not the candidate commit.';
+const EXPECTED_NOTE =
+  'The existing tag sdd-v3.0-baseline resolves to finalization commit dad0024e25bfc9a44af2f4d61ea6b8d2d899e2a1, not the verified candidate commit.';
 
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -135,7 +138,7 @@ export function validateDeclaration(declaration) {
   requireExact(declaration.release_state, 'stable', 'final release state', failures);
   requireExact(declaration.stable_declaration, 'EXECUTED', 'Stable declaration', failures);
   requireExact(declaration.planned_baseline_tag, TAG_NAME, 'planned baseline tag', failures);
-  requireExact(declaration.tag_state, 'PENDING_FINAL_TAG', 'final tag state', failures);
+  requireExact(declaration.tag_state, 'PUBLISHED', 'final tag state', failures);
   requireExact(
     declaration.freeze_state_after_final_gate,
     'ACTIVE',
@@ -151,9 +154,22 @@ export function validateDeclaration(declaration) {
     requireExact(finalGate.authority, 'manual-maintainer-release-tag', 'final-gate authority', failures);
     requireExact(finalGate.verified_commit, CANDIDATE_COMMIT, 'final-gate verified commit', failures);
     requireExact(finalGate.automatic_transition, 'FORBIDDEN', 'automatic transition policy', failures);
-    if (finalGate.finalization_commit_hash !== null) {
-      failures.push('finalization commit hash must remain unclaimed in the self-referencing declaration');
-    }
+    requireExact(finalGate.finalization_commit_hash, FINALIZATION_COMMIT, 'finalization commit hash', failures);
+    requireExact(
+      finalGate.finalization_commit_policy,
+      'recorded after finalization; tag target is the finalization commit',
+      'finalization commit policy',
+      failures,
+    );
+  }
+
+  const releasePublication = declaration.release_publication;
+  if (!isObject(releasePublication)) {
+    failures.push('release_publication must be an object');
+  } else {
+    requireExact(releasePublication.status, 'PUBLISHED', 'release publication status', failures);
+    requireExact(releasePublication.title, RELEASE_TITLE, 'release publication title', failures);
+    requireExact(releasePublication.tag, TAG_NAME, 'release publication tag', failures);
   }
 
   const compatibility = declaration.compatibility;
@@ -194,12 +210,10 @@ export function validateDeclaration(declaration) {
   } else {
     requireExact(tagBinding.target, 'finalization_commit', 'tag binding target', failures);
     requireBoolean(tagBinding.candidate_commit_is_target, false, 'candidate tag-target policy', failures);
-    if (tagBinding.finalization_commit_hash !== null) {
-      failures.push('tag binding must not claim a finalization commit hash');
-    }
+    requireExact(tagBinding.finalization_commit_hash, FINALIZATION_COMMIT, 'tag binding finalization commit', failures);
     requireExact(
       tagBinding.post_tag_check,
-      `${TAG_NAME} must resolve to the finalization commit, not the verified candidate commit`,
+      `${TAG_NAME} resolves to finalization commit ${FINALIZATION_COMMIT}, not the verified candidate commit`,
       'post-tag binding check',
       failures,
     );
@@ -415,7 +429,7 @@ export async function validateGitBinding({ mode = 'pre-tag' } = {}) {
   return { failures, currentHead: head, tagTarget: resolvedTag };
 }
 
-export async function runFinalGateValidation({ mode = 'pre-tag' } = {}) {
+export async function runFinalGateValidation({ mode = 'post-tag' } = {}) {
   const failures = [];
   let declaration;
   try {
@@ -441,7 +455,7 @@ export async function runFinalGateValidation({ mode = 'pre-tag' } = {}) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const mode = process.argv.includes('--post-tag') ? 'post-tag' : 'pre-tag';
+  const mode = process.argv.includes('--pre-tag') ? 'pre-tag' : 'post-tag';
   const result = await runFinalGateValidation({ mode });
   if (result.failures.length > 0) {
     console.error(`SPEC-SDD-0002 final-gate validation (${mode}): FAIL`);
@@ -450,10 +464,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   } else {
     console.log(`SPEC-SDD-0002 final-gate validation (${mode}): PASS`);
     console.log(`- Verified candidate commit: ${CANDIDATE_COMMIT}`);
-    console.log('- Candidate Verify, Repository Ready, archive, and pre-final state preconditions pass');
+    console.log('- Candidate Verify, Repository Ready, archive, and pre-final state preconditions pass as historical evidence');
     console.log('- Stable declaration, active freeze, compatibility policy, and tag binding are exact');
     if (mode === 'pre-tag') {
-      console.log(`- ${TAG_NAME} is intentionally not required until the finalization commit exists`);
+      console.log(`- Pre-tag mode correctly rejects the already-published ${TAG_NAME}`);
     } else {
       console.log(`- ${TAG_NAME} resolves to finalization HEAD: ${result.tagTarget}`);
     }
