@@ -11,7 +11,7 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@better-auth/prisma-adapter": "^1.6.23",
+    "@better-auth/prisma-adapter": "1.6.23",
     "@nestjs/bullmq": "^11.0.0",
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4",
@@ -22,7 +22,7 @@
     "@nestjs/swagger": "^11.4.5",
     "@prisma/client": "^6.0.0",
     "bcryptjs": "^3.0.3",
-    "better-auth": "^1.0.0",
+    "better-auth": "1.6.23",
     "bullmq": "^5.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
@@ -50,6 +50,7 @@
     "@types/node": "^22.0.0",
     "@types/nodemailer": "^8.0.1",
     "@types/supertest": "^7.2.0",
+    "auth": "1.6.23",
     "jest": "^29.0.0",
     "pino-pretty": "^13.0.0",
     "prisma": "^6.0.0",

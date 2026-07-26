@@ -1,0 +1,120 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Ba_users {
+  id              String           @id
+  name            String
+  email           String
+  emailVerified   Boolean          @default(false)
+  image           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  ba_sessionss    Ba_sessions[]
+  ba_accountss    Ba_accounts[]
+  ba_memberss     Ba_members[]
+  ba_invitationss Ba_invitations[]
+
+  @@unique([email])
+  @@map("ba_users")
+}
+
+model Ba_sessions {
+  id                     String   @id
+  expires_at             DateTime
+  token                  String
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+  ipAddress              String?
+  userAgent              String?
+  user_id                String
+  ba_users               Ba_users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  active_organization_id String?
+
+  @@unique([token])
+  @@index([user_id])
+  @@map("ba_sessions")
+}
+
+model Ba_accounts {
+  id                       String    @id
+  account_id               String
+  provider_id              String
+  user_id                  String
+  ba_users                 Ba_users  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  access_token             String?
+  refresh_token            String?
+  id_token                 String?
+  access_token_expires_at  DateTime?
+  refresh_token_expires_at DateTime?
+  scope                    String?
+  password                 String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  @@index([user_id])
+  @@map("ba_accounts")
+}
+
+model Ba_verifications {
+  id         String   @id
+  identifier String
+  value      String
+  expires_at DateTime
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("ba_verifications")
+}
+
+model Ba_organizations {
+  id              String           @id
+  name            String
+  slug            String
+  logo            String?
+  createdAt       DateTime
+  metadata        String?
+  ba_memberss     Ba_members[]
+  ba_invitationss Ba_invitations[]
+
+  @@unique([slug])
+  @@map("ba_organizations")
+}
+
+model Ba_members {
+  id               String           @id
+  organization_id  String
+  ba_organizations Ba_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  user_id          String
+  ba_users         Ba_users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role             String           @default("member")
+  createdAt        DateTime
+
+  @@index([organization_id])
+  @@index([user_id])
+  @@map("ba_members")
+}
+
+model Ba_invitations {
+  id               String           @id
+  organization_id  String
+  ba_organizations Ba_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  email            String
+  role             String?
+  status           String           @default("pending")
+  expires_at       DateTime
+  createdAt        DateTime         @default(now())
+  inviter_id       String
+  ba_users         Ba_users         @relation(fields: [inviter_id], references: [id], onDelete: Cascade)
+
+  @@index([organization_id])
+  @@index([email])
+  @@map("ba_invitations")
+}

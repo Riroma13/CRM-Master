@@ -3,6 +3,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { InfrastructureModule } from './modules/infrastructure/infrastructure.module';
 import { CoreModule } from './modules/core/core.module';
+import { IdentityModule } from './modules/identity/identity.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { ObservabilityModule } from './modules/observability/observability.module';
 import { TenantResolveMiddleware } from './common/middleware/tenant-resolve.middleware';
@@ -10,6 +11,8 @@ import { TenantScopeGuard } from './common/guards/tenant-scope.guard';
 import { BetterAuthGuard } from './common/guards/better-auth.guard';
 import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
+import { PermissionGuard } from './modules/identity/rbac/permission.guard';
+
 import { PrismaService } from './common/prisma.service';
 import { authClientProvider } from './common/auth-client.provider';
 import { LoggingMiddleware } from './modules/observability/logging/logging.middleware';
@@ -21,6 +24,7 @@ import { MetricsInterceptor } from './modules/observability/metrics/metrics.inte
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '../../.env' }),
     InfrastructureModule,
     CoreModule,
+    IdentityModule,
     TenantModule,
     ObservabilityModule,
   ],
@@ -43,6 +47,10 @@ import { MetricsInterceptor } from './modules/observability/metrics/metrics.inte
     {
       provide: APP_GUARD,
       useClass: PermissionsGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useExisting: PermissionGuard,
     },
     {
       provide: APP_INTERCEPTOR,
