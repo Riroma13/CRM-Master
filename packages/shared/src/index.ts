@@ -183,6 +183,30 @@ export type { LogLevel, LogEntry } from './observability';
 export type { HealthStatus, HealthIndicatorResult, HealthCheckResult } from './observability';
 export type { AlertSeverity, AlertStatus, AlertEvent } from './observability';
 
+// ─── Identity & Organization Platform (SPEC-0025) ─────────────────────────
+
+export type {
+  UserProfile, Team, Membership, Role, InvitationStatus, Invitation,
+} from './identity/identity.types';
+
+export type {
+  PermissionResource, PermissionAction, PermissionString, PermissionCheck, PermissionResult,
+} from './identity/permission.types';
+
+export type {
+  PasswordPolicy, SecurityPolicy,
+} from './identity/security.types';
+
+// ─── Jobs & Background Processing Platform (SPEC-0028) ──────────────────
+
+export type {
+  JobStatus,
+  JobPayload,
+  JobDefinitionDto,
+  JobRunDto,
+  JobScheduleDto,
+} from './jobs';
+
 // ─── Reporting & Analytics (SPEC-0019) ─────────────────────────────────
 
 export type {
