@@ -8,15 +8,20 @@
   "release_state": "stable",
   "stable_declaration": "EXECUTED",
   "planned_baseline_tag": "sdd-v3.0-baseline",
-  "tag_state": "PENDING_FINAL_TAG",
+  "tag_state": "PUBLISHED",
   "freeze_state_after_final_gate": "ACTIVE",
   "final_gate": {
     "status": "EXECUTED",
     "authority": "manual-maintainer-release-tag",
     "verified_commit": "03ecd9d18a329986f71214bb3ecd16b1b62ff264",
     "automatic_transition": "FORBIDDEN",
-    "finalization_commit_hash": null,
-    "finalization_commit_policy": "bound by the final tag operation; not self-referenced"
+    "finalization_commit_hash": "dad0024e25bfc9a44af2f4d61ea6b8d2d899e2a1",
+    "finalization_commit_policy": "recorded after finalization; tag target is the finalization commit"
+  },
+  "release_publication": {
+    "status": "PUBLISHED",
+    "title": "SDD v3.0 Stable",
+    "tag": "sdd-v3.0-baseline"
   },
   "compatibility": {
     "pre_v3_0": {
@@ -59,13 +64,14 @@
   "tag_binding": {
     "target": "finalization_commit",
     "candidate_commit_is_target": false,
-    "finalization_commit_hash": null,
-    "post_tag_check": "sdd-v3.0-baseline must resolve to the finalization commit, not the verified candidate commit"
+    "finalization_commit_hash": "dad0024e25bfc9a44af2f4d61ea6b8d2d899e2a1",
+    "post_tag_check": "sdd-v3.0-baseline resolves to finalization commit dad0024e25bfc9a44af2f4d61ea6b8d2d899e2a1, not the verified candidate commit"
   },
   "notes": [
-    "This declaration records the final manual Stable/freeze gate before tag creation.",
-    "The final tag will target the finalization commit, not the candidate commit.",
-    "No finalization commit hash is claimed because this declaration is part of that commit.",
+    "Post-finalization reconciliation of the existing Stable/freeze declaration; no second Stable declaration was created.",
+    "The existing tag sdd-v3.0-baseline resolves to finalization commit dad0024e25bfc9a44af2f4d61ea6b8d2d899e2a1, not the verified candidate commit.",
+    "The existing published release is titled SDD v3.0 Stable and uses sdd-v3.0-baseline.",
+    "candidate_preconditions preserves the verified pre-finalization evidence unchanged.",
     "The declaration is limited to the SPEC-SDD-0002 documentation and validation boundary; it changes no runtime behavior."
   ]
 }

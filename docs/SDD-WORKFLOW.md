@@ -1,9 +1,13 @@
+---
+status: active
+role: canonical workflow lifecycle
+guard_authority: docs/sdd-workflow-guard.md
+---
+
 # SDD Workflow — Spec-Driven Development para CRM-Master
 
-> **Versión:** 2.0
-> **Fecha:** 2026-07-18
-> **Autor:** Sistema
 > **Estado:** active
+> **Transition authority:** `docs/sdd-workflow-guard.md` (read before every phase transition)
 
 ---
 
@@ -363,24 +367,4 @@ Para que el SDD funcione, necesitamos:
 - [ ] Configurar CI para ejecutar tests en cada PR
 - [ ] Configurar CI para bloquear merge si cobertura < 80%
 - [ ] Script de doorbell test (test de fuga) en CI
-
 ---
-
----
-
-## 🏥 SDD Platform Infrastructure
-
-La plataforma SDD incluye componentes de infraestructura que garantizan su
-correcto funcionamiento:
-
-| Componente | Propósito | Documentación |
-|------------|-----------|---------------|
-| Environment Verification | Checks pre-workflow antes de cada fase | `docs/architecture/sdd-infrastructure.md` §1 |
-| Fallback Policy | 3 niveles de respaldo de modelos | `docs/architecture/sdd-infrastructure.md` §2 |
-| SDD Doctor | Auditoría completa del entorno (`/sdd-doctor`) | `docs/architecture/sdd-infrastructure.md` §3 |
-| JSON Artifact | Métricas estructuradas con environment info | `docs/architecture/sdd-infrastructure.md` §4 |
-| Stability Policy | Régimen de mantenimiento post-feature-complete | `docs/architecture/sdd-infrastructure.md` §5 |
-
----
-
-*Documento mantenido por el equipo de plataforma. Versión 2.0.*

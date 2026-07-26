@@ -11,6 +11,24 @@ Al inicio de cada sesión, el agente DEBE leer estos archivos en orden:
 
 Esto evita tener que re-explicar el proyecto en cada sesión.
 
+## Authority hierarchy
+
+This document provides **repository-wide rules and pointers only**. It does not
+override the SDD workflow. The SDD authority chain (highest to lowest) is:
+
+1. Maintainer / User
+2. Approved Design for the active SPEC
+3. `docs/SDD-WORKFLOW.md` — canonical workflow lifecycle
+4. `docs/sdd-workflow-guard.md` — transition authority
+5. `.ai/context/*` — project context (including PROJECT.md)
+6. `docs/templates/` and `docs/architecture/` guidance
+7. Thin orchestrator and specialized `sdd-direct-*` agents
+8. Validators and external tooling
+
+SDD-Direct specifics (model roles, phase ownership, transition rules, artifact
+formats) are governed by `docs/architecture/sdd-direct.md` and the Workflow
+Guard. AGENTS.md points at them; it does not supersede them.
+
 ## Qué es
 CRM-Master es una plataforma SaaS multi-tenant de gestión. Cada cliente
 (tenant) tiene su propio portal en `{slug}.crmmaster.com` para gestionar
@@ -54,8 +72,16 @@ y bitácora de cada tenant — modelo de datos completo en docs/DESIGN.md.
 10. **Composition modules puros**: todo módulo NestJS que agregue otros módulos debe seguir `docs/architecture/module-composition.md`. Sin providers, controllers, ni lógica de negocio. Imports ordenados alfabéticamente.
 11. **Regresión de app.module.ts**: si `app.module.ts` vuelve a aparecer entre los Top Hot Files del proyecto, se considera regresión arquitectónica y requiere acción correctiva inmediata.
 12. **Sidebar es presentation-only**: la navegación pertenece a los features (`src/config/navigation/*.ts`). Sidebar solo renderiza. Nunca añadir rutas, iconos o labels hardcodeados en Sidebar.
-13. **Enterprise Design Standard**: todo nuevo Design SDD DEBE generarse usando `docs/templates/design-master-prompt.md`, que sigue la estructura de `docs/templates/design-enterprise-template.md`. Ningún Design debe redactarse ad-hoc. El template es el estándar canónico de ingeniería del proyecto. Esta regla está sujeta a la política de Feature Freeze (ADR-0004): el template solo cambia con evidencia histórica recurrente, no por preferencias personales.
+13. **Enterprise Design Standard**: todo nuevo Design SDD DEBE generarse usando el único template canónico `docs/templates/design-enterprise-template.md`. Ningún Design debe redactarse ad-hoc ni se debe crear o reintroducir un segundo Design prompt. El template es el estándar canónico de ingeniería del proyecto. Esta regla está sujeta a la política de Feature Freeze (ADR-0004): el template solo cambia con evidencia histórica recurrente, no por preferencias personales.
 14. **Platform Baseline**: el baseline arquitectónico actual está definido en `docs/architecture/platform-baseline.md`. Este documento representa la referencia arquitectónica oficial desde la que comienza todo el desarrollo de producto futuro. La infraestructura se considera feature-frozen. Toda nueva implementación sigue el Enterprise Design Standard.
+
+## SDD-Direct (opt-in)
+
+Activated via `.opencode/commands/sdd-direct.md`. Artifacts live in
+`openspec/changes/<change-name>/`. Uses the shared Workflow Guard and the
+18-section Enterprise Design Standard. Stops at Repository Ready; Commit,
+Push, Merge, Release, and Tag are maintainer-controlled. See
+`docs/architecture/sdd-direct.md` and `docs/sdd-workflow-guard.md` for details.
 
 ## Comandos
 - Instalar: `pnpm install`
@@ -87,49 +113,21 @@ Documentación completa en `docs/SDD-WORKFLOW.md` (sección "Exploration Optimiz
 ## Entidades core (detalle completo en docs/DESIGN.md)
 Tenant (Cliente) → Sistema(s) → Inventario / Bitácora / Tareas
 
-## Asignación de modelos por tipo de tarea
+## Model Roles
 
-### Modelos por contexto
+Model assignment uses ROLES, not hard-coded model names. Canonical role-to-phase
+mapping lives in `docs/architecture/sdd-direct.md` (Agent Routing table).
+Summary:
 
-| Contexto | Sub-agente | Modelo | Razón |
-|---|---|---|---|
-| `sdd-apply` código general (CRUD, DTOs, servicios estándar) | `sdd-apply` (default) | `opencode-go/deepseek-v4-flash` | Barato, rápido, suficiente |
-| `sdd-apply` aislamiento/seguridad (guards, scoping, auth, raw SQL, frontera entre tenants) | `sdd-apply-pro` | `opencode-go/kimi-k2.7-code` | Precisión crítica, revisión adversarial |
-| `sdd-design`, `sdd-propose` | `sdd-design`, `sdd-propose` | `opencode-go/minimax-m3` | Razonamiento profundo para planificación |
-| `sdd-spec`, `sdd-tasks` | `sdd-spec`, `sdd-tasks` | `opencode-go/glm-5.2` | Buen equilibrio coste/precisión |
-| `sdd-verify` | `sdd-verify` | `opencode-go/deepseek-v4-pro` | Precisión en validación |
-| `sdd-archive`, `sdd-explore`, `sdd-init`, `sdd-onboard` | respectivos | `opencode-go/deepseek-v4-flash` | Tareas ligeras |
-| Conversación, orquestación | `gentle-orchestrator` | `opencode-go/deepseek-v4-flash` | Razonamiento general suficiente |
+- **economical / fast reasoning** — orchestrator, Apply, Archive, deterministic phases
+- **high reasoning** — Design, Architecture Review, Verify
+- complex or critical implementation may temporarily escalate to high reasoning when justified
 
-**Regla**: si el cambio toca `tenant_id`, guards, auth, o validación de frontera entre tenants, usar `sdd-apply-pro`. Si es lógica de negocio estándar sin implicación de aislamiento, `sdd-apply` es suficiente.
-
-### Fallback policy
-
-Si un sub-agente no puede cargar su modelo configurado:
-
-1. El orquestador intenta el modelo configurado en `opencode.json`.
-2. Si falla (`Model not found`), reintenta con `opencode-go/deepseek-v4-flash`.
-3. Registra el fallback: `[WARN] sdd-<phase> fallback: configured=<model> → used=opencode-go/deepseek-v4-flash`.
-4. Si deepseek-v4-flash también falla, el workflow se detiene con error.
-
-La ejecución del SDD nunca debe fallar por un modelo no disponible. El fallback es automático y silencioso.
-
-### Model verification
-
-Antes de iniciar un workflow SDD, el orquestador verifica los modelos:
-
-```bash
-# Verificar que todos los modelos existen
-opencode models | grep -E "opencode-go/(deepseek-v4-flash|deepseek-v4-pro|minimax-m3|glm-5.2|kimi-k2.7-code)" > /dev/null 2>&1
-```
-
-Si algún modelo falta, registrar advertencia pero continuar con fallback.
-
-### Variantes de sub-agentes
-
-| Sub-agente base | Variante pro | Cuándo usar la variante pro |
-|---|---|---|
-| `sdd-apply` | `sdd-apply-pro` | Cambios que tocan tenant_id, guards, auth, raw SQL, o frontera entre tenants |
+Concrete model mapping lives ONLY in OpenCode model configuration
+(`~/.config/opencode/opencode.json`). Future model changes must NOT require
+governance changes. If a configured model fails, fall back automatically;
+never block the workflow for a missing model. No provider names appear in SDD
+governance; they belong solely in OpenCode configuration.
 
 ## Apply Phase — Standard Execution Summary
 

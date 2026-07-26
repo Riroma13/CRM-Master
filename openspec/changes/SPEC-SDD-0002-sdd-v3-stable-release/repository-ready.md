@@ -42,11 +42,17 @@ gates and were not executed.
 | ------------------------------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Required prior artifacts exist | PASS               | Active source contains the canonical chain through `health-report.md`; the dated Archive snapshot contains the 23 copied active artifacts and its archive-only report.                                                                                |
 | Canonical path is respected    | PASS               | Active authority remains `openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/`; no `docs/sdd-direct/changes/` store was created or used.                                                                                                            |
-| Direct agent routing is valid  | PASS               | `.opencode/agents/sdd-direct-repository-ready.md`, `health-report.md`, and the Direct route define Repository Ready as the terminal Direct phase. Gentle-AI, dispatchers, native review lifecycle, and SDD dispatchers were not invoked or consulted. |
+| Direct agent routing is valid  | PASS               | `.opencode/commands/sdd-direct.md`, `sdd-direct-orchestrator`, `health-report.md`, and the Direct route define Repository Ready as the terminal Direct phase. Gentle-AI, dispatchers, native review lifecycle, and SDD dispatchers were not invoked or consulted. |
 | Verification is complete       | PASS               | `verify-report.md` is `VERIFIED`; AR-001 through AR-005 and DC-001 through DC-006 pass, with two documented non-blocking limitations.                                                                                                                 |
 | Archive is complete            | PASS               | Archive inventory and content comparison found no missing, unexpected, or mismatched copied file; the active source remains intact.                                                                                                                   |
 | No unresolved blockers remain  | PASS               | Health records `blocking_findings: []`; all carried review conditions pass and AR-NB-001/002 remain `CLOSED`.                                                                                                                                         |
 | Working tree findings          | PASS_WITH_WARNINGS | The repository is intentionally dirty. Health recorded 161 paths at entry, including preserved/excluded recovery and Direct-mode work and the separate dated archive tree. No clean-worktree claim is made.                                           |
+
+> **Post-consolidation routing/reference update:** Repository Ready is now an
+> orchestrator-owned phase in the consolidated Direct route rather than a
+> dedicated phase-agent. This wording adjustment preserves the original
+> `REPOSITORY_READY` verdict, all evidence, and candidate-only release state;
+> it is not a change to the release conclusion.
 
 ## Scope And Validation Evidence
 

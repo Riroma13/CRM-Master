@@ -146,16 +146,16 @@ Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `chore:`
 
 ---
 
-## SDD Platform Infrastructure
+## SDD Platform
 
-La plataforma SDD incluye componentes de infraestructura documentados en
-`docs/architecture/sdd-infrastructure.md`:
-
-- **Environment Verification**: chequeos pre-workflow (modelos, templates, docs)
-- **Fallback Telemetry**: registro estructurado de cada fallback de modelo
-- **SDD Doctor**: comando `/sdd-doctor` para auditoría completa del entorno
-- **JSON Artifact**: métricas estructuradas con info del entorno
-- **Stability Policy**: la plataforma SDD es feature-complete; cambios requieren evidencia
+SDD workflow, infrastructure, and governance docs live in `docs/` and
+`docs/architecture/`. The canonical authority chain is: Maintainer/User →
+Approved Design → `docs/SDD-WORKFLOW.md` → `docs/sdd-workflow-guard.md` →
+`.ai/context/*` → templates/architecture guidance → orchestrator/agents →
+validators. PROJECT.md provides project context only; it does not govern the
+SDD workflow. The platform is feature-frozen; changes require historical
+evidence. See `docs/architecture/platform-baseline.md` for status and
+`docs/architecture/sdd-infrastructure.md` for components.
 
 ---
 
@@ -208,64 +208,20 @@ Referencia oficial: `docs/architecture/platform-baseline.md`
 
 ## Enterprise Design Standard
 
-Todo nuevo Design SDD DEBE generarse usando:
-
-```
-docs/templates/design-master-prompt.md
-```
-
-que a su vez sigue la estructura de:
-
-```
-docs/templates/design-enterprise-template.md
-```
-
-**Por qué:**
-
-- Garantiza consistencia arquitectónica entre todas las implementaciones.
-- Elimina la redacción ad-hoc de Designs.
-- Asegura que las 18 secciones obligatorias están siempre presentes.
-- La Architecture Review (7 temas: escalabilidad, OCP, ownership, retención,
-  idempotencia, contratos compartidos, particionado) es obligatoria en todo Design.
-
-**Política de evolución:**
-
-Estos templates son parte de la plataforma de ingeniería. Cambios requieren
-evidencia histórica recurrente observada en múltiples implementaciones
-archivadas (≥20). No se modifican por preferencias personales. Sujetos a
-ADR-0004 (Feature Freeze).
+Project context: new SDD Designs follow the Enterprise Design Standard via
+`docs/templates/design-enterprise-template.md` (18 sections + 7 AR topics).
+This standard is governed by the canonical SDD workflow and is subject to
+Feature Freeze (ADR-0004): the template changes only with recurring historical
+evidence, not personal preference.
 
 ---
 
 ## Apply Phase — Standard Execution Report
 
-Every Apply phase MUST end with the standard execution summary format.
-This is mandatory engineering practice established after SPEC-0010, SPEC-0011
-and SPEC-0012.
-
-```markdown
-=== PHASE X COMPLETE ===
-
-Files created:
-Files modified:
-
-Working Set:
-- Planned
-- Actual
-- Accuracy
-
-Unexpected Files:
-Unexpected Dependencies:
-
-Acceptance Criteria:
-(checklist)
-
-Build:
-
-Tests:
-
-Ready for Phase X+1.
-```
+Project context: every Apply phase ends with the standard execution summary
+format (defined by the canonical SDD-Direct workflow). See
+`docs/architecture/sdd-direct.md` for the authoritative template. Mandatory
+since SPEC-0010/0011/0012.
 
 ---
 

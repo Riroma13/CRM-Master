@@ -1,10 +1,14 @@
+---
+status: active
+role: enterprise design standard (18 sections + 7 AR topics)
+---
+
 # Design: <SPEC-ID> — <TITLE>
 
-> **Versión template:** 1.0
-> **SDD Compliance:** v2.1 (Feature Frozen)
 > **Estado:** Draft
 > **Documento de trabajo.** No modifica el pipeline SDD.
-> Template authority is limited to artifact shape. Workflow transitions belong exclusively to the Workflow Guard.
+> Template authority is limited to artifact shape. Workflow transitions belong
+> exclusively to `docs/sdd-workflow-guard.md`.
 
 ---
 
@@ -59,10 +63,10 @@ Common mistakes:
 - Rationale basado en preferencia personal sin datos.
 -->
 
-| Decision | Options | Chosen | Rationale |
-|----------|---------|--------|-----------|
-| <TOPIC> | <A, B, C> | <CHOSEN> | <WHY> |
-| <TOPIC> | <A, B, C> | <CHOSEN> | <WHY> |
+| Decision | Options   | Chosen   | Rationale |
+| -------- | --------- | -------- | --------- |
+| <TOPIC>  | <A, B, C> | <CHOSEN> | <WHY>     |
+| <TOPIC>  | <A, B, C> | <CHOSEN> | <WHY>     |
 
 ## 4. Data Flow
 
@@ -101,18 +105,18 @@ uno grande con suposiciones incorrectas.
 
 <!-- Archivos que casi con certeza requerirán modificaciones. -->
 
-| # | File | Action | Reason |
-|---|------|--------|--------|
-| 1 | `<PATH>` | Create / Modify | <WHY> |
-| 2 | `<PATH>` | Create / Modify | <WHY> |
+| #   | File     | Action          | Reason |
+| --- | -------- | --------------- | ------ |
+| 1   | `<PATH>` | Create / Modify | <WHY>  |
+| 2   | `<PATH>` | Create / Modify | <WHY>  |
 
 ### 5.2 Secondary Files
 
 <!-- Archivos que pueden requerir modificaciones. Incluir tests. -->
 
-| # | File | Action | Reason |
-|---|------|--------|--------|
-| 1 | `<PATH>` | Create / Modify | <WHY> |
+| #   | File     | Action          | Reason |
+| --- | -------- | --------------- | ------ |
+| 1   | `<PATH>` | Create / Modify | <WHY>  |
 
 ### 5.3 Expected NOT to Change
 
@@ -207,12 +211,12 @@ Common mistakes:
 - Poner cero en reads cuando hay secondary files.
 -->
 
-| Resource | Budget | Notes |
-|----------|--------|-------|
-| Repo searches | <N> | <CONTEXT> |
-| Files to read | <N> | <CONTEXT> |
-| Files to create | <N> | <CONTEXT> |
-| Files to modify | <N> | <CONTEXT> |
+| Resource        | Budget | Notes     |
+| --------------- | ------ | --------- |
+| Repo searches   | <N>    | <CONTEXT> |
+| Files to read   | <N>    | <CONTEXT> |
+| Files to create | <N>    | <CONTEXT> |
+| Files to modify | <N>    | <CONTEXT> |
 
 ## 10. Risks
 
@@ -226,8 +230,8 @@ Common mistakes:
 - Ignorar riesgos de integración con módulos existentes.
 -->
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
+| Risk   | Probability  | Impact       | Mitigation   |
+| ------ | ------------ | ------------ | ------------ |
 | <RISK> | High/Med/Low | High/Med/Low | <MITIGATION> |
 | <RISK> | High/Med/Low | High/Med/Low | <MITIGATION> |
 
@@ -251,11 +255,11 @@ Common mistakes:
 - No considerar tests de frontera entre tenants.
 -->
 
-| Layer | Focus | Approach |
-|-------|-------|----------|
-| Unit | <WHAT> | <HOW> |
-| Integration | <WHAT> | <HOW> |
-| Doorbell | <WHAT> | <HOW> |
+| Layer       | Focus  | Approach |
+| ----------- | ------ | -------- |
+| Unit        | <WHAT> | <HOW>    |
+| Integration | <WHAT> | <HOW>    |
+| Doorbell    | <WHAT> | <HOW>    |
 
 ## 12. Doorbell Tests
 
@@ -275,9 +279,9 @@ Common mistakes:
 -->
 
 | Test file | What it proves |
-|-----------|----------------|
-| `<PATH>` | <WHAT> |
-| `<PATH>` | <WHAT> |
+| --------- | -------------- |
+| `<PATH>`  | <WHAT>         |
+| `<PATH>`  | <WHAT>         |
 
 ## 13. Required ADRs
 
@@ -293,10 +297,10 @@ Se requiere ADR cuando:
 Formato: Tabla.
 -->
 
-| ADR | Reason | Status |
-|-----|--------|--------|
-| ADR-NNNN | <WHY> | Proposed / Existing |
-| ADR-NNNN | <WHY> | Proposed / Existing |
+| ADR      | Reason | Status              |
+| -------- | ------ | ------------------- |
+| ADR-NNNN | <WHY>  | Proposed / Existing |
+| ADR-NNNN | <WHY>  | Proposed / Existing |
 
 ## 14. Boundaries
 
@@ -310,10 +314,10 @@ Common mistakes:
 - No definir qué módulos consumen vs. qué módulos son propietarios.
 -->
 
-| Boundary | Owner | Purpose |
-|----------|-------|---------|
-| `<COMPONENT>` | `<MODULE>` | <WHAT> |
-| `<COMPONENT>` | `<MODULE>` | <WHAT> |
+| Boundary      | Owner      | Purpose |
+| ------------- | ---------- | ------- |
+| `<COMPONENT>` | `<MODULE>` | <WHAT>  |
+| `<COMPONENT>` | `<MODULE>` | <WHAT>  |
 
 ## 15. Extensibilidad
 
@@ -327,10 +331,10 @@ Common mistakes:
 - No considerar features futuras conocidas del roadmap.
 -->
 
-| Future feature | How it fits | Effort |
-|----------------|-------------|--------|
-| <FEATURE> | <HOW> | Days/Weeks |
-| <FEATURE> | <HOW> | Days/Weeks |
+| Future feature | How it fits | Effort     |
+| -------------- | ----------- | ---------- |
+| <FEATURE>      | <HOW>       | Days/Weeks |
+| <FEATURE>      | <HOW>       | Days/Weeks |
 
 ---
 
@@ -352,12 +356,12 @@ Para cada tema, documentar:
 
 **Question:** ¿Cómo escala esta feature con 10× y 100× los datos actuales?
 
-| Factor | 10× | 100× | Mitigation |
-|--------|-----|------|------------|
-| Storage | <IMPACT> | <IMPACT> | <STRATEGY> |
-| Query latency | <IMPACT> | <IMPACT> | <STRATEGY> |
+| Factor           | 10×      | 100×     | Mitigation |
+| ---------------- | -------- | -------- | ---------- |
+| Storage          | <IMPACT> | <IMPACT> | <STRATEGY> |
+| Query latency    | <IMPACT> | <IMPACT> | <STRATEGY> |
 | Write throughput | <IMPACT> | <IMPACT> | <STRATEGY> |
-| Memory | <IMPACT> | <IMPACT> | <STRATEGY> |
+| Memory           | <IMPACT> | <IMPACT> | <STRATEGY> |
 
 **Decision:** <SCALABILITY_DECISION>
 
@@ -395,10 +399,10 @@ punto de extensión concreto. Demostrar con un ejemplo real.
 **Question:** ¿Qué bounded context es propietario de cada dato? ¿Qué módulos
 solo consumen información?
 
-| Data / Capability | Owner | Consumers |
-|-------------------|-------|-----------|
-| <DATA> | <MODULE> | <MODULES> |
-| <DATA> | <MODULE> | <MODULES> |
+| Data / Capability | Owner    | Consumers |
+| ----------------- | -------- | --------- |
+| <DATA>            | <MODULE> | <MODULES> |
+| <DATA>            | <MODULE> | <MODULES> |
 
 **Decision:** <OWNERSHIP_DECISION>
 
@@ -416,9 +420,9 @@ propietario sin documentarlo explícitamente).
 **Question:** ¿Qué datos genera esta feature? ¿Cuánto tiempo viven? ¿Cómo se
 archivan o eliminan?
 
-| Data | Lifetime | Archive | Deletion |
-|------|----------|---------|----------|
-| <DATA> | <TIME> | <METHOD> | <METHOD> |
+| Data   | Lifetime | Archive  | Deletion |
+| ------ | -------- | -------- | -------- |
+| <DATA> | <TIME>   | <METHOD> | <METHOD> |
 
 **Decision:** <RETENTION_DECISION>
 
@@ -436,9 +440,9 @@ suficiente como para degradar rendimiento. Decidirlo al diseñar.
 **Question:** ¿Qué ocurre si la operación se ejecuta dos veces? ¿Existe
 protección contra duplicados?
 
-| Operation | Duplicate risk | Protection | Fallback |
-|-----------|---------------|------------|----------|
-| <OPERATION> | Sí / No | <MECHANISM> | <BEHAVIOR> |
+| Operation   | Duplicate risk | Protection  | Fallback   |
+| ----------- | -------------- | ----------- | ---------- |
+| <OPERATION> | Sí / No        | <MECHANISM> | <BEHAVIOR> |
 
 **Decision:** <IDEMPOTENCY_DECISION>
 
@@ -456,8 +460,8 @@ Siempre diseñar para al menos un reintento.
 **Question:** ¿Existe un contrato compartido entre frontend y backend, o entre
 módulos? ¿Debe estar tipado?
 
-| Contract | Location | Consumers | Producers |
-|----------|----------|-----------|-----------|
+| Contract         | Location | Consumers   | Producers   |
+| ---------------- | -------- | ----------- | ----------- |
 | <TYPE/INTERFACE> | `<PATH>` | `<MODULES>` | `<MODULES>` |
 
 **Decision:** <SHARED_CONTRACT_DECISION>
@@ -476,11 +480,11 @@ módulos? ¿Debe estar tipado?
 **Question:** ¿Será necesario particionar por tenant, por fechas o por volumen?
 ¿Hay una decisión temprana que facilite el crecimiento sin migration destructiva?
 
-| Dimension | Risk | Strategy |
-|-----------|------|----------|
-| Tenant | <RISK> | <STRATEGY> |
-| Time | <RISK> | <STRATEGY> |
-| Volume | <RISK> | <STRATEGY> |
+| Dimension | Risk   | Strategy   |
+| --------- | ------ | ---------- |
+| Tenant    | <RISK> | <STRATEGY> |
+| Time      | <RISK> | <STRATEGY> |
+| Volume    | <RISK> | <STRATEGY> |
 
 **Decision:** <PARTITIONING_DECISION>
 
@@ -546,10 +550,10 @@ Common mistakes:
 - Rollback plan genérico ("revertir el commit").
 -->
 
-| Step | Description | Risk | Rollback |
-|------|-------------|------|----------|
-| 1 | <STEP> | <RISK> | <ROLLBACK> |
-| 2 | <STEP> | <RISK> | <ROLLBACK> |
+| Step | Description | Risk   | Rollback   |
+| ---- | ----------- | ------ | ---------- |
+| 1    | <STEP>      | <RISK> | <ROLLBACK> |
+| 2    | <STEP>      | <RISK> | <ROLLBACK> |
 
 ## 18. Open Questions
 
@@ -564,13 +568,13 @@ Common mistakes:
 - Preguntas que quedan abiertas hasta Apply (deberían resolverse en Design).
 -->
 
-| # | Question | Status | Resolution |
-|---|----------|--------|------------|
-| 1 | <QUESTION> | Open / Resolved | <RESOLUTION> |
-| 2 | <QUESTION> | Open / Resolved | <RESOLUTION> |
+| #   | Question   | Status          | Resolution   |
+| --- | ---------- | --------------- | ------------ |
+| 1   | <QUESTION> | Open / Resolved | <RESOLUTION> |
+| 2   | <QUESTION> | Open / Resolved | <RESOLUTION> |
 
 ---
 
 > **Fin del documento.**
-> Este template sigue SDD v2.1. No modifica el pipeline, los prompts ni el workflow.
+> No modifica el pipeline, los prompts ni el workflow.
 > Para cambios al template, crear ADR. No modificar directamente.

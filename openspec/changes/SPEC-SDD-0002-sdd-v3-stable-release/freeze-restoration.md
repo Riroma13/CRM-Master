@@ -11,15 +11,17 @@
 - **Final gate authority:** `manual-maintainer-release-tag`
 - **Automatic transition:** `FORBIDDEN`
 
-The SDD feature freeze is reactivated by the final manual Stable gate after the
-verified SPEC-SDD-0002 candidate reached Repository Ready. This record does not
-publish the tag by itself. Before the parent maintainer creates
-`sdd-v3.0-baseline`, the declaration intentionally remains
-`tag_state: PENDING_FINAL_TAG`.
+The SDD feature freeze was reactivated by the final manual Stable gate after the
+verified SPEC-SDD-0002 candidate reached Repository Ready. The existing
+`sdd-v3.0-baseline` tag is published and resolves to finalization commit
+`dad0024e25bfc9a44af2f4d61ea6b8d2d899e2a1`.
 
-The tag operation must target the single finalization commit that contains this
-declaration, not the verified candidate commit. The finalization commit hash is
-not recorded here because the declaration cannot self-reference it.
+The tag targets the single finalization commit, not the verified candidate
+commit. The published release title is `SDD v3.0 Stable`.
+
+> **Post-finalization reconciliation:** The candidate preconditions and phase
+> reports retain their original pre-tag conclusions as historical evidence. This
+> record reflects the already-executed final state.
 
 ## Preserved Boundaries
 

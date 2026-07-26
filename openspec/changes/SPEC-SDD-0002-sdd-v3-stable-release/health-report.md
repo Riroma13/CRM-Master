@@ -14,7 +14,7 @@
 | ------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Required prior artifacts exist | PASS               | The active source contained all 23 artifacts copied by Archive: proposal, Design, Architecture Review, spec, Tasks, Tasks Review, Workload Guard, Apply Summary, Verify, seven evidence files, and seven validation files.                                               |
 | Canonical path is respected    | PASS               | The active source is `openspec/changes/SPEC-SDD-0002-sdd-v3-stable-release/`; no `docs/sdd-direct/changes/` store was created or used.                                                                                                                                   |
-| Direct agent routing is valid  | PASS               | `.opencode/commands/sdd-direct.md`, `.opencode/agents/sdd-direct-health.md`, and the Direct section of `docs/sdd-workflow-guard.md` define the project-local route and Health Report ordering without invoking Gentle-AI, native lifecycle state, or a dispatcher.       |
+| Direct agent routing is valid  | PASS               | `.opencode/commands/sdd-direct.md`, `sdd-direct-orchestrator`, and the Direct section of `docs/sdd-workflow-guard.md` define the project-local route and Health Report ordering without invoking Gentle-AI, native lifecycle state, or a dispatcher; after consolidation, Health Report is an orchestrator-owned phase.       |
 | Verification is complete       | PASS               | `verify-report.md` reports `status: VERIFIED`, `decision: VERIFIED`, 6/6 requirements, 6/6 scenarios, zero critical findings, and 29/29 change-local tests.                                                                                                              |
 | Archive snapshot is complete   | PASS               | `openspec/changes/archive/2026-07-24-SPEC-SDD-0002-sdd-v3-stable-release/` contains 23 copied artifacts plus its archive-only report; inventory and content comparison found no missing, unexpected, or mismatched copied file.                                          |
 | No unresolved blockers remain  | PASS               | AR-001 through AR-005, DC-001 through DC-006, and the carried Tasks Review conditions have passing evidence; AR-NB-001 and AR-NB-002 remain `CLOSED`.                                                                                                                    |
@@ -38,9 +38,14 @@ Verify -> Archive -> Health Report -> Repository Ready -> STOP
 
 The same Guard identifies the active source directory as the sole canonical
 artifact store and keeps Commit, Push, Merge, Release, and Tag outside Direct
-execution. `.opencode/agents/sdd-direct-health.md` requires Archive evidence
+execution. The orchestrator-owned Health Report phase requires Archive evidence
 before Health, uses this shared terminal-gates template, and requires a
 structured result.
+
+> **Post-consolidation routing/reference update:** Health Report is now an
+> orchestrator-owned phase in the consolidated Direct route. This wording
+> adjustment preserves the original `PASS_WITH_WARNINGS` verdict, evidence,
+> and candidate release state; it is not a change to the release conclusion.
 
 No dispatcher, Gentle-AI component, native review lifecycle, or SDD dispatcher
 was invoked or consulted for this report.

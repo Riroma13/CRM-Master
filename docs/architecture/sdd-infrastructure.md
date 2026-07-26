@@ -1,49 +1,67 @@
 # SDD Platform Infrastructure
 
+---
+status: active
+role: platform infrastructure reference
+workflow_guard: docs/sdd-workflow-guard.md
+---
+
+# SDD Platform Infrastructure
+
 > Environment verification, fallback telemetry, platform health, and
 > maintenance policy for the SDD workflow platform.
+> **Workflow transitions:** see `docs/sdd-workflow-guard.md` (sole authority).
 
 ---
 
-## 1. Environment Verification
+## 1. Direct Preflight
 
-Executed before **any** SDD workflow phase begins. The orchestrator performs
-these checks and reports a structured result.
+Direct preflight is the first Direct step, owned by
+`sdd-direct-orchestrator`, before Design or any phase execution. It is a
+repository-owned prerequisite check and is not authoritative over workflow
+transitions; the Workflow Guard remains the sole transition authority. The
+orchestrator performs only these checks and reports a structured result.
 
 ### Checks
 
-| # | Check | Method | Severity |
-|---|-------|--------|----------|
-| 1 | OpenCode version | `opencode --version` (expect >= 1.18) | WARNING |
-| 2 | Available models | `opencode models` (confirm all SDD models present) | WARNING |
-| 3 | Provider connectivity | Prompt cache response | INFO |
-| 4 | Agent registry | Check opencode.json for `gentle-orchestrator` + all `sdd-*` agents | ERROR |
-| 5 | Template files | Check `~/.config/opencode/prompts/sdd/sdd-{phase}.md` exists for design, apply, verify, archive | ERROR |
-| 6 | Project documentation | Check AGENTS.md, PROJECT.md, ADR directory | INFO |
-| 7 | Workflow documentation | Check SDD-WORKFLOW.md version >= 2.0 | WARNING |
+| #   | Check                         | Method                                                                                                      | Severity |
+| --- | ----------------------------- | ----------------------------------------------------------------------------------------------------------- | -------- |
+| 1   | Canonical workflow files      | Check the canonical workflow files exist                                                                    | ERROR    |
+| 2   | Retained Direct agent set     | Check the four retained `sdd-direct-*` agents exist                                                         | ERROR    |
+| 3   | Direct command routing       | Check `.opencode/commands/sdd-direct.md` exists and routes to `sdd-direct-orchestrator`                  | ERROR    |
+| 4   | Direct validator              | Check `scripts/validate-sdd-direct.mjs` exists                                                              | ERROR    |
+| 5   | Active SPEC path              | Check the supplied change resolves to `openspec/changes/<change-name>/`                                    | ERROR    |
+
+Preflight does not depend on Gentle-AI, legacy agents, provider or model state,
+or historical lifecycle metadata. It validates only repository-owned SDD
+artifacts and project-local Direct wiring.
+
+The required sequencing is:
+
+```text
+Direct preflight -> Design
+```
 
 ### Severity Classification
 
-| Severity | Effect | Action |
-|----------|--------|--------|
-| **ERROR** | Blocks workflow | Must be fixed before proceeding |
-| **WARNING** | Does not block | Reported to user, logged |
-| **INFO** | Informational | Logged only |
+| Severity    | Effect          | Action                          |
+| ----------- | --------------- | ------------------------------- |
+| **ERROR**   | Blocks workflow | Must be fixed before proceeding |
+| **WARNING** | Does not block  | Reported to user, logged        |
+| **INFO**    | Informational   | Logged only                     |
 
 ### Result Format
 
 ```
-## Environment Verification
+## Direct Preflight
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| OpenCode Version | PASS | v1.18.3 |
-| Models | PASS | 42 available |
-| Provider | INFO | default provider |
-| Agent Registry | PASS | 19 agents configured |
-| Templates | PASS | 8/8 templates exist |
-| Project Docs | INFO | all present |
-| Workflow Docs | PASS | v2.0 |
+| Direct Agent Registry | PASS | four project-local Direct agents |
+| Canonical Workflow Files | PASS | current canonical workflow files |
+| Direct Command Routing | PASS | command routes to `sdd-direct-orchestrator` |
+| Validator | PASS | repository validator present |
+| Active SPEC Path | PASS | `openspec/changes/<change-name>/` |
 
 Result: PASS
 ```
@@ -55,10 +73,12 @@ Result: PASS
 ### Levels
 
 ```
-Level 1: Configured model (from opencode.json)
-Level 2: opencode-go/deepseek-v4-flash (default coding model)
-Level 3: general agent (for sdd-apply phases only)
+Level 1: Configured reasoning role for current phase (from OpenCode configuration)
+Level 2: Fallback to economical / fast reasoning role
+Level 3: Escalate to high reasoning role when justified
 ```
+
+Role-to-model resolution belongs solely in OpenCode configuration.
 
 ### Telemetry Record
 
@@ -66,13 +86,11 @@ Every fallback produces a structured record:
 
 ```
 Phase: sdd-<phase>
-Configured: <configured_model>
-Resolved: <resolved_model_or_agent>
+Configured Role: <configured_reasoning_role>
+Resolved Role: <resolved_reasoning_role>
 Fallback: true
 Reason: <why the configured model could not be loaded>
 OpenCode Version: <version>
-Provider: <provider_prefix>
-Variant: <variant_name or "default">
 Timestamp: <ISO-8601>
 ```
 
@@ -80,11 +98,11 @@ Timestamp: <ISO-8601>
 
 The telemetry record must appear in:
 
-| Location | Format |
-|----------|--------|
-| Apply return summary | Markdown section (only if fallback occurred) |
-| Archive JSON | `environment.fallback_used` + `environment.fallback_reason` |
-| Archive Learning | Under "Unexpected Dependencies" when fallback changed the executor |
+| Location             | Format                                                             |
+| -------------------- | ------------------------------------------------------------------ |
+| Apply return summary | Markdown section (only if fallback occurred)                       |
+| Archive JSON         | `environment.fallback_used` + `environment.fallback_reason`        |
+| Archive Learning     | Under "Unexpected Dependencies" when fallback changed the executor |
 
 ---
 
@@ -101,23 +119,23 @@ structured health report.
 
 ### Report Sections
 
-| Section | Content |
-|---------|---------|
-| Environment | OpenCode version, provider, model count, prompt cache |
-| Agents | Configured agents, missing agents, invalid models, fallback risks |
-| Templates | Presence of all 8 SDD template files |
-| Documentation | Project docs, workflow docs, architecture docs |
-| Feature Support | Working Set, Read Order, Learning, JSON, etc. |
-| Overall Health | Healthy / Healthy with Warnings / Degraded / Broken |
+| Section             | Content                                                                |
+| ------------------- | ---------------------------------------------------------------------- |
+| Environment         | OpenCode version, reasoning-role availability, prompt cache            |
+| Direct Agents       | Four project-local agents, role resolution, and fallback risks         |
+| Repository Artifacts | Canonical change store, workflow docs, and design standard            |
+| Documentation       | Project docs, workflow docs, and architecture docs                     |
+| Feature Support     | Working Set, Read Order, Learning, JSON, and related capabilities      |
+| Overall Health      | Healthy / Healthy with Warnings / Degraded / Broken                    |
 
 ### Health Levels
 
-| Level | Meaning | Action |
-|-------|---------|--------|
-| **Healthy** | All checks pass | No action needed |
-| **Healthy with Warnings** | Non-blocking issues exist | Review warnings at convenience |
-| **Degraded** | Non-critical checks failing | Fix before next feature implementation |
-| **Broken** | Critical checks failing | Stop all work, fix immediately |
+| Level                     | Meaning                     | Action                                 |
+| ------------------------- | --------------------------- | -------------------------------------- |
+| **Healthy**               | All checks pass             | No action needed                       |
+| **Healthy with Warnings** | Non-blocking issues exist   | Review warnings at convenience         |
+| **Degraded**              | Non-critical checks failing | Fix before next feature implementation |
+| **Broken**                | Critical checks failing     | Stop all work, fix immediately         |
 
 ---
 
@@ -136,13 +154,13 @@ The archive JSON artifact now includes an `environment` object:
   "unexpected_dependencies": [],
   "future_recommendations": [],
   "environment": {
-    "opencode_version": "1.18.3",
-    "provider": "opencode-go",
+    "opencode_version": "<version>",
+    "role_model": "economical / fast reasoning",
     "prompt_cache": true,
     "fallback_used": false,
     "fallback_reason": "",
-    "configured_model": "opencode-go/deepseek-v4-flash",
-    "resolved_model": "opencode-go/deepseek-v4-flash"
+    "configured_role": "economical / fast reasoning",
+    "resolved_role": "economical / fast reasoning"
   }
 }
 ```
@@ -195,15 +213,16 @@ production/runtime/architectural issue or unexpected dependency.
 
 **Classification**:
 
-| Severity | Criteria | Examples |
-|----------|----------|----------|
-| Critical | Production blocker, security issue, data leak | auth bypass, cross-tenant leak, build failure |
-| Major | Behavioral gap, spec deviation, missing coverage | untested scenario, API contract mismatch |
-| Minor | Documentation fix, non-blocking observation | comment typo, minor refactor suggestion |
+| Severity | Criteria                                         | Examples                                      |
+| -------- | ------------------------------------------------ | --------------------------------------------- |
+| Critical | Production blocker, security issue, data leak    | auth bypass, cross-tenant leak, build failure |
+| Major    | Behavioral gap, spec deviation, missing coverage | untested scenario, API contract mismatch      |
+| Minor    | Documentation fix, non-blocking observation      | comment typo, minor refactor suggestion       |
 
 **Formula**: Count of issues per severity, summed as total.
 
 **Interpretation**:
+
 - **High total with Critical discoveries** → Design quality is insufficient; Review and Design phases need strengthening.
 - **High total but only Minor discoveries** → Design was good; Verify is adding polishing value.
 - **Zero discoveries** → Verify added no value, OR the implementation was trivial.
@@ -227,6 +246,7 @@ Overall Accuracy = average of all category accuracies
 Use `null` when a category was not predicted (e.g., no commands in Design).
 
 **Interpretation**:
+
 - **100%** → Design was perfectly accurate.
 - **70-99%** → Design was good but had minor misses.
 - **50-69%** → Design significantly over/under-predicted; Working Set needs improvement.
@@ -238,12 +258,12 @@ Use `null` when a category was not predicted (e.g., no commands in Design).
 These metrics are observational only. They should be reviewed via `/sdd-metrics`
 after approximately 20 implementations to detect trends:
 
-| Signal | Action |
-|--------|--------|
-| Verify Discoveries increasing | Strengthen Design phase (Working Set, Read Order) |
-| Prediction Accuracy declining | Add more detail to Design predictions |
-| Consistent Critical discoveries | Review architecture decision process |
-| Consistent Minor discoveries | Healthy process — Verify is catching the right things |
+| Signal                          | Action                                                |
+| ------------------------------- | ----------------------------------------------------- |
+| Verify Discoveries increasing   | Strengthen Design phase (Working Set, Read Order)     |
+| Prediction Accuracy declining   | Add more detail to Design predictions                 |
+| Consistent Critical discoveries | Review architecture decision process                  |
+| Consistent Minor discoveries    | Healthy process — Verify is catching the right things |
 
 ## 7. Metrics Collector
 
@@ -271,16 +291,16 @@ aggregates. Running it earlier (as in the initial state) will show mostly
 
 ### Collected Metrics
 
-| Metric | Source | Type |
-|--------|--------|------|
-| Working Set Accuracy | JSON artifact | Numeric (%) |
-| Working Set Efficiency | JSON artifact | Planned vs Actual files |
-| Design Confidence | JSON artifact | Categorical (High/Medium/Low) |
-| Verify Iterations | JSON artifact | Numeric |
-| Unexpected Files | JSON artifact | Frequency |
-| Unexpected Dependencies | JSON artifact | Frequency |
-| Fallback Usage | JSON artifact | Boolean |
-| Environment Info | JSON artifact | Version, provider |
+| Metric                  | Source        | Type                          |
+| ----------------------- | ------------- | ----------------------------- |
+| Working Set Accuracy    | JSON artifact | Numeric (%)                   |
+| Working Set Efficiency  | JSON artifact | Planned vs Actual files       |
+| Design Confidence       | JSON artifact | Categorical (High/Medium/Low) |
+| Verify Iterations       | JSON artifact | Numeric                       |
+| Unexpected Files        | JSON artifact | Frequency                     |
+| Unexpected Dependencies | JSON artifact | Frequency                     |
+| Fallback Usage          | JSON artifact | Boolean                       |
+| Environment Info        | JSON artifact | Version, reasoning role       |
 
 ### Hotspot Detection
 
@@ -306,46 +326,15 @@ or `Not captured`.
 
 ---
 
-## 7. SDD v2.1 Feature Freeze
+## 7. References
 
-A partir del merge de este commit, la plataforma SDD se declara
-
-**FEATURE FROZEN**
-
-No se añadirán nuevas fases, prompts, agentes, comandos, ni métricas
-al workflow SDD salvo que `/sdd-metrics` lo justifique con evidencia
-histórica recurrente (mínimo 20 implementaciones).
-
-Preferir mejorar la calidad del Design sobre añadir nuevas fases.
-Preferir reducir exploración sobre aumentar complejidad de orquestación.
-
----
-
-## 8. Future Roadmap
-
-The future evolution of the SDD platform is documented in
-
-`docs/roadmaps/future-roadmap.md`
-
-This roadmap is informational only. It does not authorize any automatic
-modification to the SDD workflow, prompts, agents, or commands.
-
-Review triggers, procedures, and candidate improvements are defined there.
-No changes may occur without:
-1. Review trigger activation (≥40 implementations or PRs)
-2. Historical metrics from `/sdd-metrics`
-3. Pattern identification (≥20% recurrence)
-4. ADR proposal and acceptance
-
----
-
-## 9. References
-
-- `docs/SDD-WORKFLOW.md` — full workflow documentation (v2.0+)
+- `docs/SDD-WORKFLOW.md` — workflow lifecycle
+- `docs/sdd-workflow-guard.md` — transition authority
+- `openspec/changes/<change-name>/` — canonical active SDD artifacts
 - `docs/architecture/module-composition.md` — NestJS module composition standard
-- `AGENTS.md` — project conventions and model assignment table
+- `AGENTS.md` — project conventions
 - `.ai/context/PROJECT.md` — project context for agents
+- `docs/templates/design-enterprise-template.md` — repository design standard
 - `~/.config/opencode/opencode.json` — agent and model configuration
-- `~/.config/opencode/prompts/sdd/` — SDD phase prompt templates
 - `~/.config/opencode/commands/sdd-doctor.md` — SDD Doctor command
 - `~/.config/opencode/commands/sdd-metrics.md` — SDD Metrics Collector command

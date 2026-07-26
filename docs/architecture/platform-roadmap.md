@@ -1,9 +1,10 @@
 # Platform Roadmap — CRM-Master
 
-> **Última actualización:** 2026-07-20
-> **SDD Version:** v2.1
-> **Platform Baseline:** sdd-v2.1-baseline (Feature Frozen)
+> **Última actualización:** 2026-07-25
+> **SDD Version:** v3.0 Stable
+> **Platform Baseline:** `sdd-v3.0-baseline` (Stable; Feature Freeze ACTIVE)
 > **Enterprise Design Standard:** ACTIVE
+> **Roadmap numbering:** SPEC IDs and established titles are immutable; undefined and future slots are not assignments.
 
 ---
 
@@ -13,8 +14,12 @@
 |--------|---------|
 | ✅ **Archived** | Implemented, tested, archived, committed |
 | 🔧 **In Progress** | Active development |
+| 📝 **Proposed / Omitted** | Proposed artifact exists, but it is not accepted, implemented, or archived |
+| ⚠️ **Recovered / Uncommitted** | Worktree evidence exists, but no committed archive is claimed |
 | 📋 **Designed** | Design + Architecture Review complete |
 | ⬜ **Planned** | Not started |
+| — **Undefined / Unassigned** | No repository artifact or canonical title exists |
+| 🔭 **Reserved** | Future roadmap slot only; no artifact or implementation is claimed |
 | ❌ **Cancelled** | Deprecated or replaced |
 
 ---
@@ -29,9 +34,12 @@
 | SPEC-0004 | — | ⬜ Planned | — | — | — |
 | SPEC-0005 | — | ✅ Archived | — | — | — |
 | SPEC-0006 | — | ✅ Archived | — | — | — |
+| SPEC-0007 | Pipeline de CI + entorno de staging | 📝 Proposed / Omitted | — | — | Proposed artifact exists at `docs/specs/SPEC-0007-ci-pipeline-staging.md`; it is intentionally omitted from the accepted/current implementation sequence and is not implemented or archived. |
 | SPEC-0008 | — | ✅ Archived | — | — | — |
 | SPEC-0009 | — | ✅ Archived | — | — | — |
 | SPEC-0010 | Universal Search 2.0 | ✅ Archived | — | 20 | Búsqueda global unificada |
+| SPEC-0025 | Identity & Organization Platform | 🔧 In Progress | Not committed | — | Partially implemented and uncommitted; no archive claim. |
+| SPEC-0026 | — | — **Undefined / Unassigned** | — | — | No repository artifact or canonical title exists. This slot is not Identity; Identity remains SPEC-0025. |
 
 ## Automation & AI
 
@@ -60,6 +68,7 @@
 | SPEC-0014 | Integration Platform | ✅ Archived | — | 7 | Integraciones externas |
 | SPEC-0015 | Workflow / BPM Engine | ✅ Archived | 5 | 33 | Workflows con nodos, compensación, timers |
 | SPEC-0022 | Plugin / Extension Platform | ✅ Archived | 4 | 90 | Plugins event-based con worker_threads sandbox |
+| SPEC-0028 | Jobs & Background Processing | ⚠️ Recovered / Uncommitted | Not committed | 53 | Phase 1 only: shared BullMQ infra, JobService, DlqProcessor, 3 Prisma models, and Prometheus metrics. Phases 2–5 are deferred; no archive claim. |
 
 ## Activity, Audit & Compliance
 
@@ -86,6 +95,24 @@
 | SPEC | Title | Status | PRs | Tests | Description |
 |------|-------|--------|-----|-------|-------------|
 | SPEC-0023 | Billing & Subscription | ✅ Archived | 7 | 234 | Planes, suscripciones, Stripe, metering, facturación |
+| SPEC-0027 | Feature Flags & Licensing Platform | ⚠️ Recovered / Uncommitted | Not committed | 26 | Recovered implementation and tests for feature enforcement via Plan.features + @PlanFeature guard; no archive claim. |
+
+---
+
+## Future Roadmap (No Implementation Claimed)
+
+The following IDs are reserved for future planning only. No repository artifacts,
+canonical titles, designs, implementations, or archives exist for
+SPEC-0029–SPEC-0034.
+
+| SPEC | Title | Status | Repository reality |
+|------|-------|--------|--------------------|
+| SPEC-0029 | — | 🔭 Reserved | Unassigned; no repository artifact |
+| SPEC-0030 | — | 🔭 Reserved | Unassigned; no repository artifact |
+| SPEC-0031 | — | 🔭 Reserved | Unassigned; no repository artifact |
+| SPEC-0032 | — | 🔭 Reserved | Unassigned; no repository artifact |
+| SPEC-0033 | — | 🔭 Reserved | Unassigned; no repository artifact |
+| SPEC-0034 | — | 🔭 Reserved | Unassigned; no repository artifact |
 
 ---
 
@@ -120,26 +147,39 @@
 
 | Metric | Value |
 |--------|-------|
-| Total SPECs | 24 (+1 planned) |
-| Archived SPECs | 22 |
-| In Progress | 0 |
+| Numbered roadmap slots | 34 (SPEC-0001–SPEC-0034; includes proposed, undefined, and reserved IDs) |
+| Archived SPECs | 22 (committed archive evidence; excludes uncommitted recovery work) |
+| In Progress | 1 (SPEC-0025; partial and uncommitted) |
+| Recovered / Uncommitted | 2 (SPEC-0027 and SPEC-0028; neither archived) |
+| Proposed / Omitted | 1 (SPEC-0007) |
 | Planned | 1 (SPEC-0004) |
-| Total Tests | ~1,400+ |
-| Architecture Reviews Passed | 14/14 |
-| Average Working Set Accuracy | ~96% |
-| Total Commits (SDD era) | 30+ |
-| Architecture Decisions | 20 ADRs |
+| Undefined / Unassigned | 1 (SPEC-0026) |
+| Future reserved | 6 (SPEC-0029–SPEC-0034) |
+| Reported tests in archived rows | 1,040 (sum of numeric row values; scoped counts, not a fresh suite total) |
+| Reported recovered tests | 79 (SPEC-0027: 26; SPEC-0028: 53; uncommitted and excluded from archived count) |
+| Architecture Reviews Passed | 14/14 (historical reported metric; not recalculated here) |
+| Average Working Set Accuracy | ~96% (historical reported metric; not recalculated here) |
+| Total Commits (SDD era) | 30+ (historical reported metric; not recalculated here) |
+| Committed Architecture Decisions | 20 ADRs (roadmap inventory; recovery ADRs excluded) |
+
+> **Metric methodology:** The numbered-slot count measures roadmap coverage, not
+> implementation. A SPEC is counted as archived only when committed archive
+> evidence exists; tests or an archive-named directory do not change that rule.
+> Test values are report-scoped and were not regenerated by this documentation
+> edit. Historical quality metrics are retained as reported values, not presented
+> as a new verification run.
 
 ---
 
-## SDD Workflow
+## SDD-Direct Workflow
 
 ```
-Design → Architecture Review → Design Refinement (if required)
-→ Tasks → Tasks Review → Tasks Refinement (if required)
-→ Apply → Verify → Archive → Health Report
-→ Repository Ready → Commit → Push
+Explore (if required) → Propose → Spec → Design → Architecture Review
+→ Tasks → Apply → Verify → Archive → Repository Ready
 ```
+
+SDD-Direct stops at Repository Ready. Commit, Push, Merge, Release, and Tag are
+manual maintainer gates.
 
 **Rules:**
 - Architecture Review is executed **exactly once** per SPEC
@@ -148,4 +188,6 @@ Design → Architecture Review → Design Refinement (if required)
 
 ---
 
-> **Próximo paso:** Pendiente de definir SPEC-0025.
+> **Immediate next work item:** SPEC-0025 — Identity & Organization Platform.
+> It must pass SDD-Direct through Repository Ready before any later SPEC is
+> started. Uncommitted recovery work must not be treated as archived.

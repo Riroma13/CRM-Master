@@ -1,3 +1,12 @@
+---
+status: archived
+archived_from: docs/architecture/sdd-v3-roadmap.md
+archived_at: 2026-07-26
+---
+
+> **Status:** Archived historical document. Non-authoritative. Retained as
+> immutable pre-release vision evidence.
+
 # SDD v3.0 — Candidate Improvements (Future Roadmap)
 
 > **Estado:** Proposed (Not Scheduled)
