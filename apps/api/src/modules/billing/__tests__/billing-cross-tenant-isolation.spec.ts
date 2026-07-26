@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../../common/prisma.service';
 import { SubscriptionEngine } from '../subscription/subscription-engine';
 import { InvoiceEngine } from '../invoice/invoice-engine';
@@ -12,6 +13,7 @@ describe('Billing Cross-Tenant Isolation', () => {
   let invoiceEngineA: InvoiceEngine;
   let invoinceEngineB: InvoiceEngine;
   let meteringEngineA: MeteringEngine;
+  let mockEventEmitter: any;
 
   const TENANT_A = 'billing-tenant-a-iso';
   const TENANT_B = 'billing-tenant-b-iso';
@@ -126,6 +128,21 @@ describe('Billing Cross-Tenant Isolation', () => {
       }),
     };
 
+    mockEventEmitter = {
+      emit: jest.fn(),
+      on: jest.fn(),
+      once: jest.fn(),
+      off: jest.fn(),
+      removeAllListeners: jest.fn(),
+      setMaxListeners: jest.fn(),
+      rawListeners: jest.fn(),
+      listeners: jest.fn(),
+      listenerCount: jest.fn(),
+      eventNames: jest.fn(),
+      emitAsync: jest.fn(),
+      waitFor: jest.fn(),
+    };
+
     const moduleA: TestingModule = await Test.createTestingModule({
       providers: [
         SubscriptionEngine,
@@ -134,6 +151,7 @@ describe('Billing Cross-Tenant Isolation', () => {
         PlanCatalogService,
         { provide: PrismaService, useValue: mockPrismaA },
         { provide: PricingStrategyFactory, useValue: mockPricingFactory },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
       ],
     }).compile();
 
@@ -160,6 +178,7 @@ describe('Billing Cross-Tenant Isolation', () => {
         { provide: PrismaService, useValue: mockPrismaB },
         { provide: PricingStrategyFactory, useValue: mockPricingFactory },
         { provide: MeteringEngine, useValue: mockMeteringEngine },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
       ],
     }).compile();
 
@@ -194,6 +213,7 @@ describe('Billing Cross-Tenant Isolation', () => {
         providers: [
           SubscriptionEngine,
           { provide: PrismaService, useValue: mockPrismaSubB },
+          { provide: EventEmitter2, useValue: mockEventEmitter },
         ],
       }).compile();
 
@@ -299,6 +319,7 @@ describe('Billing Cross-Tenant Isolation', () => {
         providers: [
           SubscriptionEngine,
           { provide: PrismaService, useValue: mockPrisma },
+          { provide: EventEmitter2, useValue: mockEventEmitter },
         ],
       }).compile();
 

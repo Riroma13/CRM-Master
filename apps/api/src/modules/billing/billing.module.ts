@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { BillingController } from './billing.controller';
 import { BillingGuard } from './guards/billing.guard';
 import { PlanCatalogService } from './plan/plan-catalog.service';
@@ -30,9 +31,13 @@ import { StripeWebhookProcessor } from './payment/stripe-webhook.processor';
 import { ConvertTrialSaga } from './subscription/convert-trial.saga';
 import { SubscriptionEngine } from './subscription/subscription-engine';
 import { LifecycleService } from './subscription/lifecycle.service';
+import { FeatureFlagModule } from './feature-flags/feature-flags.module';
+import { FeatureFlagService } from './feature-flags/feature-flags.service';
+import { PlanFeatureGuard } from './feature-flags/plan-feature.guard';
 
 @Module({
   imports: [
+    FeatureFlagModule,
     BullModule.registerQueue({
       name: 'billing:metering',
       defaultJobOptions: {
@@ -103,6 +108,10 @@ import { LifecycleService } from './subscription/lifecycle.service';
     SubscriptionEngine,
     LifecycleService,
     {
+      provide: APP_GUARD,
+      useExisting: PlanFeatureGuard,
+    },
+    {
       provide: STRIPE_CLIENT,
       useFactory: (configService: ConfigService) => {
         const Stripe = require('stripe');
@@ -134,6 +143,9 @@ import { LifecycleService } from './subscription/lifecycle.service';
     ConvertTrialSaga,
     SubscriptionEngine,
     LifecycleService,
+    FeatureFlagModule,
+    FeatureFlagService,
+    PlanFeatureGuard,
   ],
 })
 export class BillingModule {}
