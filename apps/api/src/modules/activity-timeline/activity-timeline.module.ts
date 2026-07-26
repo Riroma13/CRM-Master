@@ -11,13 +11,6 @@ import { PrismaService } from '../../common/prisma.service';
 
 @Module({
   imports: [
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST ?? 'localhost',
-        port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
-        ...(process.env.REDIS_PASSWORD ? { password: process.env.REDIS_PASSWORD } : {}),
-      },
-    }),
     BullModule.registerQueue(
       {
         name: 'activity-timeline:ingestion',

@@ -3,6 +3,7 @@ import { AdminToolsModule } from '../admin-tools/admin-tools.module';
 import { AuditModule } from '../audit/audit.module';
 import { ExportModule } from '../export/export.module';
 import { HealthModule } from '../health/health.module';
+import { JobsModule } from '../jobs/jobs.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ObservabilityModule } from '../observability/observability.module';
 import { SearchModule } from '../search/search.module';
@@ -19,6 +20,7 @@ import { SearchModule } from '../search/search.module';
     AuditModule,
     ExportModule,
     HealthModule,
+    JobsModule,
     NotificationsModule,
     ObservabilityModule,
     SearchModule,

@@ -8,6 +8,8 @@ export class MetricsRegistry {
   public readonly httpRequestDuration: promClient.Histogram<string>;
   public readonly moduleErrorsTotal: promClient.Counter<string>;
   public readonly bullmqQueueDepth: promClient.Gauge<string>;
+  public readonly bullmqJobDuration: promClient.Histogram<string>;
+  public readonly bullmqDlqCount: promClient.Counter<string>;
   public readonly activeTenants: promClient.Gauge<string>;
 
   constructor() {
@@ -39,6 +41,21 @@ export class MetricsRegistry {
     this.bullmqQueueDepth = new promClient.Gauge({
       name: 'bullmq_queue_depth',
       help: 'Current depth of BullMQ queues',
+      labelNames: ['queue'],
+      registers: [this.registry],
+    });
+
+    this.bullmqJobDuration = new promClient.Histogram({
+      name: 'bullmq_job_duration_ms',
+      help: 'Duration of BullMQ job processing in milliseconds',
+      labelNames: ['queue', 'status', 'tenantId'],
+      buckets: [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000],
+      registers: [this.registry],
+    });
+
+    this.bullmqDlqCount = new promClient.Counter({
+      name: 'bullmq_dlq_count',
+      help: 'Number of jobs moved to dead letter queue',
       labelNames: ['queue'],
       registers: [this.registry],
     });
