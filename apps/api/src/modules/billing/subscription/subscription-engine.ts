@@ -69,6 +69,8 @@ export class SubscriptionEngine {
       },
     });
 
+    this.emitPlanChanged(input.tenantId);
+
     this.logger.log(
       `Subscription created: tenant=${input.tenantId} plan=${input.planId} status=${status}`,
     );
@@ -142,7 +144,7 @@ export class SubscriptionEngine {
         },
       });
 
-      this.eventEmitter.emit('plan.changed', { tenantId });
+      this.emitPlanChanged(tenantId);
 
       return this.toSubscription(updated);
     }
@@ -156,7 +158,7 @@ export class SubscriptionEngine {
       `Downgrade scheduled: tenant=${tenantId} from=$${currentPrice} to=$${newPrice} (next period)`,
     );
 
-    this.eventEmitter.emit('plan.changed', { tenantId });
+    this.emitPlanChanged(tenantId);
 
     return this.toSubscription(updated);
   }
@@ -185,7 +187,7 @@ export class SubscriptionEngine {
       },
     });
 
-    this.eventEmitter.emit('plan.changed', { tenantId });
+    this.emitPlanChanged(tenantId);
 
     this.logger.log(
       `Pending plan applied: tenant=${tenantId} plan=${sub.pendingPlanId}`,
@@ -214,6 +216,8 @@ export class SubscriptionEngine {
         cancelledAt: new Date(),
       },
     });
+
+    this.emitPlanChanged(tenantId);
 
     this.logger.log(`Subscription cancelled: tenant=${tenantId}`);
 
@@ -249,6 +253,8 @@ export class SubscriptionEngine {
         currentPeriodEnd: periodEnd,
       },
     });
+
+    this.emitPlanChanged(tenantId);
 
     this.logger.log(
       `Subscription reactivated: tenant=${tenantId}`,
@@ -289,6 +295,8 @@ export class SubscriptionEngine {
       data: updateData as any,
     });
 
+    this.emitPlanChanged(tenantId);
+
     this.logger.log(
       `Subscription status updated: tenant=${tenantId} ${currentStatus} → ${newStatus}`,
     );
@@ -320,6 +328,8 @@ export class SubscriptionEngine {
       },
     });
 
+    this.emitPlanChanged(tenantId);
+
     this.logger.log(
       `Subscription activated with Stripe IDs: tenant=${tenantId}`,
     );
@@ -337,6 +347,10 @@ export class SubscriptionEngine {
     }
 
     return plan.price;
+  }
+
+  private emitPlanChanged(tenantId: string): void {
+    this.eventEmitter.emit('plan.changed', { tenantId });
   }
 
   private calculateProration(

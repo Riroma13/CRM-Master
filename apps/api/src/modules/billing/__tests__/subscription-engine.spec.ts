@@ -58,6 +58,7 @@ const mockSubscriptionRow = {
 describe('SubscriptionEngine', () => {
   let engine: SubscriptionEngine;
   let mockPrisma: any;
+  let mockEventEmitter: any;
 
   beforeAll(async () => {
     mockPrisma = {
@@ -74,7 +75,7 @@ describe('SubscriptionEngine', () => {
       },
     };
 
-    const mockEventEmitter = {
+    mockEventEmitter = {
       emit: jest.fn(),
       on: jest.fn(),
       once: jest.fn(),
@@ -121,6 +122,9 @@ describe('SubscriptionEngine', () => {
       expect(result.status).toBe('trialing');
       expect(result.tenantId).toBe('tenant-001');
       expect(mockPrisma.admin.subscription.create).toHaveBeenCalled();
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('plan.changed', {
+        tenantId: 'tenant-001',
+      });
     });
 
     it('creates an active subscription for plans without trial', async () => {
@@ -217,6 +221,9 @@ describe('SubscriptionEngine', () => {
           }),
         }),
       );
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('plan.changed', {
+        tenantId: 'tenant-001',
+      });
     });
 
     it('downgrades by setting pendingPlanId', async () => {
@@ -282,6 +289,9 @@ describe('SubscriptionEngine', () => {
           }),
         }),
       );
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('plan.changed', {
+        tenantId: 'tenant-001',
+      });
     });
 
     it('throws when subscription not found', async () => {
@@ -322,6 +332,9 @@ describe('SubscriptionEngine', () => {
 
       expect(result.status).toBe('active');
       expect(result.cancelledAt).toBeUndefined();
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('plan.changed', {
+        tenantId: 'tenant-001',
+      });
     });
 
     it('throws when subscription not found', async () => {
@@ -352,6 +365,9 @@ describe('SubscriptionEngine', () => {
       const result = await engine.updateStatus('tenant-001', 'past_due');
 
       expect(result.status).toBe('past_due');
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('plan.changed', {
+        tenantId: 'tenant-001',
+      });
     });
 
     it('sets gracePeriodEnd when transitioning to grace_period', async () => {
@@ -387,6 +403,28 @@ describe('SubscriptionEngine', () => {
       await expect(
         engine.updateStatus('tenant-001', 'active'),
       ).rejects.toThrow(Error);
+    });
+  });
+
+  describe('updateSubscriptionWithStripeIds', () => {
+    it('emits plan.changed after activating a subscription', async () => {
+      mockPrisma.admin.subscription.findUnique.mockResolvedValue(mockSubscriptionRow);
+      mockPrisma.admin.subscription.update.mockResolvedValue({
+        ...mockSubscriptionRow,
+        stripeCustomerId: 'cus_123',
+        stripeSubscriptionId: 'sub_stripe_123',
+      });
+
+      const result = await engine.updateSubscriptionWithStripeIds(
+        'tenant-001',
+        'cus_123',
+        'sub_stripe_123',
+      );
+
+      expect(result.stripeCustomerId).toBe('cus_123');
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('plan.changed', {
+        tenantId: 'tenant-001',
+      });
     });
   });
 

@@ -13,8 +13,11 @@ export const PLAN_FEATURE_KEY = 'plan_feature_key';
  * @PlanFeature('audit-logs')
  * async getAuditLogs() { ... }
  * ```
+ *
+ * Calling the decorator without a key explicitly marks the route as not
+ * requiring a feature; the guard skips entitlement evaluation in that case.
  */
-export const PlanFeature = (featureKey: FeatureKey) =>
+export const PlanFeature = (featureKey?: FeatureKey) =>
   applyDecorators(
     SetMetadata(PLAN_FEATURE_KEY, featureKey),
   );

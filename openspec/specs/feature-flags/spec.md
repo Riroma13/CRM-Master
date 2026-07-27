@@ -8,119 +8,98 @@
 
 ### Requirement: FeatureKey Union Type
 
-A `FeatureKey` union type MUST be defined in `packages/shared/src/billing/` covering all seed plan features plus documented future keys: `workflows`, `documents`, `api-access`, `basic-analytics`, `advanced-analytics`, `email-notifications`, `custom-branding`, `priority-support`, `audit-logs`, `automation-hub`, `plugins`, `billing`, `identity-sso`, `activity-timeline`, `dedicated-infrastructure`, `sla-guarantee`, `custom-integrations`, `onboarding-training`.
+`FeatureKey` MUST be an exported string-literal union containing 18 feature strings.
+(Previously: export omitted.)
 
-#### Scenario: All seed values have corresponding keys
+#### Scenario: Catalog is assignable
+- GIVEN the seed catalog contains 18 feature strings
+- WHEN `FeatureKey` resolves from `@shared/billing`
+- THEN every seed value MUST be assignable and not be an enum
 
-- GIVEN the seed data lists 18 feature strings across 4 plans
-- WHEN the `FeatureKey` type is resolved
-- THEN every seed feature string MUST be assignable to the `FeatureKey` type
-- AND the type MUST be a string literal union (not a runtime enum)
-
-#### Scenario: Unknown feature key rejected at type level
-
+#### Scenario: Unknown key is rejected
 - GIVEN a function accepts `FeatureKey`
-- WHEN a string not in the union is passed
-- THEN the TypeScript compiler MUST raise a type error
+- WHEN an unlisted string is passed
+- THEN TypeScript MUST reject it
 
-### Requirement: FeatureFlagService.isEnabled
+### Requirement: FeatureFlagService Plan and Status Resolution
 
-The `FeatureFlagService` MUST expose `isEnabled(tenantId: string, featureKey: FeatureKey): Promise<boolean>`. It MUST read the tenant's active `Subscription`, resolve the associated `Plan.features` array, check subscription status (active/trialing/grace_period passes, expired/cancelled returns false), and return whether the feature is included. Results MUST be cached with TTL between 60 and 300 seconds.
+`FeatureFlagService` MUST expose `isEnabled`, `getAllEnabled`, and tenant-scoped invalidation. It MUST resolve `Subscription → Plan.features`; active, trialing, and `grace_period` grant listed features; other or missing subscriptions deny. The cache MUST default to 120 seconds and support `FEATURE_FLAG_CACHE_TTL`.
+(Previously: API and TTL unspecified.)
 
-#### Scenario: Active subscription with feature in plan returns true
+#### Scenario: Listed feature is enabled
+- GIVEN tenant A has an active subscription whose plan includes `advanced-analytics`
+- WHEN `isEnabled(tenantA, 'advanced-analytics')` runs
+- THEN it MUST return `true` and cache them
 
-- GIVEN tenant A has an active subscription to the Pro plan with `advanced-analytics` in `plan.features`
-- WHEN `featureFlagService.isEnabled(tenantA.id, 'advanced-analytics')` is called
-- THEN the method MUST return `true`
-- AND the result MUST be cached
+#### Scenario: Unknown runtime key is denied
+- GIVEN a tenant has a plan
+- WHEN an unknown value is evaluated
+- THEN it MUST return `false`
 
-#### Scenario: Unknown feature key returns false
+#### Scenario: Invalid or missing subscription denies
+- GIVEN tenant A has no subscription or invalid status
+- WHEN either method is called
+- THEN access MUST be denied or the array MUST be empty
 
-- GIVEN tenant A has any plan
-- WHEN `featureFlagService.isEnabled(tenantA.id, 'unknown-feature')` is called
-- THEN the method MUST return `false`
+#### Scenario: Grace period grants listed features
+- GIVEN tenant A has `grace_period` with `workflows` in its plan
+- WHEN `isEnabled(tenantA, 'workflows')` runs
+- THEN it MUST return `true`
 
-#### Scenario: Expired subscription returns false for all features
-
-- GIVEN tenant A's subscription status is `expired`
-- WHEN `featureFlagService.isEnabled(tenantA.id, 'workflows')` is called
-- THEN the method MUST return `false` regardless of what `plan.features` contains
-
-#### Scenario: No subscription returns false
-
-- GIVEN tenant A has no `Subscription` record
-- WHEN `featureFlagService.isEnabled(tenantA.id, 'documents')` is called
-- THEN the method MUST return `false`
-
-#### Scenario: Grace period treats features as enabled
-
-- GIVEN tenant A's subscription status is `grace_period` and `workflows` is in `plan.features`
-- WHEN `featureFlagService.isEnabled(tenantA.id, 'workflows')` is called
-- THEN the method MUST return `true`
+#### Scenario: Cache hit avoids re-query
+- GIVEN a tenant has no valid cache entry
+- WHEN it is called twice without invalidation
+- THEN only the first call MUST query the DB
 
 ### Requirement: @PlanFeature Decorator and Guard
 
-The `@PlanFeature(featureKey?: FeatureKey)` decorator MUST register the feature key via `Reflector`. The `PlanFeatureGuard` MUST extract the tenant from the request, call `FeatureFlagService.isEnabled`, and return HTTP 403 if the feature is not available. When no feature key is specified, the guard MUST skip the check.
+`@PlanFeature(featureKey?)` MUST register optional metadata. `PlanFeatureGuard` MUST read it, resolve the tenant from the request or user, pass without key or tenant, and return HTTP 403 with `{ error: 'feature_not_available', feature }` when denied.
+(Previously: pass-through and denial were underspecified.)
 
-#### Scenario: Guard blocks request when feature not in plan
-
-- GIVEN a route decorated with `@PlanFeature('audit-logs')`
-- AND the tenant's plan does not include 'audit-logs'
+#### Scenario: Unavailable or expired feature is blocked
+- GIVEN a route requires `audit-logs` and its tenant lacks it or has invalid status
 - WHEN an authenticated request arrives
-- THEN the guard MUST return HTTP 403
-- AND the handler MUST NOT execute
+- THEN it MUST return 403 and the handler MUST NOT execute
 
-#### Scenario: Guard allows request when feature is in plan
-
-- GIVEN a route decorated with `@PlanFeature('audit-logs')`
-- AND the tenant's plan includes 'audit-logs'
+#### Scenario: Enabled feature is allowed
+- GIVEN a route requires `audit-logs` and the plan includes it
 - WHEN an authenticated request arrives
-- THEN the guard MUST allow the request through
-- AND the handler MUST execute normally
+- THEN it MUST allow the handler
 
-#### Scenario: Guard skips check when no feature key
+#### Scenario: No key passes through
+- GIVEN a route has no feature key
+- WHEN the guard evaluates it
+- THEN it MUST return `true` without `isEnabled`
 
-- GIVEN a route decorated with `@PlanFeature()` (no argument)
-- WHEN an authenticated request arrives
-- THEN the guard MUST allow the request through without calling `isEnabled`
-- AND the handler MUST execute normally
-
-#### Scenario: Guard returns 403 for tenant with expired subscription
-
-- GIVEN a route decorated with `@PlanFeature('documents')`
-- AND the tenant's subscription is expired
-- WHEN an authenticated request arrives
-- THEN the guard MUST return HTTP 403
+#### Scenario: No tenant passes through
+- GIVEN a decorated request has no tenant identity
+- WHEN the guard evaluates it
+- THEN it MUST return `true` without `isEnabled`
 
 ### Requirement: Cache Invalidation on Plan Change
 
-The cache MUST be invalidated when a tenant's subscription or plan is updated. A dedicated event/hook on `Subscription.update` MUST clear the affected tenant's cache entries.
+The affected tenant's cache MUST be invalidated on `plan.changed`. Successful create, plan change, pending-plan application, cancellation, reactivation, status, and Stripe-ID subscription mutations MUST emit that event.
+(Previously: generic update only.)
 
-#### Scenario: Cache cleared after subscription change
+#### Scenario: Mutation refreshes cached entitlement
+- GIVEN tenant A has a cached enabled result
+- WHEN a successful entitlement mutation emits `plan.changed` for A
+- THEN the next evaluation MUST query the database
 
-- GIVEN tenant A's cache contains `isEnabled(tenantA.id, 'workflows') → true`
-- WHEN tenant A's subscription changes to a plan without `workflows`
-- THEN the next call to `isEnabled(tenantA.id, 'workflows')` MUST re-evaluate from the database
-- AND the result MUST be `false`
-
-#### Scenario: Cache miss re-evaluates from DB
-
-- GIVEN no cache entry exists for tenant A and feature 'documents'
-- WHEN `featureFlagService.isEnabled(tenantA.id, 'documents')` is called
-- THEN the service MUST query the database
-- AND cache the result
+#### Scenario: Invalidation remains tenant-scoped
+- GIVEN tenants A and B have cached results
+- WHEN A emits `plan.changed`
+- THEN only A's cache MUST be invalidated
 
 ### Requirement: Cross-Tenant Feature Isolation
 
-Feature evaluations for one tenant MUST NOT affect or leak to another tenant. Cache keys MUST be scoped by `tenantId + featureKey`.
+Feature lookup and cache state MUST be scoped by `tenantId`; one tenant's subscription or plan features MUST NOT affect another.
+(Previously: scoping was not explicit.)
 
-#### Scenario: Tenant A features don't leak to tenant B
-
-- GIVEN tenant A has `workflows` in plan and tenant B does not
-- WHEN both tenants' features are evaluated concurrently
-- THEN `isEnabled(tenantA.id, 'workflows')` MUST return `true`
-- AND `isEnabled(tenantB.id, 'workflows')` MUST return `false`
-- AND no cache state from tenant A influences tenant B's result
+#### Scenario: Tenant features do not leak
+- GIVEN A's plan includes `workflows` and B's does not
+- WHEN both tenants are evaluated
+- THEN A MUST return `true`, B MUST return `false`, with independent cache state
 
 ### Requirement: TenantModulesService Migration
 

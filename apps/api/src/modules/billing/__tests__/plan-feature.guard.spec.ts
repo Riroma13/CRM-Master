@@ -6,6 +6,7 @@ import {
 } from '../feature-flags/plan-feature.guard';
 import {
   PLAN_FEATURE_KEY,
+  PlanFeature,
 } from '../feature-flags/plan-feature.decorator';
 import { FeatureFlagService } from '../feature-flags/feature-flags.service';
 
@@ -60,6 +61,30 @@ describe('PlanFeatureGuard', () => {
     mockReflector.getAllAndOverride.mockReturnValue(undefined);
 
     const result = await guard.canActivate(mockContext);
+
+    expect(result).toBe(true);
+    expect(mockFeatureFlagService.isEnabled).not.toHaveBeenCalled();
+  });
+
+  it('allows a route decorated with PlanFeature without a feature key', async () => {
+    class TestController {
+      @PlanFeature()
+      route() {}
+    }
+
+    const decoratedGuard = new PlanFeatureGuard(
+      new Reflector(),
+      mockFeatureFlagService,
+    );
+    const decoratedContext: any = {
+      switchToHttp: () => ({
+        getRequest: () => mockRequest,
+      }),
+      getHandler: () => TestController.prototype.route,
+      getClass: () => TestController,
+    };
+
+    const result = await decoratedGuard.canActivate(decoratedContext);
 
     expect(result).toBe(true);
     expect(mockFeatureFlagService.isEnabled).not.toHaveBeenCalled();
