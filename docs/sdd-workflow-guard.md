@@ -16,6 +16,10 @@ workflow_doc: docs/SDD-WORKFLOW.md
 
 ## Transition Table
 
+> Proposal and Spec are compatibility artifacts only. They are not user-facing
+> phases and do not appear in this transition table. Missing Proposal/Spec
+> artifacts are generated or reconciled automatically during Tasks preparation.
+
 | Current phase       | Allowed next phases      | Forbidden next phases                              |
 | ------------------- | ------------------------ | -------------------------------------------------- |
 | — (start)           | Design                   | Architecture Review, Tasks, Apply, Verify, Archive |
@@ -39,17 +43,23 @@ workflow_doc: docs/SDD-WORKFLOW.md
 
 ### Architecture Review → Design Refinement
 
-If the Architecture Review verdict is `REJECTED` or `APPROVED WITH CONDITIONS`,
-the next phase MUST be **Design Refinement**.
+If the Architecture Review verdict is `BLOCKED`, the next phase MUST be
+**Design Refinement**. Material or blocking findings must be represented by the
+`BLOCKED` verdict.
 
-If the verdict is `APPROVED`, the next phase is **Tasks** (skip Design Refinement).
+If the verdict is `APPROVED` or `APPROVED_WITH_CONDITIONS`, the next phase is
+**Tasks** (skip Design Refinement). `CONDITION` findings are recorded but do not
+block progression.
 
 ### Tasks Review → Tasks Refinement
 
-If the Tasks Review produces conditions or corrections,
-the next phase MUST be **Tasks Refinement**.
+If the Tasks Review verdict is `BLOCKED`, the next phase MUST be
+**Tasks Refinement**. Material or blocking findings must be represented by the
+`BLOCKED` verdict.
 
-If the review is clean (no conditions), the next phase is **Apply**.
+If the review is clean or is `APPROVED_WITH_CONDITIONS` with only approved
+non-blocking `CONDITION`/`NON-BLOCKING` findings, the next phase is **Apply**
+(conditions are recorded but do not block).
 
 ### Tasks Refinement → Tasks Review
 
@@ -78,19 +88,24 @@ If the transition is conditional (Architecture Review → Design Refinement,
 Tasks Review → Tasks Refinement), check the condition BEFORE delegating:
 
 - Architecture Review: read the verdict from the review output.
-  - `REJECTED` or `APPROVED WITH CONDITIONS` → Design Refinement required.
-  - `APPROVED` → proceed to Tasks.
+   - `BLOCKED` → Design Refinement required. A material/blocking condition must
+     be represented by `BLOCKED`.
+  - `APPROVED` or `APPROVED_WITH_CONDITIONS` with only approved non-blocking
+    conditions → proceed to Tasks; record the conditions without refinement.
 - Tasks Review: read the review output.
-  - If conditions exist → Tasks Refinement required.
-  - If clean → run Review Workload Guard (Rule 5) BEFORE authorizing Apply.
+   - If the verdict is `BLOCKED` for material/blocking conditions → Tasks
+     Refinement required.
+  - If clean or approved with only non-blocking conditions → run Review Workload
+    Guard (Rule 5) BEFORE authorizing Apply; record the conditions.
 
 ### Rule 3 — No Skipping
 
 Every phase in the workflow MUST be visited at least once.
 Skipping from Design to Apply, or from Tasks to Verify, is ALWAYS invalid.
 
-Exception: Design Refinement and Tasks Refinement may be skipped
-when the respective review produces no conditions.
+Exception: Design Refinement and Tasks Refinement may be skipped when the
+respective review is not `BLOCKED`, including when it is
+`APPROVED_WITH_CONDITIONS` with approved non-blocking conditions.
 
 ### Rule 4 — No Re-entrance Without Condition
 
@@ -170,6 +185,65 @@ Workflow validity ALWAYS has higher priority than workload analysis.
 
 The Review Workload Guard must NEVER bypass the Workflow Guard.
 
+### Rule 7 — Closed Evidence Handoff
+
+When the economical evidence role returns a bounded evidence packet with
+`UNAMBIGUOUS_MINIMAL_FIX`, `APPROVED_CORRECTION`, or an equivalent closed factual
+conclusion with an exact Working Set and exact next action, the orchestration and
+implementation role MUST perform only a minimal contradiction check, verify the
+named files and exact current failure, execute the supplied RED/GREEN sequence,
+modify only the approved Working Set, and return immediately to the current
+lifecycle checkpoint.
+
+The implementation role MUST NOT repeat broad repository recovery or evidence
+inventory, inspect unrelated history, archived SPECs, consumers, or dependencies,
+reopen rejected alternatives, rebuild the module/dependency graph, expand the
+Working Set, escalate to the high-reasoning judgment role, redesign the approved
+correction, or replace execution with another evidence report.
+
+A minimal contradiction check is limited to confirming that the named file
+exists, the relevant code has not materially changed, the expected failure can
+still be reproduced, and no direct repository evidence contradicts the handoff.
+Investigation may reopen only when direct evidence contradicts a material fact.
+The affected task then stops, the exact fact is identified and classified using
+the canonical `BLOCKER`/`EXECUTION_GATE`/`CONDITION`/`NEEDS_EVIDENCE` taxonomy,
+one bounded evidence update is requested, and open-ended exploration is avoided.
+
+The economical evidence role gathers and closes facts. The orchestration and
+implementation role validates minimally and executes. The high-reasoning
+judgment role decides only when multiple materially valid architectural options
+remain after evidence gathering. A closed evidence handoff is an execution
+contract, not an invitation to repeat analysis.
+
+#### Execution-Time Discovery Rule
+
+The orchestration and implementation role MUST execute the approved task without
+repeating the evidence pass. When new evidence appears during execution, classify
+it as follows:
+
+1. **NON-BLOCKING DISCOVERY** — It does not prevent safe completion. Do not
+   expand the task; complete it, record the finding in the final report, and
+   provide one exact follow-up action.
+2. **BOUNDED NECESSARY DEVIATION** — A missing file, import, dependency,
+   declaration, test, or mechanical change strictly required for the same
+   correction may be included only when it is directly required, one unambiguous
+   correction is proven, no architecture or public contract changes occur, no
+   scope/SPEC boundary is crossed, security/tenant isolation/fail-closed behavior
+   is not weakened, and the change is small and reversible. Name the omitted item,
+   explain its necessity, add it to the actual Working Set, report the deviation,
+   and continue without broad exploration.
+3. **MATERIAL CONTRADICTION** — It changes architecture, ownership, scope,
+   security, acceptance criteria, or leaves multiple materially valid solutions.
+   Stop only the affected task, preserve completed work, identify the contradiction,
+   classify it as `BLOCKER` or `NEEDS_EVIDENCE`, request one bounded evidence packet,
+   and escalate to high-reasoning only when multiple valid architectural options
+   remain.
+
+The implementation role MUST NOT silently broaden the task, repair an external
+bootstrap chain indefinitely, reopen resolved alternatives without contradictory
+evidence, or convert a bounded implementation task into repository-wide
+exploration.
+
 ### Execution sequence
 
 ```
@@ -181,13 +255,13 @@ After Tasks:
   4. Do NOT forecast Apply.
   5. Wait for Tasks Review.
 
-After Tasks Review (conditions exist):
+After Tasks Review (`BLOCKED` for material/blocking conditions):
 
   1. Wait for Tasks Refinement.
   2. After refinement, repeat Tasks Review.
-  3. Only after clean review → continue below.
+   3. Only after a non-`BLOCKED` review → continue below.
 
-After Tasks Review (clean — no conditions):
+After Tasks Review (clean or `APPROVED_WITH_CONDITIONS` with approved non-blocking conditions):
 
   1. ✅ Workflow Guard authorizes the transition Tasks Review → Apply.
   2. ▶️ THEN execute Review Workload Guard (Rule 5):
@@ -243,12 +317,13 @@ review lifecycle, or global configuration.
 ### Direct Workflow
 
 ```text
-Design → Architecture Review → Design Refinement only on BLOCKER → Tasks → Tasks Review → Tasks Refinement only on BLOCKER → Workload Guard → Apply 1–5 → Apply Summary → Verify → Archive → Health Report → Repository Ready → STOP.
+Design → Architecture Review → Design Refinement only on BLOCKED → Tasks → Tasks Review → Tasks Refinement only on BLOCKED → Workload Guard → Apply 1–5 → Apply Summary → Verify → Archive → Health Report → Repository Ready → STOP.
 ```
 
 The Direct decision model is classification-based:
 
-- `BLOCKER` requires the corresponding refinement and a repeat review.
+- `BLOCKED` requires the corresponding refinement and a repeat review; material
+  or blocking findings are represented by that verdict.
 - `CONDITION` → continue after recording the condition and owner.
 - `NON-BLOCKING` → continue without refinement.
 - Resolved findings are closed and remain closed unless new evidence creates a
@@ -274,7 +349,7 @@ performs them automatically.
    directory under `openspec/changes/`.
 2. Design must be complete under the unchanged Enterprise Design Standard
    before Architecture Review.
-3. Only a `BLOCKER` may authorize Design Refinement or Tasks Refinement.
+3. Only a `BLOCKED` verdict may authorize Design Refinement or Tasks Refinement.
 4. A clean Tasks Review authorizes the automatic post-review execution chain;
    a `CONDITION` or `NON-BLOCKING` finding does not pause that chain.
 5. Every phase returns a structured result and records its evidence in the

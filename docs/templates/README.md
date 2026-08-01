@@ -1,6 +1,6 @@
 # Prompt Templates
 
-Estos prompts forman parte del estándar SDD v2.1.
+Estos prompts forman parte del estándar SDD v3.0.
 
 No deben modificarse durante el desarrollo de una SPEC.
 
@@ -20,8 +20,8 @@ No deben modificarse durante el desarrollo de una SPEC.
 
    - Phase 1 — Foundation (schema, shared contracts, ADR)
    - Phase 2 — Core Engine (service, storage, module)
-   - Phase 3 — Pipeline (preview, virus scan, retention)
-   - Phase 4 — Integration (folders, permissions, events)
+    - Phase 3 — Feature Implementation (funcionalidad específica del SPEC)
+    - Phase 4 — Integration (wiring de componentes, rutas, UI)
    - Phase 5 — Testing (unit, integration, doorbell)
 
    Al finalizar Phase 5 se genera el **Apply Summary** usando
