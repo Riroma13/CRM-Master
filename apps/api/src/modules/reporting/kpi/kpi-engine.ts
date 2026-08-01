@@ -33,7 +33,7 @@ export class KpiEngine {
   }
 
   async computeKpi(tenantId: string, kpiName: string): Promise<KpiResponse> {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const kpiDef = await prisma.kpi.findUnique({
       where: { tenantId_name: { tenantId, name: kpiName } },
@@ -132,7 +132,7 @@ export class KpiEngine {
   }
 
   async listKpis(tenantId: string): Promise<KpiResponse[]> {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
     const kpis = await prisma.kpi.findMany({
       where: { tenantId },
     });
@@ -151,7 +151,7 @@ export class KpiEngine {
   ): Promise<KpiResponse> {
     const kpi = await this.getKpi(tenantId, kpiName);
 
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
     const kpiDef = await prisma.kpi.findUnique({
       where: { tenantId_name: { tenantId, name: kpiName } },
     });

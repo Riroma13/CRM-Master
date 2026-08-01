@@ -2,8 +2,9 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger, Injectable } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { PrismaService } from '../../../common/prisma.service';
+import { KNOWLEDGE_QUEUE_NAMES } from '../knowledge-queue.constants';
 
-@Processor('kb:garbage-collector')
+@Processor(KNOWLEDGE_QUEUE_NAMES.GARBAGE_COLLECTOR)
 @Injectable()
 export class GarbageCollectorService extends WorkerHost {
   private readonly logger = new Logger(GarbageCollectorService.name);

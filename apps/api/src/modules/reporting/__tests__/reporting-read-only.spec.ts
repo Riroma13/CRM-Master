@@ -1,4 +1,5 @@
 import { createReportingReadOnlyMiddleware } from '../reporting-read-only.middleware';
+import { PrismaService } from '../../../common/prisma.service';
 
 type MWParams = {
   model?: string;
@@ -171,5 +172,52 @@ describe('ReportingReadOnlyMiddleware', () => {
       expect(next).toHaveBeenCalledWith(params);
       expect(result).toEqual([{ count: 42 }]);
     });
+  });
+});
+
+describe('Reporting Prisma client access path', () => {
+  it('exposes a dedicated reporting client', () => {
+    const prisma = new PrismaService();
+
+    expect(typeof (prisma as any).forReporting).toBe('function');
+  });
+
+  it('blocks non-reporting models through the dedicated client', async () => {
+    const prisma = new PrismaService();
+    const client = (prisma as any).forReporting('tenant-1');
+
+    await expect(client.user.findMany()).rejects.toThrow(
+      'Reporting module is read-only. Queries are restricted to reporting models only.',
+    );
+  });
+
+  it('does not apply reporting restrictions to the ordinary admin client', async () => {
+    const prisma = new PrismaService();
+    let error: unknown;
+
+    try {
+      await prisma.admin.legacyUser.findMany();
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error instanceof Error ? error.message : '').not.toContain(
+      'Reporting module is read-only',
+    );
+  });
+
+  it('does not apply reporting restrictions to the ordinary tenant client', async () => {
+    const prisma = new PrismaService();
+    let error: unknown;
+
+    try {
+      await prisma.forTenant('tenant-1').user.findMany();
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error instanceof Error ? error.message : '').not.toContain(
+      'Reporting module is read-only',
+    );
   });
 });

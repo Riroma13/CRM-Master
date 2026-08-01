@@ -23,7 +23,7 @@ export class SnapshotService {
     windowEnd: Date,
     ttlSeconds: number = 300,
   ) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const records = await prisma.analyticsDataset.findMany({
       where: {
@@ -70,7 +70,7 @@ export class SnapshotService {
     tenantId: string,
     name: string,
   ): Promise<SnapshotResult | null> {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const snapshot = await prisma.analyticsSnapshot.findUnique({
       where: { tenantId_name: { tenantId, name } },
@@ -108,7 +108,7 @@ export class SnapshotService {
   }
 
   async generateCache(tenantId: string, datasetName: string) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const records = await prisma.analyticsDataset.findMany({
       where: { tenantId, datasetName },
@@ -138,7 +138,7 @@ export class SnapshotService {
     snapshot: any,
   ) {
     try {
-      const prisma = this.prisma.forTenant(tenantId);
+      const prisma = this.prisma.forReporting(tenantId);
 
       const records = await prisma.analyticsDataset.findMany({
         where: {

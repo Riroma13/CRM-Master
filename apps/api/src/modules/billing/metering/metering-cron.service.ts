@@ -8,8 +8,9 @@ import {
   DocumentCollector,
   ApiCollector,
 } from './collectors';
+import { BILLING_QUEUE_NAMES } from '../billing-queue.constants';
 
-@Processor('billing:metering')
+@Processor(BILLING_QUEUE_NAMES.METERING)
 @Injectable()
 export class MeteringCronService extends WorkerHost {
   private readonly logger = new Logger(MeteringCronService.name);

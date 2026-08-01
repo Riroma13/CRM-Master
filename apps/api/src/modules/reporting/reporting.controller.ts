@@ -249,7 +249,7 @@ export class ReportingController {
     const fromDate = new Date(from);
     const toDate = new Date(to);
 
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const events = await prisma.datasetIngestionLog.findMany({
       where: {

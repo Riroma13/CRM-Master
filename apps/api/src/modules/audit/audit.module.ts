@@ -1,10 +1,9 @@
-import { Global, Module, OnModuleInit, Injectable } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { AuditService } from './audit.service';
 import { AuditController } from './audit.controller';
 import { IngestionService } from './ingestion/ingestion.service';
 import { PrismaService } from '../../common/prisma.service';
-import { createAuditAppendOnlyMiddleware } from './audit-append-only.middleware';
 import { AuditGuard } from './guards/audit.guard';
 import { IntegrityVerifier } from './integrity/integrity-verifier';
 import { ComplianceEngine } from './compliance/compliance-engine';
@@ -17,23 +16,21 @@ import { RedactionService } from './retention/redaction.service';
 import { ExportService } from './export/export.service';
 import { JsonExporter } from './export/json-exporter';
 import { CsvExporter } from './export/csv-exporter';
-
-@Injectable()
-class AuditAppendOnlyRegistrar implements OnModuleInit {
-  constructor(private readonly prisma: PrismaService) {}
-
-  onModuleInit() {
-    const client = this.prisma.admin as any;
-    client.$use(createAuditAppendOnlyMiddleware());
-  }
-}
+import { IdentityModule } from '../identity/identity.module';
+import { IdentityAuditDispatcherService } from '../identity/identity-audit-dispatcher.service';
+import {
+  AUDIT_RETENTION_QUEUE,
+  IDENTITY_AUDIT_DLQ_QUEUE,
+  IDENTITY_AUDIT_INGESTION_QUEUE,
+} from './audit-queue.constants';
 
 @Global()
 @Module({
   imports: [
+    IdentityModule,
     BullModule.registerQueue(
       {
-        name: 'audit:ingestion',
+        name: IDENTITY_AUDIT_INGESTION_QUEUE,
         defaultJobOptions: {
           attempts: 5,
           backoff: { type: 'exponential', delay: 2000 },
@@ -42,14 +39,14 @@ class AuditAppendOnlyRegistrar implements OnModuleInit {
         },
       },
       {
-        name: 'audit:dlq',
+        name: IDENTITY_AUDIT_DLQ_QUEUE,
         defaultJobOptions: {
           attempts: 1,
           removeOnComplete: true,
         },
       },
       {
-        name: 'audit:retention',
+        name: AUDIT_RETENTION_QUEUE,
         defaultJobOptions: {
           attempts: 3,
           backoff: { type: 'exponential', delay: 5000 },
@@ -64,7 +61,6 @@ class AuditAppendOnlyRegistrar implements OnModuleInit {
     AuditService,
     IngestionService,
     PrismaService,
-    AuditAppendOnlyRegistrar,
     AuditGuard,
     IntegrityVerifier,
     ComplianceEngine,
@@ -78,6 +74,7 @@ class AuditAppendOnlyRegistrar implements OnModuleInit {
     ExportService,
     JsonExporter,
     CsvExporter,
+    IdentityAuditDispatcherService,
   ],
   exports: [AuditService],
 })

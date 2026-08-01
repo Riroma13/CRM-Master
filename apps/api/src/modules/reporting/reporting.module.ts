@@ -1,11 +1,10 @@
-import { Global, Module, OnModuleInit, Injectable } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ReportingService } from './reporting.service';
 import { ReportingController } from './reporting.controller';
 import { DatasetIngestionService } from './ingestion/dataset-ingestion.service';
 import { ReconciliationService } from './ingestion/reconciliation.service';
 import { PrismaService } from '../../common/prisma.service';
-import { createReportingReadOnlyMiddleware } from './reporting-read-only.middleware';
 import { KpiEngine } from './kpi/kpi-engine';
 import { ReportEngine } from './report/report-engine';
 import { ReportingGuard } from './guards/reporting.guard';
@@ -16,23 +15,14 @@ import { ExportService } from './export/export.service';
 import { CsvExporter } from './export/csv-exporter';
 import { JsonExporter } from './export/json-exporter';
 import { SchedulingService } from './scheduling/scheduling.service';
-
-@Injectable()
-class ReportingReadOnlyRegistrar implements OnModuleInit {
-  constructor(private readonly prisma: PrismaService) {}
-
-  onModuleInit() {
-    const client = this.prisma.admin as any;
-    client.$use(createReportingReadOnlyMiddleware());
-  }
-}
+import { REPORTING_QUEUE_NAMES } from './reporting-queue.constants';
 
 @Global()
 @Module({
   imports: [
     BullModule.registerQueue(
       {
-        name: 'reporting:dataset:ingestion',
+        name: REPORTING_QUEUE_NAMES.DATASET_INGESTION,
         defaultJobOptions: {
           attempts: 3,
           backoff: { type: 'exponential', delay: 1000 },
@@ -41,14 +31,14 @@ class ReportingReadOnlyRegistrar implements OnModuleInit {
         },
       },
       {
-        name: 'reporting:dataset:dlq',
+        name: REPORTING_QUEUE_NAMES.DATASET_DLQ,
         defaultJobOptions: {
           attempts: 1,
           removeOnComplete: true,
         },
       },
       {
-        name: 'reporting:report:generate',
+        name: REPORTING_QUEUE_NAMES.REPORT_GENERATE,
         defaultJobOptions: {
           attempts: 2,
           backoff: { type: 'exponential', delay: 2000 },
@@ -57,7 +47,7 @@ class ReportingReadOnlyRegistrar implements OnModuleInit {
         },
       },
       {
-        name: 'reporting:export',
+        name: REPORTING_QUEUE_NAMES.EXPORT,
         defaultJobOptions: {
           attempts: 2,
           backoff: { type: 'exponential', delay: 2000 },
@@ -66,7 +56,7 @@ class ReportingReadOnlyRegistrar implements OnModuleInit {
         },
       },
       {
-        name: 'reporting:schedule',
+        name: REPORTING_QUEUE_NAMES.SCHEDULE,
         defaultJobOptions: {
           attempts: 2,
           backoff: { type: 'exponential', delay: 2000 },
@@ -82,7 +72,6 @@ class ReportingReadOnlyRegistrar implements OnModuleInit {
     DatasetIngestionService,
     ReconciliationService,
     PrismaService,
-    ReportingReadOnlyRegistrar,
     KpiEngine,
     ReportEngine,
     ReportingGuard,

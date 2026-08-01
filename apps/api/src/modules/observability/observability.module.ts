@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { PrismaService } from '../../common/prisma.service';
 import { PinoLoggerService } from './logging/pino-logger.service';
 import { LoggingMiddleware } from './logging/logging.middleware';
 import { RouteNormalizationMiddleware } from './logging/route-normalization.middleware';
@@ -20,6 +21,7 @@ import { AlertWebhookController } from './alerting/alert-webhook.controller';
     MetricsRegistry,
     MetricsInterceptor,
     AlertService,
+    PrismaService,
   ],
   exports: [PinoLoggerService, HealthService, MetricsRegistry, AlertService],
 })

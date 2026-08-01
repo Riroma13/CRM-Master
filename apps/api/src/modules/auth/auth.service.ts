@@ -19,7 +19,7 @@ export class AuthService {
 
   async login(dto: LoginDto): Promise<AuthResponseDto> {
     // Buscar usuario por email
-    const user = await this.prisma.admin.user.findUnique({
+    const user = await this.prisma.admin.legacyUser.findUnique({
       where: { email: dto.email },
       include: { tenant: true },
     });
@@ -67,7 +67,7 @@ export class AuthService {
           baUserId, user.email, true, user.name,
         );
       }
-      await this.prisma.admin.user.update({
+      await this.prisma.admin.legacyUser.update({
         where: { id: user.id },
         data: { betterAuthUserId: baUserId },
       });
@@ -117,7 +117,7 @@ export class AuthService {
   }
 
   async checkUserExists(email: string) {
-    const user = await this.prisma.admin.user.findUnique({
+    const user = await this.prisma.admin.legacyUser.findUnique({
       where: { email },
       select: { id: true, email: true, tenantId: true },
     });
@@ -125,7 +125,7 @@ export class AuthService {
   }
 
   async getMe(tenantId: string, userId: string): Promise<MeDto | null> {
-    const user = await this.prisma.admin.user.findUnique({
+    const user = await this.prisma.admin.legacyUser.findUnique({
       where: { id: userId },
       include: { tenant: true },
     });

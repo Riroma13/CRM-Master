@@ -41,7 +41,7 @@ if (dbAvailable) {
       prisma = moduleFixture.get(PrismaService);
 
       // Clean & seed test data
-      await prisma.admin.user.deleteMany({ where: { id: USER_ID } });
+      await prisma.admin.legacyUser.deleteMany({ where: { id: USER_ID } });
       await prisma.admin.tenant.deleteMany({ where: { id: TENANT_ID } });
 
       await prisma.admin.tenant.upsert({
@@ -55,7 +55,7 @@ if (dbAvailable) {
         update: {},
       });
 
-      await prisma.admin.user.upsert({
+      await prisma.admin.legacyUser.upsert({
         where: { email: 'e2e-auth-login@test.com' },
         create: {
           id: USER_ID,
@@ -69,7 +69,7 @@ if (dbAvailable) {
       });
 
       // Seed a tenant-admin user for role-specific login tests
-      await prisma.admin.user.upsert({
+      await prisma.admin.legacyUser.upsert({
         where: { email: 'e2e-tenant-admin@test.com' },
         create: {
           id: TENANT_ADMIN_ID,
@@ -85,7 +85,7 @@ if (dbAvailable) {
 
     afterAll(async () => {
       if (prisma) {
-        await prisma.admin.user.deleteMany({
+      await prisma.admin.legacyUser.deleteMany({
           where: { id: { in: [USER_ID, TENANT_ADMIN_ID] } },
         });
         await prisma.admin.tenant.deleteMany({ where: { id: TENANT_ID } });

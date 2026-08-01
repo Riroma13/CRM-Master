@@ -11,6 +11,7 @@ import type { SourceResponse, HealthResponse } from './dto';
 import type { KbQuery } from '@shared/knowledge';
 import { PrismaService } from '../../common/prisma.service';
 import { ZodError } from 'zod';
+import { KNOWLEDGE_QUEUE_NAMES } from './knowledge-queue.constants';
 
 @Controller('api/v1/knowledge')
 @UseGuards(KnowledgeGuard)
@@ -144,13 +145,13 @@ export class KnowledgeController {
 
     const [ingestionCount, reindexCount, gcCount] = await Promise.all([
       prisma.$queryRawUnsafe(
-        `SELECT COUNT(*)::bigint AS count FROM "BullMQ_jobs" WHERE queue = 'kb:ingestion' AND status = 'waiting'`,
+        `SELECT COUNT(*)::bigint AS count FROM "BullMQ_jobs" WHERE queue = '${KNOWLEDGE_QUEUE_NAMES.INGESTION}' AND status = 'waiting'`,
       ).catch(() => [{ count: BigInt(0) }]),
       prisma.$queryRawUnsafe(
-        `SELECT COUNT(*)::bigint AS count FROM "BullMQ_jobs" WHERE queue = 'kb:reindex' AND status = 'waiting'`,
+        `SELECT COUNT(*)::bigint AS count FROM "BullMQ_jobs" WHERE queue = '${KNOWLEDGE_QUEUE_NAMES.REINDEX}' AND status = 'waiting'`,
       ).catch(() => [{ count: BigInt(0) }]),
       prisma.$queryRawUnsafe(
-        `SELECT COUNT(*)::bigint AS count FROM "BullMQ_jobs" WHERE queue = 'kb:garbage-collector' AND status = 'waiting'`,
+        `SELECT COUNT(*)::bigint AS count FROM "BullMQ_jobs" WHERE queue = '${KNOWLEDGE_QUEUE_NAMES.GARBAGE_COLLECTOR}' AND status = 'waiting'`,
       ).catch(() => [{ count: BigInt(0) }]),
     ]);
 

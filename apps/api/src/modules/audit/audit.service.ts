@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../common/prisma.service';
 import { AuditEventQuery, PaginatedResult } from './dto';
 import { PinoLoggerService } from '../observability/logging/pino-logger.service';
+import { IDENTITY_AUDIT_INGESTION_QUEUE } from './audit-queue.constants';
 
 export interface AuditEventRow {
   id: string;
@@ -35,7 +36,7 @@ export class AuditService {
   constructor(
     private readonly logger: PinoLoggerService,
     private readonly prisma: PrismaService,
-    @Optional() @InjectQueue('audit:ingestion') private readonly ingestionQueue?: Queue,
+    @Optional() @InjectQueue(IDENTITY_AUDIT_INGESTION_QUEUE) private readonly ingestionQueue?: Queue,
   ) {}
 
   async getEvents(tenantId: string, filters: AuditEventQuery): Promise<PaginatedResult<AuditEventRow>> {

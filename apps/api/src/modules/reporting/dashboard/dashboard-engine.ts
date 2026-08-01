@@ -12,7 +12,7 @@ export class DashboardEngine {
   ) {}
 
   async getDashboard(tenantId: string, dashboardId: string) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const dashboard = await prisma.dashboard.findUnique({
       where: { id: dashboardId },
@@ -42,7 +42,7 @@ export class DashboardEngine {
       }>;
     },
   ) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const dashboard = await prisma.dashboard.create({
       data: {
@@ -84,7 +84,7 @@ export class DashboardEngine {
       shared?: boolean;
     },
   ) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const existing = await prisma.dashboard.findUnique({ where: { id } });
     if (!existing) {
@@ -104,7 +104,7 @@ export class DashboardEngine {
   }
 
   async deleteDashboard(tenantId: string, id: string) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const existing = await prisma.dashboard.findUnique({ where: { id } });
     if (!existing) {
@@ -115,7 +115,7 @@ export class DashboardEngine {
   }
 
   async listDashboards(tenantId: string) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
     return prisma.dashboard.findMany({
       where: { tenantId },
       include: { widgets: true },

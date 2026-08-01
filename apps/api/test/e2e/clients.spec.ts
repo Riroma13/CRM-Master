@@ -80,7 +80,7 @@ describe('GET /api/v1/admin/clientes (E2E)', () => {
     await prisma.admin.cliente.deleteMany({
       where: { id: { in: ALL_CLIENT_IDS } },
     });
-    await prisma.admin.user.deleteMany({
+    await prisma.admin.legacyUser.deleteMany({
       where: { tenantId: { in: ALL_TENANT_IDS } },
     });
     await prisma.admin.tenant.deleteMany({
@@ -121,7 +121,7 @@ describe('GET /api/v1/admin/clientes (E2E)', () => {
     );
 
     // Create legacy users with betterAuthUserId linking
-    await prisma.admin.user.upsert({
+    await prisma.admin.legacyUser.upsert({
       where: { email: 'e2e-client-super@test.com' },
       create: {
         id: 'e2e-client-super-uuid',
@@ -133,7 +133,7 @@ describe('GET /api/v1/admin/clientes (E2E)', () => {
       },
       update: {},
     });
-    await prisma.admin.user.upsert({
+    await prisma.admin.legacyUser.upsert({
       where: { email: 'e2e-client-admin@test.com' },
       create: {
         id: 'e2e-client-admin-uuid',
@@ -167,7 +167,7 @@ describe('GET /api/v1/admin/clientes (E2E)', () => {
           `UPDATE users SET better_auth_user_id = NULL WHERE email = $1`, email,
         );
       }
-      await prisma.admin.user.deleteMany({
+      await prisma.admin.legacyUser.deleteMany({
         where: { id: { in: ['e2e-client-super-uuid', 'e2e-client-admin-uuid'] } },
       });
       const ALL_CLIENT_IDS = Object.values(CLIENT_IDS);

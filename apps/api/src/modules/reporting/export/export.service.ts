@@ -10,6 +10,7 @@ import { PrismaService } from '../../../common/prisma.service';
 import * as path from 'path';
 import * as fs from 'fs';
 import type { ExportFormat } from '@shared/reporting/reporting.types';
+import { REPORTING_QUEUE_NAMES } from '../reporting-queue.constants';
 
 const EXPORTS_DIR = path.resolve(process.cwd(), 'exports');
 
@@ -19,7 +20,7 @@ export class ExportService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @InjectQueue('reporting:export') private readonly exportQueue: Queue,
+    @InjectQueue(REPORTING_QUEUE_NAMES.EXPORT) private readonly exportQueue: Queue,
   ) {}
 
   async createExport(
@@ -28,7 +29,7 @@ export class ExportService {
     format: ExportFormat,
     config?: Record<string, unknown>,
   ) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const job = await prisma.exportJob.create({
       data: {
@@ -64,7 +65,7 @@ export class ExportService {
   }
 
   async getExport(tenantId: string, jobId: string) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const job = await prisma.exportJob.findUnique({
       where: { id: jobId },
@@ -78,7 +79,7 @@ export class ExportService {
   }
 
   async downloadExport(tenantId: string, jobId: string) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const job = await prisma.exportJob.findUnique({
       where: { id: jobId },
@@ -115,7 +116,7 @@ export class ExportService {
     await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
     await fs.promises.writeFile(filePath, buffer);
 
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
     await prisma.exportJob.update({
       where: { id: jobId },
       data: {
@@ -127,7 +128,7 @@ export class ExportService {
   }
 
   async markFailed(jobId: string, tenantId: string, error: string) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
     await prisma.exportJob.update({
       where: { id: jobId },
       data: {

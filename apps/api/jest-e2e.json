@@ -7,6 +7,7 @@
   },
   "testEnvironment": "node",
   "testTimeout": 30000,
+  "setupFiles": ["./test/setup-e2e-env.ts"],
   "transformIgnorePatterns": [],
   "moduleNameMapper": {
     "^@crm-master/database$": "<rootDir>/../../packages/database/src"

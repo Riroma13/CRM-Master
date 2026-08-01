@@ -13,11 +13,12 @@ import { PrismaService } from '../../common/prisma.service';
 import { RetrievalEngine } from './retrieval/retrieval-engine';
 import { GenerationEngine } from './generation/generation-engine';
 import { ProviderRegistry } from '../automation/ai/provider-registry';
+import { KNOWLEDGE_QUEUE_NAMES } from './knowledge-queue.constants';
 
 @Injectable()
 class GarbageCollectorScheduler implements OnModuleInit {
   constructor(
-    @InjectQueue('kb:garbage-collector') private readonly queue: Queue,
+    @InjectQueue(KNOWLEDGE_QUEUE_NAMES.GARBAGE_COLLECTOR) private readonly queue: Queue,
   ) {}
 
   async onModuleInit() {
@@ -41,7 +42,7 @@ class GarbageCollectorScheduler implements OnModuleInit {
   imports: [
     BullModule.registerQueue(
       {
-        name: 'kb:ingestion',
+        name: KNOWLEDGE_QUEUE_NAMES.INGESTION,
         defaultJobOptions: {
           attempts: 3,
           backoff: { type: 'exponential', delay: 1000 },
@@ -50,7 +51,7 @@ class GarbageCollectorScheduler implements OnModuleInit {
         },
       },
       {
-        name: 'kb:reindex',
+        name: KNOWLEDGE_QUEUE_NAMES.REINDEX,
         defaultJobOptions: {
           attempts: 2,
           backoff: { type: 'exponential', delay: 2000 },
@@ -59,7 +60,7 @@ class GarbageCollectorScheduler implements OnModuleInit {
         },
       },
       {
-        name: 'kb:garbage-collector',
+        name: KNOWLEDGE_QUEUE_NAMES.GARBAGE_COLLECTOR,
         defaultJobOptions: {
           attempts: 1,
           removeOnComplete: true,
@@ -67,7 +68,7 @@ class GarbageCollectorScheduler implements OnModuleInit {
         },
       },
       {
-        name: 'kb:ingestion-dlq',
+        name: KNOWLEDGE_QUEUE_NAMES.DLQ,
         defaultJobOptions: {
           attempts: 1,
           removeOnComplete: true,

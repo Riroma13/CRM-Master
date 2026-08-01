@@ -1,5 +1,9 @@
 import { DatasetIngestionService } from '../ingestion/dataset-ingestion.service';
 import { Job } from 'bullmq';
+import {
+  REPORTING_QUEUE_NAMES,
+  REPORTING_QUEUE_IDENTITIES,
+} from '../reporting-queue.constants';
 
 function mockJob(data: any, overrides: Partial<Job> = {}): Job {
   return { id: 'test-job-1', data, ...overrides } as unknown as Job;
@@ -10,6 +14,17 @@ describe('DatasetIngestionService', () => {
   let mockPrisma: any;
   let mockDlqQueue: any;
   let scopedClient: any;
+
+  it('uses colon-free queue identities for every Reporting queue', () => {
+    expect(REPORTING_QUEUE_NAMES).toEqual({
+      DATASET_INGESTION: 'reporting-dataset-ingestion',
+      DATASET_DLQ: 'reporting-dataset-dlq',
+      REPORT_GENERATE: 'reporting-report-generate',
+      EXPORT: 'reporting-export',
+      SCHEDULE: 'reporting-schedule',
+    });
+    expect(REPORTING_QUEUE_IDENTITIES).not.toContainEqual(expect.stringContaining(':'));
+  });
 
   beforeEach(() => {
     scopedClient = {
@@ -30,7 +45,7 @@ describe('DatasetIngestionService', () => {
       },
     };
 
-    mockPrisma = { forTenant: jest.fn().mockReturnValue(scopedClient) };
+    mockPrisma = { forReporting: jest.fn().mockReturnValue(scopedClient) };
     mockDlqQueue = { add: jest.fn().mockResolvedValue(undefined) };
     service = new DatasetIngestionService(mockPrisma, mockDlqQueue);
   });

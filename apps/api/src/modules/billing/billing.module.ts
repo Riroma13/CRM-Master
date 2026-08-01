@@ -34,12 +34,14 @@ import { LifecycleService } from './subscription/lifecycle.service';
 import { FeatureFlagModule } from './feature-flags/feature-flags.module';
 import { FeatureFlagService } from './feature-flags/feature-flags.service';
 import { PlanFeatureGuard } from './feature-flags/plan-feature.guard';
+import { PrismaService } from '../../common/prisma.service';
+import { BILLING_QUEUE_NAMES } from './billing-queue.constants';
 
 @Module({
   imports: [
     FeatureFlagModule,
     BullModule.registerQueue({
-      name: 'billing:metering',
+       name: BILLING_QUEUE_NAMES.METERING,
       defaultJobOptions: {
         attempts: 2,
         backoff: { type: 'exponential', delay: 5000 },
@@ -48,7 +50,7 @@ import { PlanFeatureGuard } from './feature-flags/plan-feature.guard';
       },
     }),
     BullModule.registerQueue({
-      name: 'billing:invoice',
+       name: BILLING_QUEUE_NAMES.INVOICE,
       defaultJobOptions: {
         attempts: 3,
         backoff: { type: 'exponential', delay: 10000 },
@@ -57,7 +59,7 @@ import { PlanFeatureGuard } from './feature-flags/plan-feature.guard';
       },
     }),
     BullModule.registerQueue({
-      name: 'billing:stripe-webhooks',
+       name: BILLING_QUEUE_NAMES.STRIPE_WEBHOOKS,
       defaultJobOptions: {
         attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },
@@ -68,6 +70,7 @@ import { PlanFeatureGuard } from './feature-flags/plan-feature.guard';
   ],
   controllers: [BillingController],
   providers: [
+    PrismaService,
     BillingGuard,
     PlanCatalogService,
     PlanLimitsService,
@@ -144,8 +147,6 @@ import { PlanFeatureGuard } from './feature-flags/plan-feature.guard';
     SubscriptionEngine,
     LifecycleService,
     FeatureFlagModule,
-    FeatureFlagService,
-    PlanFeatureGuard,
   ],
 })
 export class BillingModule {}

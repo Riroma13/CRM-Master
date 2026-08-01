@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientAuthService } from './client-auth.service';
 import { PrismaService } from '../../common/prisma.service';
+import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
 import * as bcrypt from 'bcryptjs';
+
+const activityTimelineMock: Pick<ActivityTimelineService, 'publish'> = {
+  publish: jest.fn().mockResolvedValue(undefined),
+};
 
 const TEST_IP = '127.0.0.1';
 
@@ -20,7 +25,11 @@ describe('ClientAuthService', () => {
 
   beforeAll(async () => {
     moduleRef = await Test.createTestingModule({
-      providers: [ClientAuthService, PrismaService],
+      providers: [
+        ClientAuthService,
+        PrismaService,
+        { provide: ActivityTimelineService, useValue: activityTimelineMock },
+      ],
     }).compile();
 
     service = moduleRef.get(ClientAuthService);
@@ -31,7 +40,7 @@ describe('ClientAuthService', () => {
     await prisma.admin.documento.deleteMany({});
     await prisma.admin.clientUser.deleteMany({});
     await prisma.admin.cliente.deleteMany({});
-    await prisma.admin.user.deleteMany({});
+    await prisma.admin.legacyUser.deleteMany({});
     await prisma.admin.tenant.deleteMany({});
 
     await prisma.admin.tenant.createMany({

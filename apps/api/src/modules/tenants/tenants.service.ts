@@ -62,7 +62,7 @@ export class TenantsService {
 
     // 6. Crear usuario admin del tenant
     const defaultHash = bcrypt.hashSync('password', 10);
-    const adminUser = await this.prisma.admin.user.create({
+    const adminUser = await this.prisma.admin.legacyUser.create({
       data: {
         tenantId: tenant.id,
         email: dto.adminEmail,

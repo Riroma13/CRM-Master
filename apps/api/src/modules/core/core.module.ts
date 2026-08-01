@@ -13,6 +13,7 @@ import { CommunicationsModule } from '../communications/communications.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { DocumentEngineModule } from '../document-engine/document-engine.module';
 import { IntegrationModule } from '../integration/integration.module';
+import { IdentityModule } from '../identity/identity.module';
 import { DocumentosModule } from '../documentos/documentos.module';
 import { EventosModule } from '../eventos/eventos.module';
 import { KnowledgeModule } from '../knowledge/knowledge.module';
@@ -42,6 +43,7 @@ import { WorkflowModule } from '../workflow/workflow.module';
     DocumentEngineModule,
     DocumentosModule,
     IntegrationModule,
+    IdentityModule,
     EventosModule,
     KnowledgeModule,
     NotificationModule,

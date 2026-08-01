@@ -4,10 +4,13 @@ import {
   ExecutionContext,
   UnauthorizedException,
   ForbiddenException,
+  Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../common/prisma.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { AUTH_CLIENT } from '../auth-client.provider';
+import { IdentityProvider } from '../../modules/identity/identity.contracts';
 
 const ADMIN_ROUTE_PREFIX = '/api/v1/admin';
 
@@ -16,6 +19,7 @@ export class BetterAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
+    @Inject(AUTH_CLIENT) private readonly provider: IdentityProvider,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -45,27 +49,21 @@ export class BetterAuthGuard implements CanActivate {
     // If no token on non-admin routes, allow anonymous (PermissionsGuard handles restrictions)
     if (!token) return true;
 
-    // Validate session against ba_sessions directly via raw SQL.
-    const rows = await (this.prisma.admin as any).$queryRawUnsafe(
-      `SELECT s.user_id as "userId", u.email, u.name
-       FROM ba_sessions s
-       JOIN ba_users u ON s.user_id = u.id
-       WHERE s.token = $1 AND s.expires_at > NOW()`,
-      token,
+    // Resolve the session through the canonical Better Auth provider boundary.
+    const session = await this.provider.getSession(
+      new Headers({ authorization: `Bearer ${token}` }),
     );
 
-    if (!rows || rows.length === 0) {
+    if (!session) {
       if (path.startsWith(ADMIN_ROUTE_PREFIX)) {
         throw new UnauthorizedException('Token inválido o expirado');
       }
       return true; // Allow anonymous for non-admin routes even with bad token
     }
 
-    const sessionUser = rows[0];
-
     // Look up legacy User by betterAuthUserId (which stores the ba_users.id)
-    const legacyUser = await this.prisma.admin.user.findFirst({
-      where: { betterAuthUserId: sessionUser.userId },
+    const legacyUser = await this.prisma.admin.legacyUser.findFirst({
+      where: { betterAuthUserId: session.userId },
       include: { tenant: true },
     });
 
@@ -78,16 +76,15 @@ export class BetterAuthGuard implements CanActivate {
     }
 
     // Set user on request (used by PermissionsGuard downstream)
-    // Also override tenantId to match the user's actual tenant
+    // Host-derived tenant authority is immutable; Identity authorization compares
+    // the authenticated organization against hostTenantId independently.
     (request as any).user = {
-      id: sessionUser.userId,
-      email: sessionUser.email,
-      name: sessionUser.name,
+      id: session.userId,
+      email: legacyUser.email,
+      name: legacyUser.name,
       role: legacyUser.role,
       tenantId: legacyUser.tenantId,
     };
-    (request as any).tenantId = legacyUser.tenantId;
-    (request as any).tenantSlug = legacyUser.tenant?.slug;
 
     // Superadmin has no org membership — allowed on admin routes
     if (legacyUser.role === 'superadmin') return true;

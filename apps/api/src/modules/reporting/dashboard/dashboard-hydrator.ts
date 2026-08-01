@@ -104,7 +104,7 @@ export class DashboardHydrator {
         case 'bar-chart':
         case 'pie-chart': {
           if (widget.datasetName) {
-            const prisma = this.prisma.forTenant(tenantId);
+            const prisma = this.prisma.forReporting(tenantId);
             const config = (widget.config ?? {}) as Record<string, any>;
             const metrics = config.metrics as string[] | undefined;
             const granularity = (config.granularity as string) ?? 'day';
@@ -143,7 +143,7 @@ export class DashboardHydrator {
         }
         case 'table': {
           if (widget.datasetName) {
-            const prisma = this.prisma.forTenant(tenantId);
+            const prisma = this.prisma.forReporting(tenantId);
             const config = (widget.config ?? {}) as Record<string, any>;
 
             const where: any = {
@@ -173,7 +173,7 @@ export class DashboardHydrator {
         }
         case 'trend': {
           if (widget.datasetName) {
-            const prisma = this.prisma.forTenant(tenantId);
+            const prisma = this.prisma.forReporting(tenantId);
             const config = (widget.config ?? {}) as Record<string, any>;
             const metricName = config.metricName as string | undefined;
 
