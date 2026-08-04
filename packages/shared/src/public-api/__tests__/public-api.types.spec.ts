@@ -22,6 +22,7 @@ describe('Public API types compile correctly', () => {
       name: 'Production API Key',
       scopes: ['workflows:read', 'documents:read'],
       expiresAt: '2026-10-20T00:00:00Z',
+      active: true,
     };
     expect(payload.tenantId).toBe('tenant-1');
     expect(payload.scopes).toContain('workflows:read');

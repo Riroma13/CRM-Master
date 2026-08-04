@@ -1,55 +1,52 @@
 import { describe, it, expect } from 'vitest';
-import type { EventEnricher } from '../event-enricher';
-import type { ActivityEventEnvelope } from '../event-envelope';
+import type { EnrichmentContext, EnrichmentResult, EventEnricher } from '../event-enricher';
 
 describe('EventEnricher interface', () => {
   it('contract: a valid enricher can be created', () => {
     const enricher: EventEnricher = {
       name: 'test-enricher',
-      async enrich(event: ActivityEventEnvelope): Promise<ActivityEventEnvelope> {
+      description: 'Test enricher',
+      async enrich(_context: EnrichmentContext): Promise<EnrichmentResult> {
         return {
-          ...event,
           subjectName: 'Enriched Name',
         };
       },
     };
 
     expect(enricher.name).toBe('test-enricher');
+    expect(enricher.description).toBe('Test enricher');
     expect(typeof enricher.enrich).toBe('function');
   });
 
   it('contract: enrich returns the enriched event', async () => {
     const enricher: EventEnricher = {
       name: 'entity-name',
-      async enrich(event: ActivityEventEnvelope): Promise<ActivityEventEnvelope> {
+      description: 'Resolves an entity name',
+      async enrich(_context: EnrichmentContext): Promise<EnrichmentResult> {
         return {
-          ...event,
           subjectName: 'Resolved Entity Name',
         };
       },
     };
 
-    const input: ActivityEventEnvelope = {
-      eventType: 'cliente.creado',
-      tenantId: 't-1',
+    const input: EnrichmentContext = {
+      eventId: 'event-1',
       entityType: 'cliente',
+      entityId: 'cliente-1',
       actor: 'admin',
-      sourceModule: 'clientes',
-      severity: 'info',
-      category: 'crm',
-      payload: {},
+      tenantId: 't-1',
     };
 
     const result = await enricher.enrich(input);
-    expect(result.subjectName).toBe('Resolved Entity Name');
-    expect(result.eventType).toBe('cliente.creado');
+    expect(result).toEqual({ subjectName: 'Resolved Entity Name' });
   });
 
   it('contract: name is readonly', () => {
     const enricher: EventEnricher = {
       name: 'fixed-name',
-      async enrich(event: ActivityEventEnvelope): Promise<ActivityEventEnvelope> {
-        return event;
+      description: 'Fixed test enricher',
+      async enrich(_context: EnrichmentContext): Promise<EnrichmentResult> {
+        return {};
       },
     };
 
@@ -59,23 +56,21 @@ describe('EventEnricher interface', () => {
   it('contract: enricher can leave event unchanged', async () => {
     const enricher: EventEnricher = {
       name: 'noop',
-      async enrich(event: ActivityEventEnvelope): Promise<ActivityEventEnvelope> {
-        return event;
+      description: 'Does not add enrichment',
+      async enrich(_context: EnrichmentContext): Promise<EnrichmentResult> {
+        return {};
       },
     };
 
-    const input: ActivityEventEnvelope = {
-      eventType: 'login.realizado',
-      tenantId: 't-1',
+    const input: EnrichmentContext = {
+      eventId: 'event-2',
       entityType: 'auth',
+      entityId: null,
       actor: 'user',
-      sourceModule: 'auth',
-      severity: 'info',
-      category: 'auth',
-      payload: {},
+      tenantId: 't-1',
     };
 
     const result = await enricher.enrich(input);
-    expect(result).toEqual(input);
+    expect(result).toEqual({});
   });
 });
