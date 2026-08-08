@@ -3,6 +3,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { ActivityTimelineService } from './activity-timeline.service';
 import { PrismaService } from '../../common/prisma.service';
 import { ActivityEventEnvelope } from '../../../../../packages/shared/src/activity-timeline';
+import { ACTIVITY_TIMELINE_INGESTION_QUEUE } from './activity-timeline-queue.constants';
 
 describe('ActivityTimelineService', () => {
   let service: ActivityTimelineService;
@@ -29,7 +30,7 @@ describe('ActivityTimelineService', () => {
       providers: [
         ActivityTimelineService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: getQueueToken('activity-timeline:ingestion'), useValue: mockQueue },
+        { provide: getQueueToken(ACTIVITY_TIMELINE_INGESTION_QUEUE), useValue: mockQueue },
       ],
     }).compile();
 

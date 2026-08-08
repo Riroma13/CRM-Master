@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { ActivityTimelineService } from '../activity-timeline.service';
 import { PrismaService } from '../../../common/prisma.service';
+import { ACTIVITY_TIMELINE_INGESTION_QUEUE } from '../activity-timeline-queue.constants';
 
 describe('ActivityTimeline Cross-Tenant Isolation (Doorbell)', () => {
   let service: ActivityTimelineService;
@@ -91,7 +92,7 @@ describe('ActivityTimeline Cross-Tenant Isolation (Doorbell)', () => {
       providers: [
         ActivityTimelineService,
         { provide: PrismaService, useValue: prisma },
-        { provide: getQueueToken('activity-timeline:ingestion'), useValue: mockQueue },
+        { provide: getQueueToken(ACTIVITY_TIMELINE_INGESTION_QUEUE), useValue: mockQueue },
       ],
     }).compile();
 

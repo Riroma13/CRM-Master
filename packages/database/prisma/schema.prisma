@@ -26,7 +26,7 @@ model Tenant {
   searchEntries    SearchEntry[]
   automationRules  AutomationRule[]
   tenantSecrets    TenantSecret[]
-  users            User[]
+   users            LegacyUser[]
   clients         Cliente[]
   sistemas        Sistema[]
   items    ItemInventario[]
@@ -46,6 +46,8 @@ model Tenant {
   eventosAcademicos EventoAcademico[]
   documentos Documento[]
   clientUsers ClientUser[]
+  identityAuthorizationOperations IdentityAuthorizationOperation[]
+  identityAuditOutboxEvents IdentityAuditOutbox[]
 
   @@map("tenants")
 }
@@ -62,13 +64,14 @@ model Tenant {
 model organization {
   id        String           @id @default(uuid())
   name      String
-  slug      String?          @unique
+  slug      String            @unique
   logo      String?
   createdAt DateTime         @default(now())
   metadata  Json?
 
   members   member[]
   invitations invitation[]
+  sessions  session[]
 
   @@map("ba_organizations")
 }
@@ -94,9 +97,11 @@ model invitation {
   role           String       @default("member")
   status         String       @default("pending")
   inviterId      String       @map("inviter_id")
+  expiresAt      DateTime     @map("expires_at")
   createdAt      DateTime     @default(now())
 
   organization   organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inviter        user         @relation("InvitationInviter", fields: [inviterId], references: [id])
 
   @@map("ba_invitations")
 }
@@ -113,6 +118,7 @@ model user {
   sessions   session[]
   accounts   account[]
   members    member[]
+  invitationsSent invitation[] @relation("InvitationInviter")
 
   @@map("ba_users")
 }
@@ -124,8 +130,12 @@ model session {
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  activeOrganizationId String? @map("active_organization_id")
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
 
   user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganization organization? @relation(fields: [activeOrganizationId], references: [id], onDelete: SetNull)
 
   @@map("ba_sessions")
 }
@@ -163,7 +173,7 @@ model verification {
 
 // ─── Auth / Users (legacy, for business logic) ──────────────────────
 
-model User {
+model LegacyUser {
   id              String   @id @default(uuid())
   tenantId        String   @map("tenant_id")
   email           String   @unique
@@ -1837,4 +1847,55 @@ model HealthCheckLog {
 
   @@index([createdAt(sort: Desc)])
   @@map("health_check_logs")
+}
+
+// ─── Identity Platform (SPEC-0025) ───────────────────────────────────
+
+model IdentityAuthorizationOperation {
+  id               String    @id @default(uuid())
+  tenantId         String    @map("tenant_id")
+  subjectId        String    @map("subject_id")
+  mutationId       String    @map("mutation_id")
+  status           String    @default("PENDING")
+  attempts         Int       @default(0)
+  maxAttempts      Int       @default(5) @map("max_attempts")
+  nextAttemptAt    DateTime  @default(now()) @map("next_attempt_at")
+  leaseOwner       String?   @map("lease_owner")
+  leaseExpiresAt   DateTime? @map("lease_expires_at")
+  terminalAt       DateTime? @map("terminal_at")
+  terminalReason   String?   @map("terminal_reason")
+  purgeConfirmedAt DateTime? @map("purge_confirmed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, subjectId, mutationId])
+  @@index([status, nextAttemptAt])
+  @@index([tenantId, status, nextAttemptAt])
+  @@map("identity_authorization_operations")
+}
+
+model IdentityAuditOutbox {
+  id             String    @id @default(uuid())
+  eventId        String    @unique @map("event_id")
+  tenantId       String    @map("tenant_id")
+  mutationId     String    @map("mutation_id")
+  eventType      String    @map("event_type")
+  payload        Json
+  status         String    @default("PENDING")
+  attempts       Int       @default(0)
+  leaseOwner     String?   @map("lease_owner")
+  leaseExpiresAt DateTime? @map("lease_expires_at")
+  deliveredAt    DateTime? @map("delivered_at")
+  terminalAt     DateTime? @map("terminal_at")
+  errorCode      String?   @map("error_code")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, mutationId, eventType])
+  @@index([tenantId, status, leaseExpiresAt])
+  @@map("identity_audit_outbox")
 }

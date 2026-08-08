@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE ba_sessions ADD COLUMN IF NOT EXISTS ip_address TEXT;
+ALTER TABLE ba_sessions ADD COLUMN IF NOT EXISTS user_agent TEXT;
+
+COMMIT;

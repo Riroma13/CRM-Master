@@ -4,6 +4,7 @@ import { Job } from 'bullmq';
 import { PrismaService } from '../../../common/prisma.service';
 import { InvoiceEngine } from '../invoice/invoice-engine';
 import { SubscriptionEngine } from '../subscription/subscription-engine';
+import { BILLING_QUEUE_NAMES } from '../billing-queue.constants';
 
 export interface StripeWebhookJobData {
   eventId: string;
@@ -11,7 +12,7 @@ export interface StripeWebhookJobData {
   data: Record<string, unknown>;
 }
 
-@Processor('billing:stripe-webhooks')
+@Processor(BILLING_QUEUE_NAMES.STRIPE_WEBHOOKS)
 @Injectable()
 export class StripeWebhookProcessor extends WorkerHost {
   private readonly logger = new Logger(StripeWebhookProcessor.name);

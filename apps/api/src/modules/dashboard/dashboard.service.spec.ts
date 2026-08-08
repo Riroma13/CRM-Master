@@ -31,7 +31,7 @@ async function resetTestData(prisma: PrismaService) {
   await prisma.admin.disponibilidad.deleteMany({});
   await prisma.admin.tarea.deleteMany({});
   await prisma.admin.cliente.deleteMany({});
-  await prisma.admin.user.deleteMany({});
+  await prisma.admin.legacyUser.deleteMany({});
   await prisma.admin.tenant.deleteMany({});
 }
 

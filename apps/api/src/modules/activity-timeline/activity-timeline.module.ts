@@ -8,19 +8,20 @@ import { EntityNameEnricher } from './enrichment/entity-name-enricher';
 import { ActorNameEnricher } from './enrichment/actor-name-enricher';
 import { EventTypeRegistryService } from './event-type-registry.service';
 import { PrismaService } from '../../common/prisma.service';
+import {
+  ACTIVITY_TIMELINE_DLQ_QUEUE,
+  ACTIVITY_TIMELINE_INGESTION_QUEUE,
+  getActivityTimelineRedisConnectionOptions,
+} from './activity-timeline-queue.constants';
 
 @Module({
   imports: [
     BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST ?? 'localhost',
-        port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
-        ...(process.env.REDIS_PASSWORD ? { password: process.env.REDIS_PASSWORD } : {}),
-      },
+      connection: getActivityTimelineRedisConnectionOptions(),
     }),
     BullModule.registerQueue(
       {
-        name: 'activity-timeline:ingestion',
+        name: ACTIVITY_TIMELINE_INGESTION_QUEUE,
         defaultJobOptions: {
           attempts: 3,
           backoff: { type: 'exponential', delay: 1000 },
@@ -29,7 +30,7 @@ import { PrismaService } from '../../common/prisma.service';
         },
       },
       {
-        name: 'activity-timeline:dlq',
+        name: ACTIVITY_TIMELINE_DLQ_QUEUE,
         defaultJobOptions: {
           attempts: 1,
           removeOnComplete: true,

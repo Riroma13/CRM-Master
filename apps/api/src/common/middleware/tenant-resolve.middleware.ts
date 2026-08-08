@@ -25,7 +25,15 @@ export class TenantResolveMiddleware implements NestMiddleware {
   constructor(private readonly prisma: PrismaService) {}
 
   async use(req: Request, _res: Response, next: NextFunction) {
-    const host = req.headers.host || '';
+    const hostHeader = req.headers.host;
+    const forwardedHost = req.headers['x-forwarded-host'];
+    if (Array.isArray(hostHeader) || Array.isArray(forwardedHost)) {
+      throw new HttpException('Ambiguous Host header', 400);
+    }
+    const host = hostHeader || '';
+    if (forwardedHost && forwardedHost !== host) {
+      throw new HttpException('Conflicting proxy Host header', 400);
+    }
     const slug = this.extractSlug(host);
 
     // Sin slug → request a admin-web (Mission Control)
@@ -37,8 +45,7 @@ export class TenantResolveMiddleware implements NestMiddleware {
           orderBy: { createdAt: 'asc' },
         });
         if (devTenant) {
-          (req as any).tenantId = devTenant.id;
-          (req as any).tenantSlug = devTenant.slug;
+           this.setTenantContext(req, devTenant.id, devTenant.slug);
           return next();
         }
       }
@@ -51,8 +58,7 @@ export class TenantResolveMiddleware implements NestMiddleware {
       if (!cached.isActive) {
         throw new HttpException('Tenant desactivado', 403);
       }
-      (req as any).tenantId = cached.tenantId;
-      (req as any).tenantSlug = slug;
+       this.setTenantContext(req, cached.tenantId, slug);
       return next();
     }
 
@@ -80,8 +86,7 @@ export class TenantResolveMiddleware implements NestMiddleware {
       throw new HttpException('Tenant desactivado', 403);
     }
 
-    (req as any).tenantId = entry.tenantId;
-    (req as any).tenantSlug = slug;
+    this.setTenantContext(req, entry.tenantId, slug);
     next();
   }
 
@@ -89,8 +94,25 @@ export class TenantResolveMiddleware implements NestMiddleware {
     // Extrae el primer segmento del subdominio
     // "asesoria-garcia.crmmaster.com" → "asesoria-garcia"
     // "localhost:3000" → null
-    const match = host.match(/^([a-z0-9][a-z0-9-]*)\./);
-    return match ? match[1] : null;
+    if (!host) return null;
+    if (host === 'crmmaster.com' || /^localhost(?::\d+)?$/.test(host)) return null;
+    const match = host.match(/^([a-z0-9][a-z0-9-]*)\.crmmaster\.com(?::\d+)?$/);
+    if (!match) throw new HttpException('Malformed Host header', 400);
+    return match[1];
+  }
+
+  private setTenantContext(req: Request, tenantId: string, tenantSlug: string) {
+    const request = req as any;
+    if (request.hostTenantId && request.hostTenantId !== tenantId) {
+      throw new HttpException('Host tenant context cannot be overwritten', 400);
+    }
+    if (request.hostTenantSlug && request.hostTenantSlug !== tenantSlug) {
+      throw new HttpException('Host tenant context cannot be overwritten', 400);
+    }
+    request.hostTenantId ??= tenantId;
+    request.hostTenantSlug ??= tenantSlug;
+    request.tenantId = tenantId;
+    request.tenantSlug = tenantSlug;
   }
 
   invalidateCache(slug: string) {

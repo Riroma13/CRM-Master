@@ -3,8 +3,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { PrismaService } from '../../../common/prisma.service';
 import { InvoiceEngine } from './invoice-engine';
+import { BILLING_QUEUE_NAMES } from '../billing-queue.constants';
 
-@Processor('billing:invoice')
+@Processor(BILLING_QUEUE_NAMES.INVOICE)
 @Injectable()
 export class InvoiceCronService extends WorkerHost {
   private readonly logger = new Logger(InvoiceCronService.name);

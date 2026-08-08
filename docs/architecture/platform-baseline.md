@@ -88,7 +88,7 @@ this section is the current platform baseline.
 | Navigation Registry         | ✅ Implemented | `apps/tenant-web/src/config/navigation/`       |
 | Enterprise Design Template  | ✅ Active      | `docs/templates/design-enterprise-template.md` |
 | Design Standard             | ✅ Active      | `docs/templates/design-enterprise-template.md` |
-| Canonical SDD Workflow      | ✅ Active      | `docs/SDD-WORKFLOW.md`                         |
+| Canonical SDD Workflow      | ✅ Active      | `docs/SDD-WORKFLOW.md` (lifecycle) + `docs/sdd-workflow-guard.md` (transitions) |
 | Working Set                 | ✅ Mandatory   | SDD Design phase                               |
 | Read Order                  | ✅ Mandatory   | SDD Design phase                               |
 | Design Confidence           | ✅ Mandatory   | SDD Design phase                               |
@@ -158,7 +158,8 @@ this section is the current platform baseline.
    canonical templates at `docs/templates/`.
 
 5. **All implementations follow the current canonical SDD workflow in
-   `docs/SDD-WORKFLOW.md`.** Its mandatory artifacts and gates are authoritative.
+    `docs/SDD-WORKFLOW.md` (lifecycle) and `docs/sdd-workflow-guard.md`
+    (transition/blocking rules).** Mandatory artifacts and gates are authoritative.
 
 6. **Architecture Review is non-negotiable.** Every Design must evaluate:
    - Scalability (10×, 100×)
@@ -204,8 +205,7 @@ Desde este baseline, el roadmap del proyecto se centra exclusivamente en
 5. **Automation** — reglas de automatización, webhooks, plantillas.
 6. **Client portal** — experiencia de autoservicio para clientes finales.
 
-Cada una de estas áreas seguirá el workflow canónico de `docs/SDD-WORKFLOW.md`
-con el Enterprise Design Standard obligatorio.
+Cada una de estas áreas seguirán el workflow canónico (`docs/SDD-WORKFLOW.md` + `docs/sdd-workflow-guard.md`) con el Enterprise Design Standard obligatorio.
 
 ---
 
@@ -220,8 +220,9 @@ con el Enterprise Design Standard obligatorio.
 - `docs/architecture/module-composition.md`
 - `docs/templates/design-enterprise-template.md`
 - `docs/templates/design-enterprise-template.md`
-- `docs/SDD-WORKFLOW.md`
-- `docs/sdd-workflow-guard.md`
+- `docs/SDD-WORKFLOW.md` (canonical lifecycle)
+- `docs/sdd-workflow-guard.md` (transition/blocking authority)
+- `docs/architecture/sdd-direct.md` (Direct mode specifics)
 - `docs/roadmaps/future-roadmap.md`
 - `AGENTS.md`
 - `.ai/context/PROJECT.md`

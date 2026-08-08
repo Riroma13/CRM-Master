@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
@@ -15,7 +15,7 @@ export class NotificationsService {
 
   constructor(
     private readonly logger: PinoLoggerService,
-    private readonly activityTimeline?: ActivityTimelineService,
+    @Optional() private readonly activityTimeline?: ActivityTimelineService,
   ) {}
 
   configure(smtp: { host: string; port: number; user: string; pass: string; fromEmail: string }) {

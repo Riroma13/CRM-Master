@@ -103,7 +103,7 @@ if (dbAvailable) {
       await prisma.admin.cliente.deleteMany({
         where: { tenantId: { in: [TENANT_A_ID, TENANT_B_ID] } },
       });
-      await prisma.admin.user.deleteMany({
+      await prisma.admin.legacyUser.deleteMany({
         where: { id: { in: [USER_A_ID, USER_B_ID, NON_SUPER_USER_ID] } },
       });
       await prisma.admin.tenant.deleteMany({
@@ -122,7 +122,7 @@ if (dbAvailable) {
         update: {},
       });
 
-      await prisma.admin.user.upsert({
+      await prisma.admin.legacyUser.upsert({
         where: { email: SUPERADMIN_EMAIL_A },
         create: {
           id: USER_A_ID, tenantId: TENANT_A_ID,
@@ -130,7 +130,7 @@ if (dbAvailable) {
         },
         update: {},
       });
-      await prisma.admin.user.upsert({
+      await prisma.admin.legacyUser.upsert({
         where: { email: SUPERADMIN_EMAIL_B },
         create: {
           id: USER_B_ID, tenantId: TENANT_B_ID,
@@ -138,7 +138,7 @@ if (dbAvailable) {
         },
         update: {},
       });
-      await prisma.admin.user.upsert({
+      await prisma.admin.legacyUser.upsert({
         where: { email: NON_SUPER_EMAIL },
         create: {
           id: NON_SUPER_USER_ID, tenantId: TENANT_A_ID,
@@ -180,13 +180,13 @@ if (dbAvailable) {
         );
       }
 
-      await prisma.admin.user.update({
+      await prisma.admin.legacyUser.update({
         where: { id: USER_A_ID }, data: { betterAuthUserId: baUserAId },
       });
-      await prisma.admin.user.update({
+      await prisma.admin.legacyUser.update({
         where: { id: USER_B_ID }, data: { betterAuthUserId: baUserBId },
       });
-      await prisma.admin.user.update({
+      await prisma.admin.legacyUser.update({
         where: { id: NON_SUPER_USER_ID }, data: { betterAuthUserId: baNonSuperId },
       });
 
@@ -261,7 +261,7 @@ if (dbAvailable) {
         await prisma.admin.cliente.deleteMany({
           where: { tenantId: { in: [TENANT_A_ID, TENANT_B_ID] } },
         });
-        await prisma.admin.user.deleteMany({
+        await prisma.admin.legacyUser.deleteMany({
           where: { id: { in: [USER_A_ID, USER_B_ID, NON_SUPER_USER_ID] } },
         });
         await prisma.admin.tenant.deleteMany({

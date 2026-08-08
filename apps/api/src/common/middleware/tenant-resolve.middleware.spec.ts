@@ -162,4 +162,52 @@ describe('TenantResolveMiddleware', () => {
       expect(req2.tenantId).toBe('tenant-1');
     });
   });
+
+  describe('Host authority', () => {
+    it.each([
+      ['malformed host', 'ACME.crmmaster.com'],
+      ['multiple Host values', ['acme.crmmaster.com', 'other.crmmaster.com']],
+    ])('rejects %s before resolving a tenant', async (_case, host) => {
+      const req = { headers: { host } } as any;
+
+      await expect(middleware.use(req, {} as any, mockNext)).rejects.toMatchObject({
+        status: 400,
+      });
+
+      expect(prisma.admin.tenant.findUnique).not.toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('rejects an untrusted proxy-conflicting host', async () => {
+      const req = {
+        headers: {
+          host: 'acme.crmmaster.com',
+          'x-forwarded-host': 'other.crmmaster.com',
+        },
+      } as any;
+
+      await expect(middleware.use(req, {} as any, mockNext)).rejects.toMatchObject({
+        status: 400,
+      });
+      expect(prisma.admin.tenant.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('sets immutable Host-derived context without replacing hostTenantId', async () => {
+      const req = {
+        headers: { host: 'acme.crmmaster.com' },
+        hostTenantId: 'tenant-1',
+        hostTenantSlug: 'acme',
+      } as any;
+      (prisma.admin.tenant.findUnique as jest.Mock).mockResolvedValue({
+        id: 'tenant-1',
+        isActive: true,
+      });
+
+      await middleware.use(req, {} as any, mockNext);
+
+      expect(req.hostTenantId).toBe('tenant-1');
+      expect(req.hostTenantSlug).toBe('acme');
+      expect(req.tenantId).toBe('tenant-1');
+    });
+  });
 });

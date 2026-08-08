@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../../../common/prisma.service';
+import { REPORTING_QUEUE_NAMES } from '../reporting-queue.constants';
 
 @Injectable()
 export class SchedulingService {
@@ -9,7 +10,7 @@ export class SchedulingService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @InjectQueue('reporting:schedule') private readonly scheduleQueue: Queue,
+    @InjectQueue(REPORTING_QUEUE_NAMES.SCHEDULE) private readonly scheduleQueue: Queue,
   ) {}
 
   async scheduleReport(
@@ -17,7 +18,7 @@ export class SchedulingService {
     reportId: string,
     cronExpression: string,
   ) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const report = await prisma.reportDefinition.findUnique({
       where: { id: reportId },
@@ -64,7 +65,7 @@ export class SchedulingService {
   }
 
   async unscheduleReport(tenantId: string, reportId: string) {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const report = await prisma.reportDefinition.findUnique({
       where: { id: reportId },

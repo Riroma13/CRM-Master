@@ -6,13 +6,14 @@ import { ActivityEventEnvelope, ActivityEventEnvelopeSchema } from '../../../../
 import { PrismaService } from '../../common/prisma.service';
 import { TimelineQuery, PaginatedResult, ActivityEventRow, SearchQuery, CursorPaginatedResult } from './dto';
 import { Prisma } from '@prisma/client';
+import { ACTIVITY_TIMELINE_INGESTION_QUEUE } from './activity-timeline-queue.constants';
 
 @Injectable()
 export class ActivityTimelineService {
   private readonly logger = new Logger(ActivityTimelineService.name);
 
   constructor(
-    @InjectQueue('activity-timeline:ingestion') private readonly ingestionQueue: Queue,
+    @InjectQueue(ACTIVITY_TIMELINE_INGESTION_QUEUE) private readonly ingestionQueue: Queue,
     private readonly prisma: PrismaService,
   ) {}
 

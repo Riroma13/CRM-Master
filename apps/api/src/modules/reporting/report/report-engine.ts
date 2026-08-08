@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, Job } from 'bullmq';
+import { REPORTING_QUEUE_NAMES } from '../reporting-queue.constants';
 
 export interface ReportFilter {
   field: string;
@@ -49,14 +50,14 @@ export class ReportEngine {
 
   constructor(
     private readonly prisma: PrismaService,
-    @InjectQueue('reporting:report:generate') private readonly reportQueue: Queue,
+    @InjectQueue(REPORTING_QUEUE_NAMES.REPORT_GENERATE) private readonly reportQueue: Queue,
   ) {}
 
   async generateReport(
     tenantId: string,
     definition: ReportDefinitionInput,
   ): Promise<TabularResult> {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
     const where: any = {
       tenantId,
       datasetName: definition.datasetName,
@@ -126,7 +127,7 @@ export class ReportEngine {
   }
 
   async executeReport(executionId: string): Promise<void> {
-    const execution = await this.prisma.admin.reportExecution.findUnique({
+    const execution = await this.prisma.reportingAdmin.reportExecution.findUnique({
       where: { id: executionId },
       include: { report: true },
     });
@@ -135,7 +136,7 @@ export class ReportEngine {
       throw new Error(`Report execution ${executionId} not found`);
     }
 
-    await this.prisma.admin.reportExecution.update({
+    await this.prisma.reportingAdmin.reportExecution.update({
       where: { id: executionId },
       data: { status: 'running', startedAt: new Date() },
     });
@@ -153,7 +154,7 @@ export class ReportEngine {
 
       const result = await this.generateReport(execution.tenantId, definition);
 
-      await this.prisma.admin.reportExecution.update({
+      await this.prisma.reportingAdmin.reportExecution.update({
         where: { id: executionId },
         data: {
           status: 'completed',
@@ -163,7 +164,7 @@ export class ReportEngine {
       });
     } catch (error: any) {
       this.logger.error(`Report execution ${executionId} failed: ${error.message}`);
-      await this.prisma.admin.reportExecution.update({
+      await this.prisma.reportingAdmin.reportExecution.update({
         where: { id: executionId },
         data: {
           status: 'failed',
@@ -178,7 +179,7 @@ export class ReportEngine {
     tenantId: string,
     reportId: string,
   ): Promise<{ executionId: string }> {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const execution = await prisma.reportExecution.create({
       data: {
@@ -203,7 +204,7 @@ export class ReportEngine {
     result?: TabularResult;
     error?: string;
   }> {
-    const execution = await this.prisma.admin.reportExecution.findUnique({
+    const execution = await this.prisma.reportingAdmin.reportExecution.findUnique({
       where: { id: executionId },
     });
 

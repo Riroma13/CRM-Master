@@ -3,6 +3,7 @@ import { Logger, Injectable } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import { z } from 'zod';
 import { PrismaService } from '../../../common/prisma.service';
+import { REPORTING_QUEUE_NAMES } from '../reporting-queue.constants';
 
 const DatasetEventSchema = z.object({
   tenantId: z.string().min(1),
@@ -26,14 +27,14 @@ function startOfWindow(date: Date, granularity: 'hour' | 'day'): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
-@Processor('reporting:dataset:ingestion')
+@Processor(REPORTING_QUEUE_NAMES.DATASET_INGESTION)
 @Injectable()
 export class DatasetIngestionService extends WorkerHost {
   private readonly logger = new Logger(DatasetIngestionService.name);
 
   constructor(
     private readonly prisma: PrismaService,
-    @InjectQueue('reporting:dataset:dlq') private readonly dlqQueue: Queue,
+    @InjectQueue(REPORTING_QUEUE_NAMES.DATASET_DLQ) private readonly dlqQueue: Queue,
   ) {
     super();
   }
@@ -53,7 +54,7 @@ export class DatasetIngestionService extends WorkerHost {
 
     const event = parsed.data;
     const { tenantId } = event;
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
     const eventDate = new Date(event.timestamp);
     const windowStart = startOfWindow(eventDate, event.granularity);
 

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { PrismaService } from '../../../common/prisma.service';
 import { KnowledgeService } from '../knowledge.service';
 import type { SourceType } from '@shared/knowledge';
+import { KNOWLEDGE_QUEUE_NAMES } from '../knowledge-queue.constants';
 
 const IngestionJobSchema = z.object({
   tenantId: z.string().min(1),
@@ -25,7 +26,7 @@ const ReindexJobSchema = z.object({
 type IngestionJob = z.infer<typeof IngestionJobSchema>;
 type ReindexJob = z.infer<typeof ReindexJobSchema>;
 
-@Processor('kb:ingestion')
+@Processor(KNOWLEDGE_QUEUE_NAMES.INGESTION)
 @Injectable()
 export class IngestionService extends WorkerHost {
   private readonly logger = new Logger(IngestionService.name);
@@ -33,7 +34,7 @@ export class IngestionService extends WorkerHost {
   constructor(
     private readonly knowledgeService: KnowledgeService,
     private readonly prisma: PrismaService,
-    @InjectQueue('kb:ingestion-dlq') private readonly dlqQueue: Queue,
+    @InjectQueue(KNOWLEDGE_QUEUE_NAMES.DLQ) private readonly dlqQueue: Queue,
   ) {
     super();
   }
@@ -103,14 +104,14 @@ export class IngestionService extends WorkerHost {
   }
 }
 
-@Processor('kb:reindex', { concurrency: 1 })
+@Processor(KNOWLEDGE_QUEUE_NAMES.REINDEX, { concurrency: 1 })
 @Injectable()
 export class ReindexService extends WorkerHost {
   private readonly logger = new Logger(ReindexService.name);
 
   constructor(
     private readonly knowledgeService: KnowledgeService,
-    @InjectQueue('kb:ingestion-dlq') private readonly dlqQueue: Queue,
+    @InjectQueue(KNOWLEDGE_QUEUE_NAMES.DLQ) private readonly dlqQueue: Queue,
   ) {
     super();
   }

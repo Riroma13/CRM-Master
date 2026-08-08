@@ -10,6 +10,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { StripeGateway, STRIPE_CLIENT, type StripeClient } from './stripe-gateway';
 import { STRIPE_WEBHOOK_SECRET } from './stripe-gateway';
+import { BILLING_QUEUE_NAMES } from '../billing-queue.constants';
 
 const MAX_EVENT_AGE_MS = 5 * 60 * 1000;
 
@@ -19,7 +20,7 @@ export class StripeWebhookGuard implements CanActivate {
 
   constructor(
     private readonly stripeGateway: StripeGateway,
-    @InjectQueue('billing:stripe-webhooks')
+    @InjectQueue(BILLING_QUEUE_NAMES.STRIPE_WEBHOOKS)
     private readonly webhookQueue: Queue,
     @Inject(STRIPE_WEBHOOK_SECRET)
     private readonly webhookSecret: string,

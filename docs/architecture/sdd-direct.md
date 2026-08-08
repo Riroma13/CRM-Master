@@ -78,18 +78,18 @@ Report, and Repository Ready are forbidden while Verify is `BLOCKED`.
 
 ## Agent Routing
 
-| Direct agent | Model role | Phase ownership |
+| Direct agent | Logical role | Phase ownership |
 |---|---|---|
-| `sdd-direct-orchestrator` | economical / fast reasoning | Direct preflight, phase determination, Tasks generation, Tasks Review logic, Tasks Refinement (patch-only on BLOCKER), orchestrator-owned Direct Fix repair mode, Workload Guard, automatic progression, Apply, Apply Summary, Archive, Health Report, Repository Ready |
-| `sdd-direct-design` | high reasoning | repository exploration, architecture, contracts, security, migrations, Working Set, Read Order, acceptance criteria, Design Refinement (patch-only on BLOCKER) |
-| `sdd-direct-architecture-review` | high reasoning | validates approved Design for real blockers; does not redesign |
-| `sdd-direct-verify` | high reasoning | final validation against Design, Tasks, implementation, tests, evidence |
+| `sdd-direct-orchestrator` | orchestration/implementation | Direct preflight, phase determination, Tasks generation, Tasks Review logic, Tasks Refinement (patch-only on BLOCKER), orchestrator-owned Direct Fix repair mode, Workload Guard, automatic progression, Apply coordination/dispatch and ownership, Apply Summary, Archive, Health Report, Repository Ready |
+| `sdd-direct-design` | high-reasoning | repository exploration, architecture, contracts, security, migrations, Working Set, Read Order, acceptance criteria, Design Refinement (patch-only on BLOCKER) |
+| `sdd-direct-architecture-review` | high-reasoning | validates approved Design for real blockers; does not redesign |
+| `sdd-direct-verify` | high-reasoning | final validation against Design, Tasks, implementation, tests, evidence |
 
-Model roles map to concrete models in OpenCode model configuration only.
-Future model changes must NOT require governance changes. Complex or critical
-implementation may temporarily escalate to high reasoning when justified.
-No provider names appear in SDD governance; actual model selection belongs
-solely in OpenCode configuration (`~/.config/opencode/opencode.json`).
+Role contract: the Direct orchestrator owns orchestration/implementation and
+Apply routing; Design, Architecture Review, and Verify use high-reasoning. The
+economical evidence/mechanical role is bounded support and does not own Apply.
+Concrete model mappings live only in `docs/SDD-MODEL-ASSIGNMENTS.md` and the
+OpenCode configuration (`~/.config/opencode/opencode.json`).
 All Direct agents operate only on the canonical change directory and paths
 declared by the current Working Set. Each returns a structured result in
 English and records evidence in the canonical artifact store.

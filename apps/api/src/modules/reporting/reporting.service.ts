@@ -38,7 +38,7 @@ export class ReportingService {
       ttl?: number;
     },
   ): Promise<{ id: string }> {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const kpi = await prisma.kpi.create({
       data: {
@@ -83,7 +83,7 @@ export class ReportingService {
   }
 
   async listDatasets(tenantId: string): Promise<Array<{ datasetName: string; metricNames: string[] }>> {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const records = await prisma.analyticsDataset.findMany({
       where: { tenantId },

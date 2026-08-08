@@ -10,6 +10,25 @@ const ALLOWLIST = new Set([
   'DatasetIngestionLog',
 ]);
 
+export function createReportingReadOnlyExtension() {
+  return {
+    query: {
+      $allModels: {
+        async $allOperations({ model, args, query }: { model?: string; args: any; query: (args: any) => Promise<any> }) {
+          if (model && !ALLOWLIST.has(model)) {
+            throw new Error(
+              `Reporting module is read-only. Queries are restricted to reporting models only. ` +
+              `Model "${model}" is not in the allowlist.`,
+            );
+          }
+
+          return query(args);
+        },
+      },
+    },
+  };
+}
+
 type MiddlewareParams = {
   model?: string;
   action: string;

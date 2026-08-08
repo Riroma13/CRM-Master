@@ -6,15 +6,19 @@ import { PrismaService } from '../../common/prisma.service';
 import { ActivityEventEnvelope, ActivityEventEnvelopeSchema, EnrichmentContext } from '../../../../../packages/shared/src/activity-timeline';
 import { EnricherRegistryService } from './enrichment/enricher-registry.service';
 import { Prisma } from '@prisma/client';
+import {
+  ACTIVITY_TIMELINE_DLQ_QUEUE,
+  ACTIVITY_TIMELINE_INGESTION_QUEUE,
+} from './activity-timeline-queue.constants';
 
-@Processor('activity-timeline:ingestion')
+@Processor(ACTIVITY_TIMELINE_INGESTION_QUEUE)
 export class ActivityTimelineProcessor extends WorkerHost {
   private readonly logger = new Logger(ActivityTimelineProcessor.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly enricherRegistry: EnricherRegistryService,
-    @InjectQueue('activity-timeline:dlq') private readonly dlqQueue: Queue,
+    @InjectQueue(ACTIVITY_TIMELINE_DLQ_QUEUE) private readonly dlqQueue: Queue,
   ) {
     super();
   }

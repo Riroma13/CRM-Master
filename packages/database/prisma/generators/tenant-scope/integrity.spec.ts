@@ -113,7 +113,7 @@ describe('Tenant Scope Integrity (cross-referenced against schema.prisma)', () =
       'Disponibilidad', 'Documento', 'Encuesta', 'EventoAcademico',
       'EventoBitacora', 'Incidencia', 'ItemInventario', 'PagoIntent',
       'PlantillaDocumento', 'Presupuesto', 'Resource', 'Sistema',
-      'Tarea', 'User', 'Webhook',
+      'Tarea', 'LegacyUser', 'Webhook',
     ];
     for (const m of expected) {
       expect(TENANT_SCOPED_MODELS).toContain(m);

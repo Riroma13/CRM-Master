@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { injectWhere, injectData, injectDataArray } from './prisma-helpers';
+import { auditAppendOnlyExtension } from './audit-append-only.extension';
 import {
   TENANT_SCOPED_MODELS,
   CLIENTE_SCOPED_MODELS,
@@ -40,7 +41,7 @@ export function createPrismaClient(opts?: CreatePrismaClientOptions | string) {
     );
   }
 
-  const client = new PrismaClient();
+  const client = new PrismaClient().$extends(auditAppendOnlyExtension) as any;
 
   if (!tenantId) return client;
 

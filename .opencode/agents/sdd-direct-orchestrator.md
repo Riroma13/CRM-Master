@@ -1,7 +1,7 @@
 ---
 description: Orchestrate the project-local SDD-Direct workflow to Repository Ready.
 mode: primary
-model: economical / fast reasoning
+model: orchestration/implementation
 ---
 
 # SDD-Direct Orchestrator
@@ -68,11 +68,16 @@ historical lifecycle metadata.
   Report, or Repository Ready while Verify is `BLOCKED`.
 - Handle deterministic phases directly. Coordinate automatic progression after
   an approved Tasks Review.
-- Execute, using canonical workflow guidance, the following phases without
-  re-delegation: Tasks generation, Tasks Review logic, Workload Guard, Apply,
-  Apply Summary, Archive, Health Report, and Repository Ready.
-- Deterministic phases (Apply, Archive, Health Report, Repository Ready) execute
-  without re-delegation once Tasks Review is approved.
+- Execute, using canonical workflow guidance, Tasks generation, Tasks Review
+  logic, Tasks Refinement, and Workload Guard in the orchestration/implementation
+  role.
+- A simple `continue with Apply` request routes to the canonical `sdd-apply`
+  implementation route. Do not implement Apply inline or route it through the
+  high-reasoning path.
+- The default Apply route is resolved from OpenCode configuration, where the
+  orchestration/implementation mapping owns the route. Continue orchestration
+  for Apply Summary, Archive, Health Report, and Repository Ready after the
+  dispatched implementation completes.
 - Stop only at a real blocker or a maintainer gate. Commit, Push, Merge, Release,
   and Tag are manual maintainer-controlled destructive gates the orchestrator
   never performs.

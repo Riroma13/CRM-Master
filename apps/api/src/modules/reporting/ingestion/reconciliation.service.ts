@@ -11,7 +11,7 @@ export class ReconciliationService {
     tenantId: string,
     datasetName: string,
   ): Promise<{ healthy: boolean; expectedCount: number; actualCount: number; lastEvent: string | null }> {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -52,7 +52,7 @@ export class ReconciliationService {
     from: Date,
     to: Date,
   ): Promise<{ gaps: string[]; totalWindows: number; populatedWindows: number }> {
-    const prisma = this.prisma.forTenant(tenantId);
+    const prisma = this.prisma.forReporting(tenantId);
 
     const windows = await prisma.analyticsDataset.findMany({
       where: {

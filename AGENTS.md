@@ -48,8 +48,11 @@ y bitácora de cada tenant — modelo de datos completo en docs/DESIGN.md.
 - Infra: Docker + Caddy, VPS, wildcard TLS `*.crmmaster.com`
 
 ## Reglas no negociables
-1. **SDD primero**: ninguna feature se implementa sin spec aprobada en
- `docs/specs/`. Usa `docs/specs/TEMPLATE.md` como base.
+1. **SDD primero**: ninguna feature se implementa sin Design aprobado en
+ `openspec/changes/<change-name>/design.md`. El Design es el contrato
+ de razonamiento e implementación. Los artifacts Proposal y Spec son de
+ compatibilidad y se derivan automáticamente; no son fases visibles para
+ el usuario.
 2. **TDD estricto**: test primero (debe fallar), implementación mínima,
  test pasa, refactor. Nunca código sin test que lo cubra.
 3. **Aislamiento de tenant es crítico**: toda query a tablas con datos de
@@ -92,11 +95,12 @@ Push, Merge, Release, and Tag are maintainer-controlled. See
 - Levantar local: `docker compose up -d`
 - SDD Doctor: `/sdd-doctor` (audita el entorno SDD completo)
 
-## Estructura de specs (docs/specs/NNNN-nombre.md)
-- Contexto / problema que resuelve
-- Contrato (input/output, entidades de datos afectadas)
-- Casos de borde
-- Criterios de aceptación (testables, no ambiguos)
+## Estructura de artifacts (openspec/changes/<change-name>/)
+- `proposal.md` — artifact de compatibilidad, no fase visible
+- `design.md` — contrato de razonamiento e implementación (autoritativo)
+- `tasks.md` — plan de implementación derivado del Design aprobado
+- Los artifacts Proposal/Spec se generan automáticamente cuando se necesiten;
+  nunca se presentan como fases obligatorias para el usuario.
 
 ## Exploration Optimization (Phase 2)
 El flujo SDD ahora incluye medición de precisión del Working Set:
@@ -115,25 +119,27 @@ Tenant (Cliente) → Sistema(s) → Inventario / Bitácora / Tareas
 
 ## Model Roles
 
-Model assignment uses ROLES, not hard-coded model names. Canonical role-to-phase
-mapping lives in `docs/architecture/sdd-direct.md` (Agent Routing table).
-Summary:
+Model assignment uses provider-independent logical roles:
 
-- **economical / fast reasoning** — orchestrator, Apply, Archive, deterministic phases
-- **high reasoning** — Design, Architecture Review, Verify
-- complex or critical implementation may temporarily escalate to high reasoning when justified
+- **High-reasoning** — Design, final Architecture Review, critical architectural decisions, and Verify.
+- **Orchestration/implementation** — Tasks, Apply Phases 1–5, Apply Summary, Archive, Health Report, Repository Ready, and workflow progression. Apply is owned by this role.
+- **Economical evidence/mechanical** — broad reading, inventories, type/dependency checks, reconciliation, path mapping, repetitive analysis, and bounded sub-tasks delegated by the orchestration/implementation role.
+- Economical evidence/mechanical support may assist Apply only with bounded evidence or mechanical work; high-reasoning work is not routine implementation.
 
-Concrete model mapping lives ONLY in OpenCode model configuration
-(`~/.config/opencode/opencode.json`). Future model changes must NOT require
-governance changes. If a configured model fails, fall back automatically;
-never block the workflow for a missing model. No provider names appear in SDD
-governance; they belong solely in OpenCode configuration.
+Concrete mappings are documented only in `docs/SDD-MODEL-ASSIGNMENTS.md` and
+the OpenCode configuration.
 
 ## Apply Phase — Standard Execution Summary
 
 Every Apply phase MUST conclude with the standard execution summary.
-After three complete implementations (SPEC-0010, SPEC-0011, SPEC-0012)
-this format is now mandatory engineering practice.
+The current Apply structure has five phases plus a consolidated summary:
+
+- **Phase 1: Foundation** — infraestructura, tipos, migraciones, configuración
+- **Phase 2: Core Engine** — lógica de negocio central, contratos, estado
+- **Phase 3: Feature Implementation** — funcionalidad específica del SPEC
+- **Phase 4: Integration** — wiring de componentes, rutas, UI
+- **Phase 5: Testing** — pruebas unitarias, integración, doorbell, regresión
+- **Apply Summary** — consolidación usando `docs/templates/apply-summary-template.md`
 
 ```markdown
 === PHASE X COMPLETE ===
@@ -159,17 +165,10 @@ Tests:
 Ready for Phase X+1.
 ```
 
-## Apply Summary
-
-After all 5 Apply phases are complete, generate a consolidated Apply Summary
-using `docs/templates/apply-summary-template.md`. This document does NOT
-replace the individual phase summaries — it consolidates them into a single
-overview.
-
 ---
 
 ## Antes de marcar una tarea como hecha
 - [ ] Tests pasan (`pnpm test`)
 - [ ] Lint limpio (`pnpm lint`)
-- [ ] Spec correspondiente actualizada si hubo desviación del plan
+- [ ] Design correspondiente actualizado si hubo desviación del plan
 - [ ] Si tocó aislamiento de tenant:

@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientsService } from './clients.service';
 import { PrismaService } from '../../common/prisma.service';
+import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
+
+const activityTimelineMock: Pick<ActivityTimelineService, 'publish'> = {
+  publish: jest.fn().mockResolvedValue(undefined),
+};
 
 describe('ClientsService', () => {
   let service: ClientsService;
@@ -40,7 +45,11 @@ describe('ClientsService', () => {
 
   beforeAll(async () => {
     moduleRef = await Test.createTestingModule({
-      providers: [ClientsService, PrismaService],
+      providers: [
+        ClientsService,
+        PrismaService,
+        { provide: ActivityTimelineService, useValue: activityTimelineMock },
+      ],
     }).compile();
 
     service = moduleRef.get(ClientsService);
@@ -54,7 +63,7 @@ describe('ClientsService', () => {
     await prisma.admin.disponibilidad.deleteMany({});
     await prisma.admin.tarea.deleteMany({});
     await prisma.admin.cliente.deleteMany({});
-    await prisma.admin.user.deleteMany({});
+    await prisma.admin.legacyUser.deleteMany({});
     await prisma.admin.tenant.deleteMany({});
 
     // Seed tenants

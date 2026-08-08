@@ -6,6 +6,10 @@ import { ChunkingService } from '../ingestion/chunking.service';
 import { EmbeddingService } from '../embeddings/embedding.service';
 import { EmbeddingCache } from '../embeddings/embedding-cache';
 import { IngestionService, ReindexService } from '../ingestion/ingestion.service';
+import {
+  KNOWLEDGE_QUEUE_NAMES,
+  KNOWLEDGE_QUEUE_IDENTITIES,
+} from '../knowledge-queue.constants';
 
 describe('IngestionService', () => {
   let service: IngestionService;
@@ -19,6 +23,16 @@ describe('IngestionService', () => {
     sourceId: 'doc-1',
     content: 'Test content for ingestion.',
   };
+
+  it('uses colon-free queue identities for every Knowledge queue', () => {
+    expect(KNOWLEDGE_QUEUE_NAMES).toEqual({
+      INGESTION: 'kb-ingestion',
+      REINDEX: 'kb-reindex',
+      GARBAGE_COLLECTOR: 'kb-garbage-collector',
+      DLQ: 'kb-ingestion-dlq',
+    });
+    expect(KNOWLEDGE_QUEUE_IDENTITIES).not.toContainEqual(expect.stringContaining(':'));
+  });
 
   beforeEach(async () => {
     prisma = {
@@ -45,7 +59,7 @@ describe('IngestionService', () => {
           },
         },
         {
-          provide: getQueueToken('kb:ingestion-dlq'),
+          provide: getQueueToken(KNOWLEDGE_QUEUE_NAMES.DLQ),
           useValue: dlqQueue,
         },
         { provide: PrismaService, useValue: prisma },
@@ -139,7 +153,7 @@ describe('ReindexService', () => {
           },
         },
         {
-          provide: getQueueToken('kb:ingestion-dlq'),
+          provide: getQueueToken(KNOWLEDGE_QUEUE_NAMES.DLQ),
           useValue: dlqQueue,
         },
       ],

@@ -83,7 +83,7 @@ describe('GET /api/v1/admin/dashboard (E2E)', () => {
     await prisma.admin.disponibilidad.deleteMany({});
     await prisma.admin.tarea.deleteMany({});
     await prisma.admin.cliente.deleteMany({});
-    await prisma.admin.user.deleteMany({});
+    await prisma.admin.legacyUser.deleteMany({});
     await prisma.admin.tenant.deleteMany({});
 
     // Seed data: tenants, clients, tareas
@@ -123,7 +123,7 @@ describe('GET /api/v1/admin/dashboard (E2E)', () => {
     );
 
     // Create legacy users with betterAuthUserId linking
-    await prisma.admin.user.upsert({
+    await prisma.admin.legacyUser.upsert({
       where: { email: 'e2e-dash-super@test.com' },
       create: {
         id: 'e2e-dash-super-uuid',
@@ -135,7 +135,7 @@ describe('GET /api/v1/admin/dashboard (E2E)', () => {
       },
       update: {},
     });
-    await prisma.admin.user.upsert({
+    await prisma.admin.legacyUser.upsert({
       where: { email: 'e2e-dash-admin@test.com' },
       create: {
         id: 'e2e-dash-admin-uuid',
@@ -176,7 +176,7 @@ describe('GET /api/v1/admin/dashboard (E2E)', () => {
           `UPDATE users SET better_auth_user_id = NULL WHERE email = $1`, email,
         );
       }
-      await prisma.admin.user.deleteMany({
+      await prisma.admin.legacyUser.deleteMany({
         where: { id: { in: ['e2e-dash-super-uuid', 'e2e-dash-admin-uuid'] } },
       });
       await prisma.admin.tarea.deleteMany({

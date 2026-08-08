@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { createPrismaClient, ScopedPrismaClient } from '../../../../packages/database/src';
+import { createReportingReadOnlyExtension } from '../modules/reporting/reporting-read-only.middleware';
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
@@ -29,9 +30,19 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     return createPrismaClient(tenantId);
   }
 
+  /** Creates a tenant-scoped client restricted to reporting models. */
+  forReporting(tenantId: string) {
+    return createPrismaClient(tenantId).$extends(createReportingReadOnlyExtension()) as any;
+  }
+
   /** Cliente sin scope (superadmin) */
   get admin() {
     return this.client;
+  }
+
+  /** Unscoped reporting client for trusted reporting operations. */
+  get reportingAdmin() {
+    return this.client.$extends(createReportingReadOnlyExtension()) as any;
   }
 
   get $client() {

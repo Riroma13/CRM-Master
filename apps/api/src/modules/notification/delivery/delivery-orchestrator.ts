@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma.service';
 import type { CommunicationProvider, SendMessageInput } from '@shared/communication';
 
@@ -11,6 +11,7 @@ export class DeliveryOrchestrator {
 
   constructor(
     private readonly prisma: PrismaService,
+    @Optional()
     options?: { backoffMs?: number[] },
   ) {
     this.BACKOFF_MS = options?.backoffMs ?? [1_000, 5_000, 30_000];

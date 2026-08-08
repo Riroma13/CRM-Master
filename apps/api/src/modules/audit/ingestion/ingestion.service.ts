@@ -5,6 +5,8 @@ import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../../common/prisma.service';
 import { createAuditAppendOnlyMiddleware, computeGenesisHash, computeAuditEventHash } from '../audit-append-only.middleware';
 import { z } from 'zod';
+import { IdentityAuditDispatcherService } from '../../identity/identity-audit-dispatcher.service';
+import { IDENTITY_AUDIT_DLQ_QUEUE, IDENTITY_AUDIT_INGESTION_QUEUE } from '../audit-queue.constants';
 
 export const AuditIngestionEventSchema = z.object({
   eventId: z.string().uuid().optional(),
@@ -26,7 +28,7 @@ export const AuditIngestionEventSchema = z.object({
 
 export type AuditIngestionEvent = z.infer<typeof AuditIngestionEventSchema>;
 
-@Processor('audit:ingestion')
+@Processor(IDENTITY_AUDIT_INGESTION_QUEUE)
 @Injectable()
 export class IngestionService extends WorkerHost {
   private readonly logger = new Logger(IngestionService.name);
@@ -35,7 +37,8 @@ export class IngestionService extends WorkerHost {
 
   constructor(
     private readonly prisma: PrismaService,
-    @InjectQueue('audit:dlq') private readonly dlqQueue: Queue,
+    @InjectQueue(IDENTITY_AUDIT_DLQ_QUEUE) private readonly dlqQueue: Queue,
+    private readonly identityAuditDispatcher: IdentityAuditDispatcherService,
   ) {
     super();
   }
@@ -44,12 +47,7 @@ export class IngestionService extends WorkerHost {
     const parsed = AuditIngestionEventSchema.safeParse(job.data);
     if (!parsed.success) {
       this.logger.warn(`Invalid audit event for job ${job.id}: ${parsed.error.message}`);
-      await this.dlqQueue.add('invalid-event', {
-        jobId: job.id,
-        data: job.data,
-        error: parsed.error.message,
-        failedAt: new Date().toISOString(),
-      });
+      await this.identityAuditDispatcher.handleInvalidPayload(job, 'IDENTITY_AUDIT_INVALID_PAYLOAD');
       return { eventId: 'invalid' };
     }
 
@@ -170,9 +168,12 @@ export class IngestionService extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job | undefined, error: Error) {
+  async onFailed(job: Job | undefined, error: Error) {
     if (job) {
       this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
+      if (job.attemptsMade >= (job.opts.attempts ?? 1)) {
+        await this.identityAuditDispatcher.handleDeliveryFailure(job, error);
+      }
     }
   }
 }

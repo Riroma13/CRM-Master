@@ -25,7 +25,7 @@ stack:
 
 conventions:
   git: conventional commits (feat:, fix:, test:, docs:, refactor:)
-  sdd_first: true  # no feature without approved spec in docs/specs/
+  sdd_first: true  # no feature without approved Design in openspec/changes/
   strict_tdd: true  # test first (must fail) → implement → pass → refactor
   tenant_isolation: critical  # all queries pass through central Prisma extension for tenant_id scoping
   tenant_resolution: by Host header (subdomain), never by URL param or body
@@ -33,8 +33,10 @@ conventions:
   tenant_slugs: unique, immutable, validated against reserved list
   prisma_schema_changes: require ADR or reference to existing one
   code_delivery:
-    model_code: opencode-go/kimi-k2.7-code
-    model_planning: opencode-go/deepseek-v4-flash
+    # Concrete orchestration/implementation mapping; logical role policy lives
+    # in AGENTS.md and docs/architecture/sdd-direct.md.
+    model_code: openai/gpt-5.6-luna
+    model_planning: openai/gpt-5.6-luna
 
 testing:
   strict_tdd: true
@@ -72,20 +74,13 @@ phase_rules:
   - phase: explore
     allowed: true
     requires_spec: false
-  - phase: propose
-    allowed: true
-    requires_context: true
-  - phase: spec
-    allowed: true
-    requires_approval: true
-    template: docs/specs/TEMPLATE.md
   - phase: design
     allowed: true
     requires_adr: when_architectural_change
     adr_template: docs/architecture/adr/TEMPLATE.md
   - phase: tasks
     allowed: true
-    requires_spec_approved: true
+    requires_design_approved: true
   - phase: apply
     allowed: true
     requires_tdd: true

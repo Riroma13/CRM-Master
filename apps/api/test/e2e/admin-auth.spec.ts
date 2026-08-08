@@ -90,7 +90,7 @@ describe('Admin Auth E2E — Guard enforcement', () => {
     );
 
     // Create legacy users with betterAuthUserId linking
-    await prisma.admin.user.upsert({
+    await prisma.admin.legacyUser.upsert({
       where: { email: 'e2e-admin-test-super@test.com' },
       create: {
         id: 'e2e-admin-test-super-uuid',
@@ -103,7 +103,7 @@ describe('Admin Auth E2E — Guard enforcement', () => {
       },
       update: {},
     });
-    await prisma.admin.user.upsert({
+    await prisma.admin.legacyUser.upsert({
       where: { email: 'e2e-admin-test-admin@test.com' },
       create: {
         id: 'e2e-admin-test-admin-uuid',
@@ -142,7 +142,7 @@ describe('Admin Auth E2E — Guard enforcement', () => {
           `UPDATE users SET better_auth_user_id = NULL WHERE email = $1`, email,
         );
       }
-      await prisma.admin.user.deleteMany({
+      await prisma.admin.legacyUser.deleteMany({
         where: { id: { in: ['e2e-admin-test-super-uuid', 'e2e-admin-test-admin-uuid'] } },
       });
     }
