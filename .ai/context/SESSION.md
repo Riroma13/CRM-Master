@@ -1,17 +1,32 @@
-# SESSION — SPEC-0025 Identity Platform
+# SESSION — SPEC-0025 Identity & Organization Platform
 
-> Fecha: 28 Jul 2026
+> Fecha: 8 Ago 2026
 
 ## Estado
 
-- **Branch**: `merge/spec-0025-identity` (at `d41f8de`, same as `main`)
-- **Fase SDD visible actual**: `Apply` (pendiente; Tasks Review completado)
-- **SPEC-0025 Identity Platform**:
+- **Branch**: `main`
+- **SPEC-0025 Identity & Organization Platform**: ✅ **COMPLETED** — archivado y mergeado a `main` mediante PR #18
+- **Fase SDD visible actual**: `Archive` completado; PR #18 mergeado
+- **SPEC-0025**:
   - Proposal: ✅ Creado (compatibilidad)
   - Design: ✅ APPROVED_WITH_CONDITIONS
   - Architecture Review: ✅ APPROVED_WITH_CONDITIONS (sin blockers)
   - Tasks: ✅ Creado
   - Tasks Review: ✅ APPROVED_WITH_CONDITIONS (sin blockers)
+  - Apply: ✅ Completado
+  - Verify: ✅ Completado
+  - Archive: ✅ Completado
+
+## Final CI
+
+- Database tests: ✅ PASS
+- Lint: ✅ PASS
+- Generated scope verification: ✅ PASS
+
+## Deudas técnicas
+
+- **API ESLint configuration**: ✅ Deuda de configuración resuelta
+- **Rate limiter service-side double check redundancy**: ⏳ Sigue sin resolverse; conservar como pendiente
 
 ## Condiciones aprobadas (no bloqueantes)
 
@@ -43,13 +58,13 @@ SPEC-0027, SPEC-0028, frontend, client-portal RBAC, SSO/SCIM, Better Auth cleanu
 
 ## Próximo paso visible
 
-1. Apply Phases 1–5
-2. Apply Summary → Verify
+- **OAuth social login** — siguiente candidato del roadmap
+- No se ha creado un SPEC nuevo todavía
 
 ## Para arrancar
 
 ```bash
 cd /home/ubuntu/.openclaw/workspace/CRM-Master
 opencode
-# Decir: "leé .ai/context/SESSION.md y continuá"
+# No iniciar un SPEC nuevo todavía; el siguiente candidato es OAuth social login.
 ```

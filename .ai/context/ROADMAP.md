@@ -11,21 +11,16 @@
 - [x] **CI workflow** — GitHub Actions con verify + test + lint
 - [x] **Documentación** — tenant-scope generator en `docs/`
 - [x] **Client self-registration** — signup, login, portal access
-
-## 🔧 Activo
-
-- [ ] **SPEC-0025 — Identity & Organization Platform**
-  - Design: APPROVED_WITH_CONDITIONS
-  - Architecture Review: APPROVED_WITH_CONDITIONS
-  - Próximo: Tasks → Tasks Review → Apply
+- [x] **SPEC-0025 — Identity & Organization Platform** — COMPLETED; archivado y mergeado a `main` mediante PR #18
+- [x] **SPEC-0025 final CI** — Database tests PASS, Lint PASS, generated scope verification PASS
+- [x] **API ESLint configuration** — deuda de configuración resuelta
 
 ## Pendientes técnicos
 
-- [ ] Lint pre-existing (API sin ESLint config)
 - [ ] Rate limiter service-side double check redundancy
 
 ## 🏗️ Próximas features
 
-- OAuth social login
+- [ ] **OAuth social login** — siguiente candidato; no crear un SPEC todavía
 - Password reset email
 - Mobile app
