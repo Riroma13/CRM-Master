@@ -36,23 +36,26 @@ export class BetterAuthGuard implements CanActivate {
     // Extract Bearer token if present
     const authHeader = request.headers?.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const cookie = typeof request.headers?.cookie === 'string' ? request.headers.cookie : null;
+    const hasSessionCredential = Boolean(token || cookie);
 
-    // For admin routes, token is required
+    // For admin routes, a Better Auth cookie or bearer token is required.
     if (path.startsWith(ADMIN_ROUTE_PREFIX)) {
-      if (!token) {
+      if (!hasSessionCredential) {
         throw new UnauthorizedException(
           'Se requiere token de autenticación para acceder a rutas de administración',
         );
       }
     }
 
-    // If no token on non-admin routes, allow anonymous (PermissionsGuard handles restrictions)
-    if (!token) return true;
+    // If no session credential on non-admin routes, allow anonymous (PermissionsGuard handles restrictions)
+    if (!hasSessionCredential) return true;
 
     // Resolve the session through the canonical Better Auth provider boundary.
-    const session = await this.provider.getSession(
-      new Headers({ authorization: `Bearer ${token}` }),
-    );
+    const sessionHeaders = new Headers();
+    if (token) sessionHeaders.set('authorization', `Bearer ${token}`);
+    if (cookie) sessionHeaders.set('cookie', cookie);
+    const session = await this.provider.getSession(sessionHeaders);
 
     if (!session) {
       if (path.startsWith(ADMIN_ROUTE_PREFIX)) {

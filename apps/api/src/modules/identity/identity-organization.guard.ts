@@ -16,7 +16,9 @@ import { PrismaService } from '../../common/prisma.service';
 import { IdentityMembershipRepository } from './identity-membership.repository';
 import { IdentityCatalogPreflightService } from './identity-catalog-preflight.service';
 import { IDENTITY_CATALOG_SNAPSHOT } from './identity-catalog.config';
-import { IdentityProvider } from './identity.contracts';
+import {
+  IdentityProvider,
+} from './identity.contracts';
 
 export const IDENTITY_PERMISSION_MATRIX: Record<string, ReadonlySet<string>> = {
   owner: new Set(['*']),
@@ -44,9 +46,6 @@ export class IdentityOrganizationGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<Request & { hostTenantId?: string }>();
-    if (!request.hostTenantId) {
-      throw new ForbiddenException('IDENTITY_TENANT_CONTEXT_REQUIRED');
-    }
 
     const headers = new Headers();
     const authorization = request.headers.authorization;
@@ -56,6 +55,9 @@ export class IdentityOrganizationGuard implements CanActivate {
 
     const session = await this.provider.getSession(providerHeaders(headers));
     if (!session) throw new UnauthorizedException('IDENTITY_SESSION_REQUIRED');
+    if (!request.hostTenantId) {
+      throw new ForbiddenException('IDENTITY_TENANT_CONTEXT_REQUIRED');
+    }
 
     const tenantClient = this.prisma.forTenant(request.hostTenantId) as any;
     const tenant = await tenantClient.tenant.findFirst({

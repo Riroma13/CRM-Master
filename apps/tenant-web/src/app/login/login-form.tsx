@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import * as Tabs from '@radix-ui/react-tabs';
-import { login } from '@/lib/auth';
+import { beginGoogleLogin, login } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LogIn, UserCircle } from 'lucide-react';
@@ -56,6 +56,11 @@ function LoginFormTab({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {mode === 'admin' && (
+        <Button type="button" variant="outline" className="w-full text-xs" onClick={beginGoogleLogin}>
+          Continuar con Google
+        </Button>
+      )}
       <div>
         <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">Email</label>
         <Input

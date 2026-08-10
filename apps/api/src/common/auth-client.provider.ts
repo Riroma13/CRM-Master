@@ -18,12 +18,16 @@ export class BetterAuthProviderSessionAdapter implements IdentityProvider {
   constructor(private readonly auth: Auth) {}
 
   async getSession(headers: Pick<Headers, 'get'>): Promise<ProviderSession | null> {
-    const session = await (this.auth.api as any).getSession({ headers: providerHeaders(headers) });
-    if (!session?.user || !session.session) return null;
-    return {
-      userId: session.user.id,
-      activeOrganizationId: session.session.activeOrganizationId ?? null,
-    };
+    try {
+      const session = await (this.auth.api as any).getSession({ headers: providerHeaders(headers) });
+      if (!session?.user || !session.session) return null;
+      return {
+        userId: session.user.id,
+        activeOrganizationId: session.session.activeOrganizationId ?? null,
+      };
+    } catch {
+      return null;
+    }
   }
 }
 

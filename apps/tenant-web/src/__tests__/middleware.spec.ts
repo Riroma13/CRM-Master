@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveRouteByCookie, resolveTenantFromHost } from '../middleware';
+import { resolveAdvisoryRole, resolveRouteByCookie, resolveTenantFromHost } from '../middleware';
 
 describe('resolveTenantFromHost', () => {
   it('extracts slug from subdomain host', () => {
@@ -78,5 +78,19 @@ describe('resolveRouteByCookie', () => {
       pathname: '/admin',
     });
     expect(result).toEqual({ destination: '/login', action: 'redirect' });
+  });
+});
+
+describe('resolveAdvisoryRole', () => {
+  it('treats the Better Auth session cookie as opaque admin state', async () => {
+    await expect(resolveAdvisoryRole({ adminCookie: 'opaque.session.value' })).resolves.toBe('admin');
+  });
+
+  it('treats the Better Auth cookie as authoritative transport without decoding its value', async () => {
+    await expect(resolveAdvisoryRole({ adminCookie: 'not-a-jwt' })).resolves.toBe('admin');
+  });
+
+  it('does not grant an admin role from an absent session cookie', async () => {
+    await expect(resolveAdvisoryRole({})).resolves.toBeNull();
   });
 });

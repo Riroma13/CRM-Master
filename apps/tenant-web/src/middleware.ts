@@ -3,6 +3,10 @@ import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
 const RESERVED_SLUGS = new Set(['www', 'api', 'admin', 'app', 'mail', 'dev']);
+const BETTER_AUTH_SESSION_COOKIE = '__Secure-better-auth.session_token';
+const LEGACY_ADMIN_SESSION_COOKIE = '__Secure-session';
+const CLIENT_SESSION_COOKIE = '__Secure-client-session';
+const LOCAL_CLIENT_SESSION_COOKIE = 'client-session';
 
 export interface RouteDecision {
   destination: string;
@@ -24,7 +28,7 @@ interface CookiePayload {
   role: string | null;
 }
 
-async function parseCookie(cookieValue: string | undefined): Promise<CookiePayload> {
+async function parseClientCookie(cookieValue: string | undefined): Promise<CookiePayload> {
   if (!cookieValue) return { role: null };
 
   const secret = process.env.CLIENT_JWT_SECRET;
@@ -49,6 +53,17 @@ async function parseCookie(cookieValue: string | undefined): Promise<CookiePaylo
   } catch {
     return { role: null };
   }
+}
+
+export async function resolveAdvisoryRole(params: {
+  adminCookie?: string;
+  clientCookie?: string;
+  clientPortalEnabled?: boolean;
+}): Promise<string | null> {
+  if (params.adminCookie) return 'admin';
+  if (!params.clientPortalEnabled) return null;
+  const { role } = await parseClientCookie(params.clientCookie);
+  return role;
 }
 
 export function resolveRouteByCookie(params: {
@@ -88,12 +103,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const adminCookie = request.cookies.get('__Secure-session')?.value;
-  const clientCookie = request.cookies.get('__Secure-client-session')?.value;
+  const adminCookie =
+    request.cookies.get(BETTER_AUTH_SESSION_COOKIE)?.value ??
+    request.cookies.get(LEGACY_ADMIN_SESSION_COOKIE)?.value;
+  const clientCookie =
+    request.cookies.get(CLIENT_SESSION_COOKIE)?.value ??
+    (process.env.NODE_ENV === 'production'
+      ? undefined
+      : request.cookies.get(LOCAL_CLIENT_SESSION_COOKIE)?.value);
 
   const clientPortalEnabled = process.env.NEXT_PUBLIC_CLIENT_PORTAL_ENABLED === 'true';
-  const payload = await parseCookie(clientPortalEnabled ? (adminCookie || clientCookie) : adminCookie);
-  const { role } = payload;
+  const role = await resolveAdvisoryRole({
+    adminCookie,
+    clientCookie,
+    clientPortalEnabled,
+  });
 
   const decision = resolveRouteByCookie({ role, pathname });
 

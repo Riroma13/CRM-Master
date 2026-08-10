@@ -13,9 +13,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../../src/app.module';
-import { PrismaService } from '../../src/common/prisma.service';
-import { BetterAuthGuard } from '../../src/common/guards/better-auth.guard';
 
 // ─── Constantes ───────────────────────────────────────────────
 
@@ -48,9 +45,11 @@ const BA_SLUGS = [TENANT_A_SLUG, TENANT_B_SLUG];
 if (dbAvailable) {
   describe('🔔 DOORBELL HTTP — Multi-tenant isolation via HTTP', () => {
     let app: INestApplication;
-    let prisma: PrismaService;
+    let prisma: any;
 
     beforeAll(async () => {
+      const { AppModule } = require('../../src/app.module');
+      const { PrismaService } = require('../../src/common/prisma.service');
       process.env.BETTER_AUTH_URL = 'http://localhost:3000';
 
       // Build test module (BetterAuthGuard is registered as APP_GUARD)
@@ -62,7 +61,7 @@ if (dbAvailable) {
       app = moduleFixture.createNestApplication();
       await app.init();
 
-      prisma = moduleFixture.get<PrismaService>(PrismaService);
+      prisma = moduleFixture.get(PrismaService);
 
       // ── Cleanup ─────────────────────────────────────────────
       for (const email of BA_EMAILS) {

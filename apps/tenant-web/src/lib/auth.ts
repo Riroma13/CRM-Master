@@ -4,6 +4,18 @@ import { api } from './api';
 
 const TOKEN_KEY = 'crm_session_token';
 const USER_KEY = 'crm_user';
+const GOOGLE_RETURN_PATHS = new Set(['/admin', '/login']);
+
+export function getGoogleLoginUrl(callbackPath: string = '/admin'): string {
+  const safeCallbackPath = GOOGLE_RETURN_PATHS.has(callbackPath) ? callbackPath : '/admin';
+  const params = new URLSearchParams({ provider: 'google', callbackURL: safeCallbackPath });
+  return `/api/auth/sign-in/social?${params.toString()}`;
+}
+
+export function beginGoogleLogin(): void {
+  if (typeof window === 'undefined') return;
+  window.location.assign(getGoogleLoginUrl());
+}
 
 export interface AuthUser {
   id: string;

@@ -10,6 +10,7 @@
   "setupFiles": ["./test/setup-e2e-env.ts"],
   "transformIgnorePatterns": [],
   "moduleNameMapper": {
-    "^@crm-master/database$": "<rootDir>/../../packages/database/src"
+    "^@crm-master/database$": "<rootDir>/../../packages/database/src",
+    "^@shared/(.*)$": "<rootDir>/../../packages/shared/src/$1"
   }
 }

@@ -9,7 +9,7 @@ export default defineConfig({
   retries: 0,
   reporter: [['html', { outputFolder: 'playwright-report' }], ['list']],
   use: {
-    baseURL: 'https://crm-master.duckdns.org',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3101',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
