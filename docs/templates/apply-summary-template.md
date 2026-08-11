@@ -1,4 +1,11 @@
-# Apply Summary
+---
+classification: TEMPLATE
+semantic_authority: false
+---
+
+# Apply Summary — Nested Apply Substep 7.6
+
+> This artifact is 7.6 inside Apply. It is not a separate lifecycle phase.
 
 > **SPEC:** <SPEC-ID>
 > **Fecha:** <YYYY-MM-DD>
@@ -9,14 +16,14 @@
 
 ## Phases Completed
 
-| Phase | Focus | Files Created | Files Modified | WSA |
+| Apply substep | Focus | Files Created | Files Modified | WSA |
 |-------|-------|:-------------:|:--------------:|:---:|
-| 1 | Foundation | <N> | <N> | <N>% |
-| 2 | Core Engine | <N> | <N> | <N>% |
-| 3 | Pipeline | <N> | <N> | <N>% |
-| 4 | Integration | <N> | <N> | <N>% |
-| 5 | Testing | <N> | <N> | <N>% |
-| **Total** | | **<N>** | **<N>** | **~<N>%** |
+| 7.1 | Foundation | <N> | <N> | <N>% |
+| 7.2 | Core Engine | <N> | <N> | <N>% |
+| 7.3 | Feature Implementation | <N> | <N> | <N>% |
+| 7.4 | Integration | <N> | <N> | <N>% |
+| 7.5 | Testing | <N> | <N> | <N>% |
+| **7.6 Summary** | Consolidated Apply evidence | **<N>** | **<N>** | **~<N>%** |
 
 ## Overall Metrics
 
@@ -32,13 +39,13 @@
 
 ## Acceptance Criteria Summary
 
-| Phase | Criteria | Status |
+| Apply substep | Criteria | Status |
 |-------|----------|--------|
-| 1 | Foundation | ✅ |
-| 2 | Core Engine | ✅ |
-| 3 | Pipeline | ✅ |
-| 4 | Integration | ✅ |
-| 5 | Testing | ✅ |
+| 7.1 | Foundation | PASS |
+| 7.2 | Core Engine | PASS |
+| 7.3 | Feature Implementation | PASS |
+| 7.4 | Integration | PASS |
+| 7.5 | Testing | PASS |
 
 ## Architecture Decisions Applied
 

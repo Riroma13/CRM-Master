@@ -1,0 +1,88 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "sdd-direct-orchestrator",
+  "agent": {
+    "sdd-apply": { "disable": true },
+    "sdd-apply-pro": { "disable": true },
+    "sdd-archive": { "disable": true },
+    "sdd-design": { "disable": true },
+    "sdd-explore": { "disable": true },
+    "sdd-init": { "disable": true },
+    "sdd-onboard": { "disable": true },
+    "sdd-propose": { "disable": true },
+    "sdd-spec": { "disable": true },
+    "sdd-tasks": { "disable": true },
+    "sdd-verify": { "disable": true },
+    "sdd-judge-a": { "disable": true },
+    "sdd-judge-b": { "disable": true },
+    "sdd-fix": { "disable": true },
+    "sdd-architecture-review": { "disable": true },
+    "sdd-tasks-review": { "disable": true },
+    "sdd-health": { "disable": true },
+    "sdd-repository-ready": { "disable": true },
+    "sdd-orchestrator": { "disable": true },
+    "gentle-orchestrator": { "disable": true }
+  },
+  "command": {
+    "sdd-archive": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-onboard": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-status": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-ff": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-apply": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-new": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-metrics": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-init": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-verify": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-doctor": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-explore": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    },
+    "sdd-continue": {
+      "description": "Legacy SDD boundary; use /sdd-direct",
+      "agent": "sdd-direct-orchestrator",
+      "template": "CRM_SDD_LEGACY_BOUNDARY: This legacy command is disabled for CRM-Master. Return STOP without starting a lifecycle and direct the user to /sdd-direct <change-name>."
+    }
+  }
+}

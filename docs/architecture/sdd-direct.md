@@ -1,105 +1,59 @@
-# SDD-Direct Architecture
+---
+classification: EXECUTION ADAPTER
+semantic_authority: false
+workflow_semantics: docs/SDD-WORKFLOW.md
+persistence: hybrid
+---
 
-> Project-local, opt-in execution mode for CRM-Master.
+# CRM-SDD Direct Execution Adapter
 
-## Authority
+This document defines how project-local execution is wired. It does not define
+WHAT the CRM lifecycle is, WHEN a transition is legal, or HOW a gate is judged.
+Those semantics belong exclusively to `docs/SDD-WORKFLOW.md`.
 
-SDD-Direct has one canonical active artifact store:
-`openspec/changes/<change-name>/`. Design, reviews, tasks, Apply evidence,
-Verify, Archive, Health Report, and Repository Ready artifacts are read and
-written there. The archive convention remains under `openspec/changes/`.
-SDD-Direct never creates a second store such as `docs/sdd-direct/changes/`.
+## Execution Sequence
 
-Direct does not invoke or consult Gentle-AI, its dispatcher, the native review
-lifecycle, or native workflow state. Those states are irrelevant to Direct.
-The existing legacy/Gentle-AI behavior and global configuration remain
-untouched. Direct is selected only through the project-local command and
-project-local Direct agents.
+The local Direct orchestrator performs this bounded sequence:
 
-## Direct Preflight
+1. Load the canonical repository governance and the active project context.
+2. Resolve the project-local executor for the current action from
+   `.opencode/sdd-model-map.json`.
+3. Recover the current change state from
+   `openspec/changes/<change-name>/` before additional exploration.
+4. Invoke the local phase executor with the approved Working Set and Read Order.
+5. Persist exact artifacts in the canonical change directory under the
+   `hybrid` contract and mirror bounded status/evidence to Engram.
+6. Invoke the repository validators and record their results in the phase
+   artifact.
+7. Return control to the orchestrator, the canonical checkpoint, or the
+   maintainer handoff prescribed by the workflow.
 
-Direct preflight is the first Direct step, owned by
-`sdd-direct-orchestrator`, before Design or any phase execution. It is a
-repository-owned prerequisite check and is not authoritative over workflow
-transitions; the Workflow Guard remains the sole transition authority. It
-verifies only:
+The adapter never creates a second artifact store, rewrites a Design or Tasks
+to conceal drift, or silently broadens the Working Set. A missing file,
+provenance conflict, or material contradiction stops the affected action and
+returns an evidence request instead of triggering broad exploration.
 
-- canonical workflow files exist;
-- the retained four-agent set exists;
-- Direct command routing is valid;
-- the validator is available;
-- the active SPEC path is valid under `openspec/changes/<change-name>/`.
+## Local Wiring
 
-The required sequencing is:
+`/sdd-direct <change-name>` is the only project-local CRM-SDD lifecycle entry
+point. Local agents are thin adapters and defer lifecycle meaning to the
+canonical workflow. Same-name legacy command overrides are STOP-only
+compatibility boundaries; they cannot start the CRM lifecycle.
 
-```text
-Direct preflight -> Design
-```
+Global OpenCode/Gentle files remain external read-only evidence. This adapter
+does not invoke, synchronize, install, uninstall, or modify them, and it does
+not assign global prompt semantics to CRM-SDD.
 
-Preflight does not depend on Gentle-AI, legacy agents, provider or model state,
-or historical lifecycle metadata.
+## Persistence Boundary
 
-## Decision Model
+OpenSpec files carry exact repository artifacts. Engram carries durable bounded
+context, decisions, status summaries, and recovery metadata. The `hybrid`
+contract separates storage from authority: neither store, the local model map,
+nor this adapter can redefine lifecycle semantics.
 
-The approved Design is the primary reasoning and specification authority. It
-must preserve the existing 18-section Enterprise Design Standard without
-changing or duplicating its templates. Architecture Review and Tasks Review
-classify findings as `BLOCKER`, `CONDITION`, or `NON-BLOCKING`:
+## Maintainer Handoff
 
-- `BLOCKER` is the only classification that permits the matching refinement
-  and repeat review.
-- `CONDITION` -> continue after recording the condition and owner.
-- `NON-BLOCKING` -> continue without refinement.
-- Resolved findings are closed; they are not reopened without new evidence.
-
-## Automatic Flow
-
-```text
-Design → Architecture Review → Design Refinement only on BLOCKER → Tasks → Tasks Review → Tasks Refinement only on BLOCKER → Workload Guard → Apply 1–5 → Apply Summary → Verify → Archive → Health Report → Repository Ready → STOP.
-```
-
-After an approved Tasks Review, Workload Guard and the remaining non-destructive
-phases execute automatically. Direct stops at Repository Ready. Commit, Push,
-Merge, Release, and Tag are manual maintainer-controlled destructive gates and
-are never performed by Direct agents.
-
-The normal `Verify → Archive` transition requires a `VERIFIED` Verify result.
-When Verify is blocked, the legal recovery loop is:
-
-```text
-Verify BLOCKED -> orchestrator-owned Direct Fix -> Verify
-```
-
-Direct Fix is an orchestrator-owned repair mode, not an agent or phase agent.
-It changes only what is necessary to resolve the concrete Verify blocker. The
-approved Design and Tasks remain unchanged unless the blocker proves a real
-contract inconsistency. Control returns to Verify after repair; Archive, Health
-Report, and Repository Ready are forbidden while Verify is `BLOCKED`.
-
-## Agent Routing
-
-| Direct agent | Logical role | Phase ownership |
-|---|---|---|
-| `sdd-direct-orchestrator` | orchestration/implementation | Direct preflight, phase determination, Tasks generation, Tasks Review logic, Tasks Refinement (patch-only on BLOCKER), orchestrator-owned Direct Fix repair mode, Workload Guard, automatic progression, Apply coordination/dispatch and ownership, Apply Summary, Archive, Health Report, Repository Ready |
-| `sdd-direct-design` | high-reasoning | repository exploration, architecture, contracts, security, migrations, Working Set, Read Order, acceptance criteria, Design Refinement (patch-only on BLOCKER) |
-| `sdd-direct-architecture-review` | high-reasoning | validates approved Design for real blockers; does not redesign |
-| `sdd-direct-verify` | high-reasoning | final validation against Design, Tasks, implementation, tests, evidence |
-
-Role contract: the Direct orchestrator owns orchestration/implementation and
-Apply routing; Design, Architecture Review, and Verify use high-reasoning. The
-economical evidence/mechanical role is bounded support and does not own Apply.
-Concrete model mappings live only in `docs/SDD-MODEL-ASSIGNMENTS.md` and the
-OpenCode configuration (`~/.config/opencode/opencode.json`).
-All Direct agents operate only on the canonical change directory and paths
-declared by the current Working Set. Each returns a structured result in
-English and records evidence in the canonical artifact store.
-
-## Compatibility, Migration, and Rollback
-
-Direct mode is additive. It does not reinterpret legacy state, alter existing
-OpenSpec/Gentle-AI artifacts, or loosen product SDD/TDD rules. No migration is
-required because the artifact location is the existing `openspec/changes/`
-tree. To roll back Direct, remove its project-local agents, command,
-documentation, and validator; leave all existing change and archive artifacts
-untouched. SPEC-SDD-0002 is only a future Direct-mode pilot reference and is
-not created, started, or modified by this implementation.
+The adapter can prepare health and readiness evidence, but it never executes
+Commit, Push, Merge, Release, Tag, reset, clean, stash, restore, or checkout.
+Those operations require an explicit HUMAN / MAINTAINER action under
+`AGENTS.md` and the canonical workflow.

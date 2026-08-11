@@ -8,6 +8,8 @@
     "build": "turbo build",
     "test": "turbo test",
     "lint": "turbo lint",
+    "sdd:validate": "node scripts/validate-sdd-direct.mjs",
+    "sdd:validate:design": "node scripts/validate-enterprise-design.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "turbo clean"
   },

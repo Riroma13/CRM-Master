@@ -1,30 +1,24 @@
-# SDD Model Assignments — CRM-Master
+---
+classification: HISTORICAL
+semantic_authority: false
+runtime: not-loaded
+---
 
-> Status: Active operating brief
-> Updated: 2026-07-28
+# Historical SDD Model Assignments
 
-This brief records the current concrete assignments for the provider-independent
-roles defined in `AGENTS.md` and `docs/architecture/sdd-direct.md`.
+This file preserves the 2026-07-28 operating brief as historical evidence. It
+is not an active routing source and is not loaded by CRM-SDD runtime. The sole
+current concrete mapping is `.opencode/sdd-model-map.json`; logical role
+semantics are defined by `AGENTS.md` and `docs/SDD-WORKFLOW.md`.
 
-## Current Assignments
+## Historical Snapshot
 
-| Logical role | Current configured model | Agents |
+| Historical logical label | Historical configured model | Historical agents |
 |---|---|---|
-| orchestration/implementation | `openai/gpt-5.6-luna` | `sdd-orchestrator`, `sdd-tasks`, `sdd-tasks-review`, `sdd-apply`, `sdd-archive`, `sdd-health`, `sdd-repository-ready` |
-| high-reasoning | `openai/gpt-5.6-terra` | `sdd-design`, `sdd-architecture-review`, `sdd-verify` |
-| economical evidence/mechanical | LongCat intended for bounded support | No current agent binding |
+| orchestration/implementation | `openai/gpt-5.6-luna` | legacy global SDD agents |
+| high-reasoning | `openai/gpt-5.6-terra` | legacy global SDD agents |
+| economical evidence/mechanical | LongCat intended for bounded support | no historical binding |
 
-LongCat is the intended bounded-support mapping, but no LongCat-specific agent
-binding is currently present in `~/.config/opencode/opencode.json`. It must never
-become the default Apply route.
-
-## Default Apply Route
-
-```text
-continue with Apply -> sdd-apply -> openai/gpt-5.6-luna
-```
-
-## Configuration Source
-
-Concrete assignments are sourced from `~/.config/opencode/opencode.json`.
-Restart OpenCode after changing that file so agent mappings are reloaded.
+The former brief sourced concrete assignments from global OpenCode
+configuration. That configuration remains external read-only evidence and is
+not the CRM-SDD execution path.

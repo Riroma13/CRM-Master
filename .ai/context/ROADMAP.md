@@ -1,26 +1,34 @@
+---
+classification: PROJECT CONTEXT
+semantic_authority: false
+scope: product roadmap only
+---
+
 # ROADMAP — CRM-Master
 
-> Próximos hitos y dirección del producto.
+This file records product SPEC state only. It does not route SDD phases, assign
+logical roles, or select models.
 
-## ✅ Completado
+## Completed
 
-- [x] **Client Platform** — PR1 + PR2 mergeados a `main`
-- [x] **Portal cliente activado** — `NEXT_PUBLIC_CLIENT_PORTAL_ENABLED=true`
-- [x] **Rate limiter OnModuleDestroy** — fix memory leak
-- [x] **Integrity test** — tenant-scope cross-references schema
-- [x] **CI workflow** — GitHub Actions con verify + test + lint
-- [x] **Documentación** — tenant-scope generator en `docs/`
-- [x] **Client self-registration** — signup, login, portal access
-- [x] **SPEC-0025 — Identity & Organization Platform** — COMPLETED; archivado y mergeado a `main` mediante PR #18
-- [x] **SPEC-0025 final CI** — Database tests PASS, Lint PASS, generated scope verification PASS
-- [x] **API ESLint configuration** — deuda de configuración resuelta
+- [x] Client Platform — PR1 and PR2 merged to `main`
+- [x] Client portal activated — `NEXT_PUBLIC_CLIENT_PORTAL_ENABLED=true`
+- [x] Rate limiter `OnModuleDestroy` — memory leak fix
+- [x] Integrity test — tenant-scope cross-references schema
+- [x] CI workflow — GitHub Actions with verify, test, and lint
+- [x] Tenant-scope generator documentation
+- [x] Client self-registration — signup, login, and portal access
+- [x] SPEC-0025 Identity & Organization Platform — completed, archived, and
+  merged to `main` through PR #18
+- [x] SPEC-0025 final CI — database tests, lint, and generated scope checks pass
+- [x] API ESLint configuration debt resolved
 
-## Pendientes técnicos
+## Technical Debt
 
-- [ ] Rate limiter service-side double check redundancy
+- [ ] Rate limiter service-side double-check redundancy
 
-## 🏗️ Próximas features
+## Upcoming Product Features
 
-- [ ] **OAuth social login** — siguiente candidato; no crear un SPEC todavía
-- Password reset email
-- Mobile app
+- [ ] OAuth social login — next candidate; no new SPEC yet
+- [ ] Password reset email
+- [ ] Mobile app

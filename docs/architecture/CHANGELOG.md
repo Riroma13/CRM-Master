@@ -1,4 +1,13 @@
+---
+classification: HISTORICAL
+semantic_authority: false
+runtime: not-loaded
+---
+
 # Architecture Changelog
+
+> Historical release evidence. Current CRM-SDD semantics are defined only by
+> `docs/SDD-WORKFLOW.md`.
 
 ## Stable: SDD v3.0
 

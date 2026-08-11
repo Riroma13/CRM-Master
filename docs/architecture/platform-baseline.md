@@ -1,6 +1,6 @@
-# Platform Baseline
-
 ---
+classification: PROJECT CONTEXT
+semantic_authority: false
 status: active
 role: platform baseline reference
 ---
@@ -73,7 +73,7 @@ this section is the current platform baseline.
 | SDD Version                | **v3.0 (stable)**                                              |
 | Feature Freeze             | **ACTIVE** (ADR-0004 history retained)                         |
 | Enterprise Design Standard | **STABLE** (18-section/A-G shape preserved)                    |
-| OpenSpec Workflow          | **ACTIVE**                                                     |
+| CRM-SDD Governance         | **v3 ACTIVE / STABLE**                                        |
 
 ---
 
@@ -88,7 +88,7 @@ this section is the current platform baseline.
 | Navigation Registry         | ✅ Implemented | `apps/tenant-web/src/config/navigation/`       |
 | Enterprise Design Template  | ✅ Active      | `docs/templates/design-enterprise-template.md` |
 | Design Standard             | ✅ Active      | `docs/templates/design-enterprise-template.md` |
-| Canonical SDD Workflow      | ✅ Active      | `docs/SDD-WORKFLOW.md` (lifecycle) + `docs/sdd-workflow-guard.md` (transitions) |
+| Canonical SDD Workflow      | ✅ Active      | `docs/SDD-WORKFLOW.md` (sole semantic authority)             |
 | Working Set                 | ✅ Mandatory   | SDD Design phase                               |
 | Read Order                  | ✅ Mandatory   | SDD Design phase                               |
 | Design Confidence           | ✅ Mandatory   | SDD Design phase                               |
@@ -158,8 +158,9 @@ this section is the current platform baseline.
    canonical templates at `docs/templates/`.
 
 5. **All implementations follow the current canonical SDD workflow in
-    `docs/SDD-WORKFLOW.md` (lifecycle) and `docs/sdd-workflow-guard.md`
-    (transition/blocking rules).** Mandatory artifacts and gates are authoritative.
+     `docs/SDD-WORKFLOW.md`.** The Workflow Guard is only a compatibility and
+     mechanical-enforcement pointer. Mandatory artifacts and gates are
+     authoritative in the workflow document.
 
 6. **Architecture Review is non-negotiable.** Every Design must evaluate:
    - Scalability (10×, 100×)
@@ -205,7 +206,8 @@ Desde este baseline, el roadmap del proyecto se centra exclusivamente en
 5. **Automation** — reglas de automatización, webhooks, plantillas.
 6. **Client portal** — experiencia de autoservicio para clientes finales.
 
-Cada una de estas áreas seguirán el workflow canónico (`docs/SDD-WORKFLOW.md` + `docs/sdd-workflow-guard.md`) con el Enterprise Design Standard obligatorio.
+Cada una de estas áreas seguirá el workflow canónico
+(`docs/SDD-WORKFLOW.md`) con el Enterprise Design Standard obligatorio.
 
 ---
 
@@ -220,9 +222,9 @@ Cada una de estas áreas seguirán el workflow canónico (`docs/SDD-WORKFLOW.md`
 - `docs/architecture/module-composition.md`
 - `docs/templates/design-enterprise-template.md`
 - `docs/templates/design-enterprise-template.md`
-- `docs/SDD-WORKFLOW.md` (canonical lifecycle)
-- `docs/sdd-workflow-guard.md` (transition/blocking authority)
-- `docs/architecture/sdd-direct.md` (Direct mode specifics)
+- `docs/SDD-WORKFLOW.md` (sole semantic workflow authority)
+- `docs/sdd-workflow-guard.md` (compatibility/enforcement pointer)
+- `docs/architecture/sdd-direct.md` (execution adapter)
 - `docs/roadmaps/future-roadmap.md`
 - `AGENTS.md`
 - `.ai/context/PROJECT.md`

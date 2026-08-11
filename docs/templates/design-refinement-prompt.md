@@ -1,4 +1,13 @@
-# Design Refinement Prompt — SDD v2.1
+---
+classification: HISTORICAL
+semantic_authority: false
+runtime: not-loaded
+---
+
+# Historical Design Refinement Prompt — SDD v2.1
+
+> Preserved as historical evidence. It is not loaded by CRM-SDD runtime;
+> refinement semantics belong to `docs/SDD-WORKFLOW.md`.
 
 ## Objetivo
 

@@ -1,5 +1,7 @@
 # SDD v3.0 Stable Release Notes
 
+> Classification: HISTORICAL. Non-authoritative and not loaded by CRM-SDD runtime.
+
 ---
 status: archived
 archived_from: docs/architecture/sdd-v3.0-release-notes.md

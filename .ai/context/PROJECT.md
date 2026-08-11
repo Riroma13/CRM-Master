@@ -1,3 +1,8 @@
+---
+classification: PROJECT CONTEXT
+semantic_authority: false
+---
+
 # PROJECT: CRM-Master
 
 > Plataforma SaaS multi-tenant de gestión empresarial.
@@ -148,14 +153,15 @@ Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `chore:`
 
 ## SDD Platform
 
-SDD workflow, infrastructure, and governance docs live in `docs/` and
-`docs/architecture/`. The canonical authority chain is: Maintainer/User →
-Approved Design → `docs/SDD-WORKFLOW.md` → `docs/sdd-workflow-guard.md` →
-`.ai/context/*` → templates/architecture guidance → orchestrator/agents →
-validators. PROJECT.md provides project context only; it does not govern the
-SDD workflow. The platform is feature-frozen; changes require historical
-evidence. See `docs/architecture/platform-baseline.md` for status and
-`docs/architecture/sdd-infrastructure.md` for components.
+PROJECT.md provides stack, architecture, product conventions, and repository
+context only; it does not govern SDD lifecycle semantics or model routing.
+Startup and authority rules are in `AGENTS.md`. The sole semantic workflow
+authority is `docs/SDD-WORKFLOW.md`; `docs/architecture/sdd-direct.md` is the
+project-local execution adapter and `.opencode/sdd-model-map.json` is the sole
+concrete mapping source. The active artifact persistence contract is `hybrid`
+under `openspec/changes/<change-name>/` with bounded Engram context. See
+`docs/architecture/platform-baseline.md` for platform status and
+`docs/architecture/sdd-infrastructure.md` for mechanical infrastructure.
 
 ---
 
@@ -210,18 +216,10 @@ Referencia oficial: `docs/architecture/platform-baseline.md`
 
 Project context: new SDD Designs follow the Enterprise Design Standard via
 `docs/templates/design-enterprise-template.md` (18 sections + 7 AR topics).
-This standard is governed by the canonical SDD workflow and is subject to
-Feature Freeze (ADR-0004): the template changes only with recurring historical
-evidence, not personal preference.
-
----
-
-## Apply Phase — Standard Execution Report
-
-Project context: every Apply phase ends with the standard execution summary
-format (defined by the canonical SDD-Direct workflow). See
-`docs/architecture/sdd-direct.md` for the authoritative template. Mandatory
-since SPEC-0010/0011/0012.
+The template owns artifact shape; lifecycle timing and gate semantics belong to
+`docs/SDD-WORKFLOW.md`. This standard is subject to Feature Freeze (ADR-0004):
+the template changes only with recurring historical evidence, not personal
+preference.
 
 ---
 

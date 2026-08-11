@@ -9,6 +9,8 @@ archived_at: 2026-07-26
 
 # SDD v3.0 — Candidate Improvements (Future Roadmap)
 
+> Classification: HISTORICAL. Non-authoritative and not loaded by CRM-SDD runtime.
+
 > **Estado:** Proposed (Not Scheduled)
 > **Versión SDD actual:** v2.1 (Feature Frozen)
 > **Documento:** Vision-only. No modifica ningún comportamiento del pipeline.

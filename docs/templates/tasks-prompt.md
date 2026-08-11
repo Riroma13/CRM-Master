@@ -1,4 +1,13 @@
-# Tasks Prompt — SDD v2.1
+---
+classification: HISTORICAL
+semantic_authority: false
+runtime: not-loaded
+---
+
+# Historical Tasks Prompt — SDD v2.1
+
+> Preserved as historical evidence. It is not loaded by CRM-SDD runtime;
+> Tasks semantics belong to `docs/SDD-WORKFLOW.md`.
 
 ## Objetivo
 

@@ -1,34 +1,21 @@
-# Prompt Templates
+---
+classification: TEMPLATE
+semantic_authority: false
+---
 
-Estos prompts forman parte del estándar SDD v3.0.
+# SDD Template Catalog
 
-No deben modificarse durante el desarrollo de una SPEC.
+These files provide artifact shape and review prompts. They do not define the
+CRM-SDD lifecycle, transition graph, role ownership, gate semantics, or model
+routing. Those responsibilities belong to `docs/SDD-WORKFLOW.md` and the
+project-local execution configuration.
 
-## Flujo oficial
+## Canonical Templates
 
-1. **Design**
-2. **Architecture Review**
-3. **Design Refinement**
+- `design-enterprise-template.md` — the sole 18-section Design shape with A-G
+  Architecture Review topics
+- `apply-summary-template.md` — the nested 7.6 Apply Summary artifact
+- `terminal-gates-template.md` — health and repository-readiness evidence shape
 
-4. **Tasks**
-5. **Tasks Review**
-6. **Tasks Refinement**
-
-7. **Apply**
-
-   Consiste en 5 fases secuenciales:
-
-   - Phase 1 — Foundation (schema, shared contracts, ADR)
-   - Phase 2 — Core Engine (service, storage, module)
-    - Phase 3 — Feature Implementation (funcionalidad específica del SPEC)
-    - Phase 4 — Integration (wiring de componentes, rutas, UI)
-   - Phase 5 — Testing (unit, integration, doorbell)
-
-   Al finalizar Phase 5 se genera el **Apply Summary** usando
-   `apply-summary-template.md`, que consolida las métricas de
-   todas las fases sin sustituir los resúmenes individuales.
-
-8. **Verify**
-9. **Archive**
-
-El objetivo es mantener consistencia entre SPEC independientemente del modelo utilizado.
+Historical v2.1 prompts remain for evidence only. Their classification is
+`HISTORICAL`, and no project-local executor loads them as runtime authorities.

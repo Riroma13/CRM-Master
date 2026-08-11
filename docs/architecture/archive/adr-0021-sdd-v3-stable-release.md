@@ -1,5 +1,7 @@
 # ADR-0021 - SDD v3.0 Stable Release Contract
 
+> Classification: HISTORICAL. Non-authoritative and not loaded by CRM-SDD runtime.
+
 ---
 status: archived
 archived_from: docs/architecture/adr/0021-sdd-v3-stable-release.md

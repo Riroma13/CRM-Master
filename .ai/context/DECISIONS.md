@@ -1,6 +1,17 @@
+---
+classification: PROJECT CONTEXT
+semantic_authority: false
+scope: durable product and architecture decisions
+---
+
 # DECISIONS — Architecture Decision Records
 
 > Formato: Problema → Contexto → Decisión → Consecuencias
+>
+> This file contains durable product and architecture decisions only. It does
+> not route SDD phases or assign models. Workflow references in historical ADR
+> evidence are non-authoritative; current governance is defined by `AGENTS.md`
+> and `docs/SDD-WORKFLOW.md`.
 
 ---
 

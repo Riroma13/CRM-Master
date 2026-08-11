@@ -1,129 +1,546 @@
 #!/usr/bin/env node
 
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const AGENTS = join(ROOT, '.opencode', 'agents');
-const COMMAND = join(ROOT, '.opencode', 'commands', 'sdd-direct.md');
-const GUARD = join(ROOT, 'docs', 'sdd-workflow-guard.md');
-const DIRECT_ARCHITECTURE = join(ROOT, 'docs', 'architecture', 'sdd-direct.md');
-const ORCHESTRATOR = join(AGENTS, 'sdd-direct-orchestrator.md');
-const VERIFY = join(AGENTS, 'sdd-direct-verify.md');
-const KEEP_AGENTS = ['sdd-direct-orchestrator.md', 'sdd-direct-design.md', 'sdd-direct-architecture-review.md', 'sdd-direct-verify.md'];
-const CANONICAL = 'openspec/changes/<change-name>/';
-const FORBIDDEN = 'docs/sdd-direct/changes/';
-const RECOVERY_PATH = 'Verify BLOCKED -> orchestrator-owned Direct Fix -> Verify';
-const PREFLIGHT_SEQUENCE = 'Direct preflight -> Design';
-
 const failures = [];
-const fail = (m) => failures.push(m);
-const p = (f) => relative(ROOT, f) || '.';
-const read = (f) => { try { return readFileSync(f, 'utf8'); } catch { return null; } };
-function fm(text) {
+const fail = (message) => failures.push(message);
+const pathOf = (...parts) => join(ROOT, ...parts);
+const relativePath = (file) => relative(ROOT, file) || '.';
+const read = (file) => {
+  try {
+    return readFileSync(file, 'utf8');
+  } catch {
+    return null;
+  }
+};
+
+function frontmatter(text) {
   if (!text || !text.startsWith('---\n')) return null;
   const end = text.indexOf('\n---\n', 4);
-  if (end === -1) return null;
-  const m = {};
+  if (end < 0) return null;
+  const values = {};
   for (const line of text.slice(4, end).split('\n')) {
     const match = /^([A-Za-z][A-Za-z0-9_-]*):\s*(.*)$/.exec(line);
-    if (match) m[match[1]] = match[2].trim();
+    if (match) values[match[1]] = match[2].trim();
   }
-  return { fm: m, body: text.slice(end + 5) };
+  return values;
 }
 
-// Rule 1: Frontmatter structure validation
-for (const name of KEEP_AGENTS) {
-  const f = join(AGENTS, name);
-  if (!read(f)) { fail(`${p(f)}: missing`); continue; }
-  if (!fm(read(f))) fail(`${p(f)}: invalid frontmatter`);
-}
-const cmd = read(COMMAND);
-if (!cmd || !fm(cmd)) fail(`${p(COMMAND)}: invalid frontmatter`);
-
-// Rule 2: Mode validation
-for (const name of KEEP_AGENTS) {
-  const parsed = fm(read(join(AGENTS, name)));
-  if (!parsed) continue;
-  if (name === 'sdd-direct-orchestrator.md' && parsed.fm.mode !== 'primary') fail(`${name}: mode must be primary`);
-  if (name !== 'sdd-direct-orchestrator.md' && parsed.fm.mode !== 'subagent') fail(`${name}: mode must be subagent`);
+function parseJson(file) {
+  const text = read(file);
+  if (text === null) {
+    fail(`${relativePath(file)}: missing or unreadable`);
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    fail(`${relativePath(file)}: invalid JSON (${error.message})`);
+    return null;
+  }
 }
 
-// Rule 3: Description presence
-for (const name of KEEP_AGENTS) {
-  const parsed = fm(read(join(AGENTS, name)));
-  if (parsed && !parsed.fm.description) fail(`${name}: missing description`);
-}
-const cmdParsed = fm(cmd);
-if (cmdParsed && !cmdParsed.fm.description) fail(`${p(COMMAND)}: missing description`);
-
-// Rule 4: Command selects sdd-direct-orchestrator
-if (cmdParsed && cmdParsed.fm.agent !== 'sdd-direct-orchestrator') fail(`${p(COMMAND)}: agent must be sdd-direct-orchestrator`);
-
-// Rule 5: Canonical path reference
-if (cmdParsed && !cmdParsed.body.includes(CANONICAL)) fail(`${p(COMMAND)}: must reference ${CANONICAL}`);
-for (const name of KEEP_AGENTS) {
-  const parsed = fm(read(join(AGENTS, name)));
-  if (parsed && !parsed.body.includes(CANONICAL)) fail(`${name}: must reference ${CANONICAL}`);
+function requireFile(file) {
+  if (!existsSync(file)) fail(`${relativePath(file)}: required file is missing`);
 }
 
-// Rule 6: Forbidden store absence
-if (existsSync(join(ROOT, FORBIDDEN))) fail(`forbidden store exists: ${FORBIDDEN}`);
-for (const name of [...KEEP_AGENTS, 'sdd-direct.md']) {
-  const f = name === 'sdd-direct.md' ? COMMAND : join(AGENTS, name);
-  const text = read(f);
-  if (text && text.includes(FORBIDDEN)) fail(`${name}: references forbidden store`);
-}
-
-// Rule 7: Direct Verify recovery invariants
-const guard = read(GUARD);
-const directArchitecture = read(DIRECT_ARCHITECTURE);
-const orchestrator = read(ORCHESTRATOR);
-const verify = read(VERIFY);
-const requireText = (text, expected, message) => {
-  if (!text || !text.includes(expected)) fail(message);
-};
-const requirePattern = (text, pattern, message) => {
-  if (!text || !pattern.test(text)) fail(message);
+const files = {
+  agents: pathOf('AGENTS.md'),
+  project: pathOf('.ai', 'context', 'PROJECT.md'),
+  session: pathOf('.ai', 'context', 'SESSION.md'),
+  decisions: pathOf('.ai', 'context', 'DECISIONS.md'),
+  issues: pathOf('.ai', 'context', 'KNOWN_ISSUES.md'),
+  roadmap: pathOf('.ai', 'context', 'ROADMAP.md'),
+  workflow: pathOf('docs', 'SDD-WORKFLOW.md'),
+  guard: pathOf('docs', 'sdd-workflow-guard.md'),
+  direct: pathOf('docs', 'architecture', 'sdd-direct.md'),
+  infrastructure: pathOf('docs', 'architecture', 'sdd-infrastructure.md'),
+  baseline: pathOf('docs', 'architecture', 'platform-baseline.md'),
+  changelog: pathOf('docs', 'architecture', 'CHANGELOG.md'),
+  template: pathOf('docs', 'templates', 'design-enterprise-template.md'),
+  templateReadme: pathOf('docs', 'templates', 'README.md'),
+  applyTemplate: pathOf('docs', 'templates', 'apply-summary-template.md'),
+  terminalTemplate: pathOf('docs', 'templates', 'terminal-gates-template.md'),
+  modelHistory: pathOf('docs', 'SDD-MODEL-ASSIGNMENTS.md'),
+  config: pathOf('openspec', 'config.yaml'),
+  package: pathOf('package.json'),
+  projectConfig: pathOf('opencode.json'),
+  modelMap: pathOf('.opencode', 'sdd-model-map.json'),
+  command: pathOf('.opencode', 'commands', 'sdd-direct.md'),
 };
 
-requireText(guard, RECOVERY_PATH, 'Workflow Guard: Verify BLOCKED must route through orchestrator-owned Direct Fix back to Verify');
-requireText(directArchitecture, RECOVERY_PATH, 'Direct architecture: Verify BLOCKED recovery loop is missing');
-requireText(orchestrator, RECOVERY_PATH, 'Orchestrator: Direct Fix must return control to Verify');
-requireText(verify, RECOVERY_PATH, 'Verify: BLOCKED result must route to orchestrator-owned Direct Fix and back to Verify');
-requirePattern(
-  guard,
-  /While Verify is\s*`BLOCKED`,\s+Archive,\s+Health\s+Report,\s+and Repository Ready are forbidden/,
-  'Workflow Guard: Archive, Health Report, and Repository Ready must be forbidden from BLOCKED Verify',
+const localAgentNames = [
+  'sdd-direct-orchestrator',
+  'sdd-direct-design',
+  'sdd-direct-architecture-review',
+  'sdd-direct-tasks',
+  'sdd-direct-tasks-review',
+  'sdd-direct-apply',
+  'sdd-direct-verify',
+  'sdd-direct-archive',
+  'sdd-direct-health-report',
+  'sdd-direct-repository-ready',
+];
+const localAgentFiles = Object.fromEntries(
+  localAgentNames.map((name) => [name, pathOf('.opencode', 'agents', `${name}.md`)]),
 );
-if (existsSync(join(AGENTS, 'sdd-direct-fix.md'))) fail('Direct Fix must remain a repair mode, not an agent');
-
-// Rule 8: Direct preflight sequencing
-requireText(orchestrator, PREFLIGHT_SEQUENCE, 'Orchestrator: Direct preflight must precede Design');
-requireText(directArchitecture, PREFLIGHT_SEQUENCE, 'Direct architecture: Direct preflight must precede Design');
-requirePattern(
-  orchestrator,
-  /The first Direct step, before Design or any phase execution/,
-  'Orchestrator: Direct preflight must be the first step before phase execution',
+const legacyCommandNames = [
+  'sdd-archive',
+  'sdd-onboard',
+  'sdd-status',
+  'sdd-ff',
+  'sdd-apply',
+  'sdd-new',
+  'sdd-metrics',
+  'sdd-init',
+  'sdd-verify',
+  'sdd-doctor',
+  'sdd-explore',
+  'sdd-continue',
+];
+const legacyCommandFiles = Object.fromEntries(
+  legacyCommandNames.map((name) => [name, pathOf('.opencode', 'commands', `${name}.md`)]),
 );
-requireText(orchestrator, '`sdd-direct-orchestrator` owns this step', 'Orchestrator: Direct preflight ownership is missing');
 
-// Rule 9: Maintainer-controlled terminal gates
-requireText(directArchitecture, 'manual maintainer-controlled destructive gates', 'Direct architecture: terminal gates must remain maintainer-controlled');
-requireText(orchestrator, 'manual maintainer-controlled destructive gates', 'Orchestrator: terminal gates must remain maintainer-controlled');
-requirePattern(directArchitecture, /Commit,\s+Push,\s+Merge,\s+Release,\s+and Tag/, 'Direct architecture: terminal gate list is incomplete');
+const requiredFiles = [
+  ...Object.values(files),
+  ...Object.values(localAgentFiles),
+  ...Object.values(legacyCommandFiles),
+  pathOf('scripts', 'validate-sdd-direct.mjs'),
+  pathOf('scripts', 'validate-enterprise-design.mjs'),
+];
+requiredFiles.forEach(requireFile);
+
+const texts = Object.fromEntries(
+  Object.entries(files).map(([name, file]) => [name, read(file) || '']),
+);
+const localAgentTexts = Object.fromEntries(
+  Object.entries(localAgentFiles).map(([name, file]) => [name, read(file) || '']),
+);
+const legacyCommandTexts = Object.fromEntries(
+  Object.entries(legacyCommandFiles).map(([name, file]) => [name, read(file) || '']),
+);
+const projectConfig = parseJson(files.projectConfig);
+const modelMap = parseJson(files.modelMap);
+const packageJson = parseJson(files.package);
+
+// The workflow is the only file allowed to declare semantic authority.
+const authorityCandidates = [
+  files.agents,
+  files.project,
+  files.session,
+  files.decisions,
+  files.issues,
+  files.roadmap,
+  files.workflow,
+  files.guard,
+  files.direct,
+  files.infrastructure,
+  files.baseline,
+  files.changelog,
+  files.template,
+  files.templateReadme,
+  files.applyTemplate,
+  files.terminalTemplate,
+  files.modelHistory,
+  ...Object.values(localAgentFiles),
+  files.command,
+];
+const semanticAuthorityFiles = authorityCandidates.filter((file) =>
+  /semantic_authority:\s*true\b/.test(read(file) || ''),
+);
+if (semanticAuthorityFiles.length !== 1 || semanticAuthorityFiles[0] !== files.workflow) {
+  fail(
+    `exactly one workflow semantic authority required; found ${semanticAuthorityFiles
+      .map(relativePath)
+      .join(', ') || 'none'}`,
+  );
+}
+
+const expectedClassifications = new Map([
+  [files.agents, 'PRIMARY AUTHORITY'],
+  [files.workflow, 'PRIMARY AUTHORITY'],
+  [files.guard, 'COMPATIBILITY STUB'],
+  [files.direct, 'EXECUTION ADAPTER'],
+  [files.infrastructure, 'EXECUTION ADAPTER'],
+  [files.baseline, 'PROJECT CONTEXT'],
+  [files.changelog, 'HISTORICAL'],
+  [files.template, 'TEMPLATE'],
+  [files.templateReadme, 'TEMPLATE'],
+  [files.applyTemplate, 'TEMPLATE'],
+  [files.terminalTemplate, 'TEMPLATE'],
+  [files.modelHistory, 'HISTORICAL'],
+  [files.project, 'PROJECT CONTEXT'],
+  [files.session, 'PROJECT CONTEXT'],
+  [files.decisions, 'PROJECT CONTEXT'],
+  [files.issues, 'PROJECT CONTEXT'],
+  [files.roadmap, 'PROJECT CONTEXT'],
+]);
+for (const [file, expected] of expectedClassifications) {
+  const marker = frontmatter(read(file) || '')?.classification;
+  if (marker !== expected) fail(`${relativePath(file)}: classification must be ${expected}`);
+}
+for (const [name, text] of Object.entries(localAgentTexts)) {
+  if (!/^Classification:\s+EXECUTION ADAPTER\./m.test(text)) {
+    fail(`${name}: missing EXECUTION ADAPTER classification`);
+  }
+}
+if (!/^Classification:\s+EXECUTION ADAPTER\./m.test(texts.command)) {
+  fail(`${relativePath(files.command)}: missing EXECUTION ADAPTER classification`);
+}
+
+// Version and lifecycle structure.
+const workflowMeta = frontmatter(texts.workflow);
+if (workflowMeta?.sdd_version !== 'v3') fail('workflow: sdd_version must be v3');
+if (workflowMeta?.status !== 'ACTIVE/STABLE') fail('workflow: status must be ACTIVE/STABLE');
+if (!/sole semantic workflow authority/i.test(texts.workflow)) {
+  fail('workflow: sole semantic workflow authority declaration is missing');
+}
+
+function markedBlock(text, start, end) {
+  const startIndex = text.indexOf(start);
+  const endIndex = text.indexOf(end);
+  if (startIndex < 0 || endIndex < 0 || endIndex <= startIndex) return '';
+  return text.slice(startIndex + start.length, endIndex);
+}
+
+const lifecycle = markedBlock(
+  texts.workflow,
+  '<!-- canonical-lifecycle:start -->',
+  '<!-- canonical-lifecycle:end -->',
+);
+const expectedPhases = [
+  'Design',
+  'Architecture Review',
+  'Design Refinement',
+  'Tasks',
+  'Tasks Review',
+  'Tasks Refinement',
+  'Apply',
+  'Verify',
+  'Archive',
+  'Health Report',
+  'Repository Ready',
+  'Commit',
+  'Push',
+  'Merge',
+];
+const phaseRows = [...lifecycle.matchAll(/^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|/gm)].map((match) => ({
+  number: Number(match[1]),
+  name: match[2].trim(),
+}));
+if (phaseRows.length !== expectedPhases.length) {
+  fail(`canonical lifecycle must contain exactly 14 phases, found ${phaseRows.length}`);
+} else {
+  phaseRows.forEach((phase, index) => {
+    if (phase.number !== index + 1 || phase.name !== expectedPhases[index]) {
+      fail(`canonical lifecycle phase ${index + 1} must be ${expectedPhases[index]}`);
+    }
+  });
+}
+
+const applyBlock = markedBlock(
+  texts.workflow,
+  '<!-- apply-substeps:start -->',
+  '<!-- apply-substeps:end -->',
+);
+const expectedApply = [
+  ['7.1', 'Foundation'],
+  ['7.2', 'Core Engine'],
+  ['7.3', 'Feature Implementation'],
+  ['7.4', 'Integration'],
+  ['7.5', 'Testing'],
+  ['7.6', 'Apply Summary'],
+];
+const applyRows = [...applyBlock.matchAll(/^\|\s*(7\.\d)\s*\|\s*([^|]+?)\s*\|/gm)].map((match) => [
+  match[1].trim(),
+  match[2].trim(),
+]);
+if (applyRows.length !== expectedApply.length) {
+  fail(`Apply must contain exactly six nested substeps, found ${applyRows.length}`);
+} else {
+  expectedApply.forEach(([id, name], index) => {
+    if (applyRows[index][0] !== id || applyRows[index][1] !== name) {
+      fail(`Apply nested substep ${id} must be ${name}`);
+    }
+  });
+}
+if (!/Apply Summary is nested under Apply/i.test(texts.workflow)) {
+  fail('workflow: Apply Summary nesting declaration is missing');
+}
+if (!/Workload Guard is a gate, not a\s*\n?phase/i.test(texts.workflow)) {
+  fail('workflow: Workload Guard must be defined as a gate, not a phase');
+}
+if (!/Proposal, Spec, and Explore are not CRM lifecycle phases/i.test(texts.workflow)) {
+  fail('workflow: Proposal, Spec, and Explore must be excluded from the lifecycle');
+}
+
+const requiredWorkflowTerms = [
+  'Transition Graph',
+  'PASS',
+  'BLOCKED',
+  'one retry',
+  'Baseline Debt',
+  'Bounded',
+  'Apply Boundaries',
+  'Hybrid Persistence Contract',
+  'Terminal Maintainer Handoff',
+  'Architecture Review',
+];
+requiredWorkflowTerms.forEach((term) => {
+  if (!texts.workflow.toLowerCase().includes(term.toLowerCase())) {
+    fail(`workflow: required semantic section or term missing: ${term}`);
+  }
+});
+
+// The compatibility Guard must remain a pointer, never a competing state machine.
+const guardMeta = frontmatter(texts.guard);
+if (guardMeta?.classification !== 'COMPATIBILITY STUB' || guardMeta?.semantic_authority !== 'false') {
+  fail('Workflow Guard must be a non-semantic COMPATIBILITY STUB');
+}
+if (!/Workflow semantics.*docs\/SDD-WORKFLOW\.md/s.test(texts.guard)) {
+  fail('Workflow Guard must point workflow semantics to docs/SDD-WORKFLOW.md');
+}
+if (!/Mechanical enforcement.*scripts\/validate-sdd-direct\.mjs/s.test(texts.guard)) {
+  fail('Workflow Guard must point mechanical enforcement to repository validators');
+}
+for (const forbidden of [/Transition Table/i, /Allowed next/i, /sole.*transition/i, /Direct Workflow/i, /^###?\s+Rule\s+\d+/im]) {
+  if (forbidden.test(texts.guard)) fail('Workflow Guard contains competing lifecycle semantics');
+}
+
+// Execution adapter boundaries.
+const directMeta = frontmatter(texts.direct);
+if (directMeta?.classification !== 'EXECUTION ADAPTER' || directMeta?.semantic_authority !== 'false') {
+  fail('Direct architecture must be a non-semantic EXECUTION ADAPTER');
+}
+if (!/WHAT.*lifecycle is.*WHEN.*transition is legal.*HOW.*gate is judged/s.test(texts.direct)) {
+  fail('Direct architecture must explicitly defer WHAT and lifecycle semantics to the workflow');
+}
+if (!/project-local.*CRM-SDD lifecycle entry/i.test(texts.direct)) {
+  fail('Direct architecture must identify the project-local CRM-SDD entry point');
+}
+if (/sole workflow|sole transition|Transition Table|Direct Workflow/i.test(texts.direct)) {
+  fail('Direct architecture contains a competing workflow definition');
+}
+
+// Concrete model map and logical assignments.
+if (!modelMap || modelMap.persistence !== 'hybrid') fail('model map: persistence must be hybrid');
+const expectedRoles = {
+  HIGH: ['ARCHITECT', 'openai/gpt-5.6-terra'],
+  MID: ['BUILDER', 'openai/gpt-5.6-luna'],
+  LOW: ['OPERATOR-EVIDENCE', 'longcat/LongCat-2.0'],
+  HUMAN: ['MAINTAINER', null],
+};
+for (const [role, [name, model]] of Object.entries(expectedRoles)) {
+  const actual = modelMap?.roles?.[role];
+  if (!actual || actual.name !== name || actual.model !== model) {
+    fail(`model map: ${role} must map to ${name} with model ${model ?? 'null'}`);
+  }
+}
+const expectedPhaseRoles = {
+  Design: 'HIGH',
+  'Architecture Review': 'HIGH',
+  'Design Refinement': 'HIGH',
+  Tasks: 'MID',
+  'Tasks Review': 'MID',
+  'Tasks Refinement': 'MID',
+  Apply: 'MID',
+  'Apply 7.1 Foundation': 'MID',
+  'Apply 7.2 Core Engine': 'MID',
+  'Apply 7.3 Feature Implementation': 'MID',
+  'Apply 7.4 Integration': 'MID',
+  'Apply 7.5 Testing': 'MID',
+  'Apply 7.6 Apply Summary': 'MID',
+  Verify: 'HIGH',
+  Archive: 'LOW',
+  'Health Report': 'LOW',
+  'Repository Ready': 'LOW',
+  Commit: 'HUMAN',
+  Push: 'HUMAN',
+  Merge: 'HUMAN',
+};
+if (JSON.stringify(modelMap?.phase_roles) !== JSON.stringify(expectedPhaseRoles)) {
+  fail('model map: phase-role assignments are not canonical');
+}
+const expectedAgentRoles = {
+  'sdd-direct-orchestrator': 'MID',
+  'sdd-direct-design': 'HIGH',
+  'sdd-direct-architecture-review': 'HIGH',
+  'sdd-direct-tasks': 'MID',
+  'sdd-direct-tasks-review': 'MID',
+  'sdd-direct-apply': 'MID',
+  'sdd-direct-verify': 'HIGH',
+  'sdd-direct-archive': 'LOW',
+  'sdd-direct-health-report': 'LOW',
+  'sdd-direct-repository-ready': 'LOW',
+};
+if (JSON.stringify(modelMap?.local_agent_roles) !== JSON.stringify(expectedAgentRoles)) {
+  fail('model map: local-agent role assignments are not canonical');
+}
+
+const actualAgentFiles = readdirSync(pathOf('.opencode', 'agents'))
+  .filter((name) => /^sdd-direct-.*\.md$/.test(name))
+  .map((name) => name.replace(/\.md$/, ''))
+  .sort();
+if (JSON.stringify(actualAgentFiles) !== JSON.stringify([...localAgentNames].sort())) {
+  fail('local Direct agent set contains a missing or undefined canonical executor');
+}
+for (const [name, expectedRole] of Object.entries(expectedAgentRoles)) {
+  const parsed = frontmatter(localAgentTexts[name]);
+  const expectedModel = expectedRoles[expectedRole][1];
+  if (!parsed || !parsed.description || parsed.mode !== (name === 'sdd-direct-orchestrator' ? 'primary' : 'subagent')) {
+    fail(`${name}: invalid mode or description`);
+  }
+  if (parsed?.model !== expectedModel) {
+    fail(`${name}: model binding does not match the canonical ${expectedRole} mapping`);
+  }
+}
+
+const commandMeta = frontmatter(texts.command);
+if (!commandMeta || commandMeta.agent !== 'sdd-direct-orchestrator') {
+  fail('local Direct command must route to the defined local orchestrator');
+}
+if (!texts.command.includes('openspec/changes/<change-name>/')) {
+  fail('local Direct command must use the canonical change path');
+}
+if (/Use the shared Workflow Guard Direct-mode section|global SDD|Gentle-AI/i.test(texts.command)) {
+  fail('local Direct command contains legacy or global routing instructions');
+}
+for (const [name, text] of Object.entries(legacyCommandTexts)) {
+  const parsed = frontmatter(text);
+  if (!parsed || parsed.agent !== 'sdd-direct-orchestrator' || !/CRM_SDD_LEGACY_BOUNDARY/.test(text) || !/STOP/.test(text)) {
+    fail(`${name}: project-local compatibility stub is missing or can route a legacy lifecycle`);
+  }
+}
+
+// Project-local OpenCode config must override the observed global runtime path.
+const globalAgents = [
+  'sdd-apply',
+  'sdd-apply-pro',
+  'sdd-archive',
+  'sdd-design',
+  'sdd-explore',
+  'sdd-init',
+  'sdd-onboard',
+  'sdd-propose',
+  'sdd-spec',
+  'sdd-tasks',
+  'sdd-verify',
+  'sdd-judge-a',
+  'sdd-judge-b',
+  'sdd-fix',
+  'sdd-architecture-review',
+  'sdd-tasks-review',
+  'sdd-health',
+  'sdd-repository-ready',
+  'sdd-orchestrator',
+  'gentle-orchestrator',
+];
+if (projectConfig?.default_agent !== 'sdd-direct-orchestrator') {
+  fail('opencode.json: default_agent must be sdd-direct-orchestrator');
+}
+for (const name of globalAgents) {
+  if (projectConfig?.agent?.[name]?.disable !== true) {
+    fail(`opencode.json: conflicting global agent ${name} must be disabled`);
+  }
+}
+for (const name of legacyCommandNames) {
+  const command = projectConfig?.command?.[name];
+  if (!command || command.agent !== 'sdd-direct-orchestrator' || !/CRM_SDD_LEGACY_BOUNDARY/.test(command.template || '') || !/STOP/.test(command.template || '')) {
+    fail(`opencode.json: ${name} must be a STOP-only legacy compatibility stub`);
+  }
+}
+
+const localRuntimeText = [texts.command, ...Object.values(localAgentTexts), ...Object.values(legacyCommandTexts)].join('\n');
+if (/\bsdd-(?!direct-)(?:apply|apply-pro|archive|design|explore|init|onboard|propose|spec|tasks|verify|judge-a|judge-b|fix|architecture-review|tasks-review|health|repository-ready|orchestrator)\b/.test(localRuntimeText)) {
+  fail('project-local Direct wiring references a global/non-Direct SDD executor');
+}
+if (/~\/\.config\/opencode|Gentle-AI|Gentle AI/i.test(localRuntimeText)) {
+  fail('project-local Direct wiring contains a global Gentle runtime route');
+}
+
+// Active auxiliary documents cannot claim the old authority chain or mapping.
+if (/Status:\s*Active operating brief|Current Assignments|Configuration Source/i.test(texts.modelHistory)) {
+  fail('historical model assignment brief still claims active authority');
+}
+for (const historical of [
+  pathOf('docs', 'templates', 'architecture-review-prompt.md'),
+  pathOf('docs', 'templates', 'design-refinement-prompt.md'),
+  pathOf('docs', 'templates', 'tasks-prompt.md'),
+  pathOf('docs', 'templates', 'tasks-review-prompt.md'),
+  pathOf('docs', 'templates', 'tasks-refinement-prompt.md'),
+]) {
+  const marker = frontmatter(read(historical) || '');
+  if (marker?.classification !== 'HISTORICAL' || marker?.runtime !== 'not-loaded') {
+    fail(`${relativePath(historical)} must be explicitly historical and non-runtime`);
+  }
+}
+if (/phase_rules:|model_code:|model_planning:/i.test(texts.config)) {
+  fail('openspec/config.yaml contains stale phase or concrete model routing');
+}
+if (/docs\/SDD-MODEL-ASSIGNMENTS\.md/.test(texts.agents + texts.workflow + texts.direct + texts.config)) {
+  fail('active governance points to the historical model assignment brief');
+}
+if (/artifact_store\s*:\s*(?:both|engram|openspec)\b|persistence\s*:\s*(?:both|engram|openspec)\b|mode\s*:\s*(?:both|engram|openspec)\b/i.test(
+  [
+    texts.agents,
+    texts.workflow,
+    texts.guard,
+    texts.direct,
+    texts.infrastructure,
+    texts.baseline,
+    texts.project,
+    texts.session,
+    texts.decisions,
+    texts.issues,
+    texts.roadmap,
+    texts.config,
+    texts.template,
+    texts.command,
+    ...Object.values(localAgentTexts),
+  ].join('\n'),
+)) {
+  fail('active governance contains a non-hybrid persistence value');
+}
+if (!/artifact_store:\s*hybrid/i.test(texts.config) || !/persistence:\s*hybrid/i.test(texts.workflow)) {
+  fail('hybrid persistence contract is missing from canonical config or workflow');
+}
+
+// Terminal phases must remain maintainer-only in the canonical map and workflow.
+for (const phase of ['Commit', 'Push', 'Merge']) {
+  if (modelMap?.phase_roles?.[phase] !== 'HUMAN') fail(`${phase}: terminal phase must be HUMAN-owned`);
+}
+if (!/Commit, Push, and Merge are user-facing lifecycle\s+phases\s+but\s+are HUMAN \/ MAINTAINER-only/is.test(texts.workflow)) {
+  fail('workflow: terminal Git phases must be explicitly maintainer-only');
+}
+if (!/Do not commit, push, merge, release, or tag/i.test(texts.command)) {
+  fail('local Direct command must prohibit maintainer Git operations');
+}
+
+// Package-level entry points are required and must remain governance-only.
+if (packageJson?.scripts?.['sdd:validate'] !== 'node scripts/validate-sdd-direct.mjs') {
+  fail('package.json: pnpm sdd:validate entry point is missing');
+}
+if (packageJson?.scripts?.['sdd:validate:design'] !== 'node scripts/validate-enterprise-design.mjs') {
+  fail('package.json: pnpm sdd:validate:design entry point is missing');
+}
+if (!/18 sections/i.test(texts.template) || !/(A-G|7 AR topics)/i.test(texts.template)) {
+  fail('Enterprise Design template does not advertise the stable 18-section/A-G shape');
+}
 
 if (failures.length) {
-  console.error('SDD-Direct validation: FAIL');
-  failures.forEach((f) => console.error(`- ${f}`));
+  console.error('CRM-SDD governance validation: FAIL');
+  failures.forEach((failure) => console.error(`- ${failure}`));
   process.exitCode = 1;
 } else {
-  console.log('SDD-Direct validation: PASS');
-  console.log(`- ${KEEP_AGENTS.length} agents valid`);
-  console.log('- Command routes to orchestrator');
-  console.log('- Canonical path and forbidden store checks passed');
-  console.log('- Verify BLOCKED recovery loop is orchestrator-owned and returns to Verify');
-  console.log('- Direct preflight precedes Design');
-  console.log('- Terminal destructive gates remain maintainer-controlled');
+  console.log('CRM-SDD governance validation: PASS');
+  console.log('- canonical files and classifications are valid');
+  console.log('- exactly 14 phases and nested Apply 7.1-7.6 are valid');
+  console.log('- workflow authority and non-semantic Guard boundary are valid');
+  console.log('- local Direct wiring, legacy STOP stubs, and agent bindings are valid');
+  console.log('- logical role map, hybrid persistence, and maintainer gates are valid');
+  console.log('- package-level validators and Enterprise template boundary are valid');
 }

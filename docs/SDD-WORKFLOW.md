@@ -1,360 +1,242 @@
 ---
-status: active
-role: canonical workflow lifecycle
-guard_authority: docs/sdd-workflow-guard.md
+classification: PRIMARY AUTHORITY
+semantic_authority: true
+sdd_version: v3
+status: ACTIVE/STABLE
+persistence: hybrid
 ---
 
-# SDD Workflow — Spec-Driven Development para CRM-Master
-
-> **Estado:** active
-> **Transition authority:** `docs/sdd-workflow-guard.md` (read before every phase transition)
-
----
-
-## 🎯 Objetivo
-
-Establecer un flujo de fases claro, repetible y riguroso para el desarrollo de features en CRM-Master. Cada feature pasa por estados definidos, con responsables claros y gates de calidad obligatorios.
-
----
-
-## 📋 Workflow Canónico (15 fases)
-
-```
-┌────────┐    ┌────────────────┐    ┌───────────────────┐    ┌─────────┐    ┌─────────────┐    ┌──────────┐
-│   1    │ →  │       2        │ →  │         3         │ →  │    4    │ →  │      5      │ →  │    6     │
-│ DESIGN │    │   ARCHITECTURE │    │  DESIGN REFINEMENT│    │  TASKS  │    │   TASKS     │    │  TASKS   │
-│        │    │    REVIEW      │    │   (solo BLOCKED)  │    │         │    │   REVIEW    │    │REFINEMENT│
-└────────┘    └────────────────┘    └───────────────────┘    └─────────┘    └─────────────┘    └──────────┘
-                                                                                                  │ (solo
-                                                                                                  │ BLOCKED)
-                                                                                                  ↓
-┌────────┐    ┌────────┐    ┌────────┐    ┌────────┐    ┌───────────┐    ┌─────────┐    ┌──────────┐    ┌──────────┐
-│  13    │ ←  │  12    │ ←  │  11    │ ←  │  10    │ ←  │     9     │ ←  │    8    │ ←  │    7     │ ←  │    7.6   │
-│ COMMIT │    │ PUSH   │    │ MERGE  │    │REPO    │    │  HEALTH   │    │ ARCHIVE │    │ VERIFY   │    │  APPLY   │
-│        │    │        │    │        │    │READY   │    │  REPORT   │    │         │    │          │    │  SUMMARY │
-└────────┘    └────────┘    └────────┘    └────────┘    └───────────┘    └─────────┘    └──────────┘    └──────────┘
-      ↑
-      │    ┌────────────────────────────────────────────────────────────────────────────────────────────┐
-      └────┤  APPLY FASES: 7.1 Foundation → 7.2 Core Engine → 7.3 Feature → 7.4 Integration → 7.5 Tests │
-           └────────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🎭 Roles
-
-| Rol lógico | Responsabilidad |
-|-----|-------|
-| **High-reasoning judgment role** | Design, final Architecture Review, critical architectural decisions, and Verify |
-| **Orchestration and implementation role** | Tasks, Apply Phases 1–5, Apply Summary, Archive, Health Report, Repository Ready, and workflow progression |
-| **Economical evidence role** | Bounded evidence gathering, inventories, type/dependency checks, reconciliation, and path mapping |
-| **Quality Gate** | CI and automated tests block merge when required checks fail |
-
-### Closed Evidence Handoff
-
-When the economical evidence role returns a bounded evidence packet with
-`UNAMBIGUOUS_MINIMAL_FIX`, `APPROVED_CORRECTION`, or an equivalent closed factual
-conclusion with an exact Working Set and exact next action, the orchestration and
-implementation role performs only the minimal contradiction check, verifies the
-named files and exact current failure, executes the supplied RED/GREEN sequence,
-modifies only the approved Working Set, and returns to the current lifecycle
-checkpoint.
-
-It must not repeat broad repository recovery or evidence inventory, inspect
-unrelated history, archived SPECs, consumers, or dependencies, reopen rejected
-alternatives, rebuild the module/dependency graph, expand the Working Set,
-escalate to the high-reasoning judgment role, redesign the approved correction,
-or replace execution with another evidence report. Investigation reopens only
-when direct evidence contradicts a material handoff fact; then the affected task
-stops, the exact contradiction is classified using the canonical taxonomy, and
-one bounded evidence update is requested.
-
-The economical evidence role gathers and closes facts. The orchestration and
-implementation role validates minimally and executes. The high-reasoning
-judgment role decides only when multiple materially valid architectural options
-remain after evidence gathering. A closed handoff is an execution contract, not
-an invitation to repeat analysis.
-
-Execution-time findings are governed by the canonical **Execution-Time Discovery
-Rule** in `docs/sdd-workflow-guard.md`, Rule 7. That rule applies the closed
-handoff sequence: minimal contradiction check → execute → reopen evidence only
-upon direct material contradiction.
-
----
-
-## 🏗️ Fases detalladas (visibles para el usuario)
-
-### **FASE 1: Design**
-> **Estado:** `design` → Responsable: Tech Lead
-
-- **Trigger:** Idea de negocio, bug, mejora, o decisión estratégica.
-- **Actividad:** Diseño técnico usando el Enterprise Design Standard (`docs/templates/design-enterprise-template.md`). Generar Working Set, Read Order, Exploration Budget.
-- **Entregable:** `openspec/changes/<change-name>/design.md` completo con las 18 secciones canónicas.
-- **Gate:** Diseño completo con arquitectura, flujo de datos, contratos, riesgos, estrategia de testing.
-
----
-
-### **FASE 2: Architecture Review**
-> **Estado:** `architecture-review` → Responsable: Revisor de alta razonamiento
-
-- **Trigger:** Design completo.
-- **Actividad:** Validación del Design contra los 7 temas canónicos (A–G). Clasificación de hallazgos como `BLOCKER`, `CONDITION`, o `NON-BLOCKING`.
-- **Entregable:** Veredicto (`APPROVED`, `APPROVED_WITH_CONDITIONS`, `BLOCKED`, o `NEEDS_EVIDENCE`).
-- **Gate:** Solo el veredicto `BLOCKED` requiere Design Refinement. Las
-  condiciones no bloqueantes aprobadas en `APPROVED_WITH_CONDITIONS` se registran
-  y permiten continuar.
-
----
-
-### **FASE 3: Design Refinement (solo si BLOCKED)**
-> **Estado:** `design-refinement` → Responsable: Tech Lead
-
-- **Trigger:** Architecture Review con veredicto `BLOCKED`.
-- **Actividad:** Parche mínimo del Design para resolver únicamente los blockers identificados. No se expande scope.
-- **Gate:** Vuelve a Architecture Review después del refinamiento.
-
----
-
-### **FASE 4: Tasks**
-> **Estado:** `tasks` → Responsable: Tech Lead / Orquestador
-
-- **Trigger:** Architecture Review `APPROVED` o `APPROVED_WITH_CONDITIONS`.
-- **Actividad:** Derivar plan de implementación del Design aprobado. Secuencia RED-first. Definir archivos, dependencias, fases, checkpoints.
-- **Entregable:** `openspec/changes/<change-name>/tasks.md`.
-- **Gate:** Plan completo con todos los RED tests antes de implementación.
-
----
-
-### **FASE 5: Tasks Review**
-> **Estado:** `tasks-review` → Responsable: Revisor de alta razonamiento
-
-- **Trigger:** Tasks completos.
-- **Actividad:** Validar completitud, dependencias, tests, riesgo de workload.
-- **Entregable:** Veredicto con condiciones si existen.
-- **Gate:** Si el veredicto es `BLOCKED` por condiciones materiales/bloqueantes →
-  Tasks Refinement. Si está limpio o es `APPROVED_WITH_CONDITIONS` con
-  condiciones no bloqueantes → Workload Guard; las condiciones aprobadas se
-  registran sin bloquear el avance.
-
----
-
-### **FASE 6: Tasks Refinement (solo si BLOCKED)**
-> **Estado:** `tasks-refinement` → Responsable: Tech Lead
-
-- **Trigger:** Tasks Review con veredicto `BLOCKED`.
-- **Actividad:** Ajuste mínimo de tasks para resolver condiciones. No se expande scope.
-- **Gate:** Vuelve a Tasks Review.
-
----
-
-### **FASE 7: Apply (5 fases + Summary)**
-
-#### Fase 7.1: Foundation
-> **Estado:** `apply-foundation` → Responsable: Tech Lead
-
-- Infraestructura, tipos, migraciones, configuración base.
-- Gate: Tests de infraestructura pasan.
-
-#### Fase 7.2: Core Engine
-> **Estado:** `apply-core-engine` → Responsable: Tech Lead
-
-- Lógica de negocio central, contratos, estado.
-- Gate: Tests unitarios de lógica pasan.
-
-#### Fase 7.3: Feature Implementation
-> **Estado:** `apply-feature` → Responsable: Tech Lead
-
-- Funcionalidad específica del SPEC.
-- Gate: Tests de feature pasan.
-
-#### Fase 7.4: Integration
-> **Estado:** `apply-integration` → Responsable: Tech Lead
-
-- Wiring de componentes, rutas, UI.
-- Gate: Tests de integración pasan.
-
-#### Fase 7.5: Testing
-> **Estado:** `apply-testing` → Responsable: Tech Lead
-
-- Pruebas unitarias, integración, doorbell, regresión.
-- Gate: Todos los tests pasan, lint limpio, puertas de ejecución (execution gates) verificadas.
-
-#### Fase 7.6: Apply Summary
-> **Estado:** `apply-summary` → Responsable: Tech Lead
-
-- Consolidación usando `docs/templates/apply-summary-template.md`.
-- Documenta Working Set accuracy, métricas, lecciones aprendidas.
-
----
-
-### **FASE 8: Verify**
-> **Estado:** `verify` → Responsable: Revisor de alta razonamiento
-
-- **Trigger:** Apply completo.
-- **Actividad:** Validación final contra Design, Tasks, implementación, tests, evidencia.
-- **Entregable:** Veredicto (`VERIFIED` o `BLOCKED`).
-- **Gate:** `VERIFIED` permite Archive. `BLOCKED` activa Direct Fix.
-
----
-
-### **FASE 9: Archive**
-> **Estado:** `archive` → Responsable: Orquestador
-
-- **Trigger:** Verify `VERIFIED`.
-- **Actividad:** Sincronizar delta specs, mover a archive, generar Learning + JSON artifact + PR description.
-- **Entregable:** Archive report con métricas.
-
----
-
-### **FASE 10: Health Report**
-> **Estado:** `health-report` → Responsable: Orquestador
-
-- **Trigger:** Archive completo.
-- **Actividad:** Auditoría del entorno SDD completo.
-- **Entregable:** Reporte de salud del proyecto.
-
----
-
-### **FASE 11: Repository Ready**
-> **Estado:** `repository-ready` → Responsable: Orquestador
-
-- **Trigger:** Health Report completo.
-- **Actividad:** Confirmar que implementación y repositorio satisfacen requisitos de verificación y handoff.
-- **Gate:** Handoff listo para Commit.
-
----
-
-### **FASE 12: Commit**
-> **Estado:** `commit` → Responsable: **Maintainer (manual)**
-
-- **Gate destructivo.** Solo el maintainer ejecuta commit con Conventional Commit.
-
----
-
-### **FASE 13: Push**
-> **Estado:** `push` → Responsable: **Maintainer (manual)**
-
-- **Gate destructivo.** Solo el maintainer ejecuta push.
-
----
-
-### **FASE 14: Merge**
-> **Estado:** `merge` → Responsable: **Maintainer (manual)**
-
-- **Gate destructivo.** Solo el maintainer ejecuta merge a main.
-
----
-
-## 📁 Estructura de archivos SDD
-
-```
-openspec/
-├── changes/
-│   └── <change-name>/
-│       ├── proposal.md        ← compatibilidad (no fase visible)
-│       ├── design.md          ← autoritativo (contrato de razonamiento e implementación)
-│       ├── tasks.md           ← plan de implementación derivado del Design
-│       └── specs/             ← opcional, generado automáticamente si se necesita
-└── archive/
-    └── <change-name>/         ← artifacts archivados
+# SDD Workflow — CRM-Master
+
+This document is the sole semantic workflow authority for CRM-Master. It
+defines the canonical lifecycle, ownership, gates, transition rules, recovery
+budget, evidence contract, and terminal handoff. `AGENTS.md` governs startup,
+repository safety, and maintainer boundaries. The Workflow Guard is a
+compatibility/enforcement pointer. `docs/architecture/sdd-direct.md` is an
+execution adapter. The Enterprise Design template owns Design shape only.
+
+## Version and Status
+
+| Property | Canonical value |
+|---|---|
+| SDD version | v3 |
+| Lifecycle status | ACTIVE / STABLE |
+| Semantic authority | This document only |
+| Active artifact path | `openspec/changes/<change-name>/` |
+| Persistence vocabulary | `hybrid` |
+
+## Canonical Phases
+
+The lifecycle has exactly 14 user-facing phases. Refinement phases are
+conditional phases in this count. Apply Summary is nested under Apply as 7.6;
+it is not an additional user-facing phase. Workload Guard is a gate, not a
+phase.
+
+<!-- canonical-lifecycle:start -->
+| # | Phase | Entry condition or result |
+|---:|---|---|
+| 1 | Design | Create the Enterprise Design artifact |
+| 2 | Architecture Review | Review the Design |
+| 3 | Design Refinement | Conditional: only after a BLOCKED Architecture Review |
+| 4 | Tasks | Derive the implementation plan |
+| 5 | Tasks Review | Review the Tasks artifact |
+| 6 | Tasks Refinement | Conditional: only after a BLOCKED Tasks Review |
+| 7 | Apply | Execute the nested Apply work and summary |
+| 8 | Verify | Validate implementation and evidence |
+| 9 | Archive | Synchronize completed change evidence and learning |
+| 10 | Health Report | Produce the bounded repository health report |
+| 11 | Repository Ready | Prepare the maintainer handoff |
+| 12 | Commit | Maintainer-only Git phase |
+| 13 | Push | Maintainer-only Git phase |
+| 14 | Merge | Maintainer-only Git phase |
+<!-- canonical-lifecycle:end -->
+
+Apply contains exactly these nested work units:
+
+<!-- apply-substeps:start -->
+| ID | Nested Apply work | Boundary |
+|---|---|---|
+| 7.1 | Foundation | Infrastructure, types, migrations, and base configuration |
+| 7.2 | Core Engine | Core business logic, contracts, and state |
+| 7.3 | Feature Implementation | SPEC-specific behavior |
+| 7.4 | Integration | Component wiring, routes, and UI integration |
+| 7.5 | Testing | Unit, integration, doorbell, regression, and required gates |
+| 7.6 | Apply Summary | Consolidated execution evidence and Working Set metrics |
+<!-- apply-substeps:end -->
+
+Proposal, Spec, and Explore are not CRM lifecycle phases. Proposal and Spec are
+compatibility artifacts that may be generated or reconciled when required;
+Explore is bounded evidence gathering inside an owned action. None may become a
+runtime transition or a user-facing phase.
+
+## Logical Ownership
+
+Governance assigns logical roles, never provider or model names:
+
+| Logical role | Owns |
+|---|---|
+| HIGH / ARCHITECT | Design, Architecture Review, Design Refinement, and Verify judgment |
+| MID / BUILDER | Orchestration, Tasks, Tasks Review, Tasks Refinement, and Apply 7.1–7.6 |
+| LOW / OPERATOR-EVIDENCE | Bounded evidence, mechanical checks, Archive, Health Report, and Repository Ready |
+| HUMAN / MAINTAINER | Commit, Push, Merge, release/tag authorization, and destructive Git decisions |
+
+LOW may gather facts and produce mechanical summaries. LOW stops and escalates
+when architecture, implementation judgment, or scope expansion is required.
+MID escalates to HIGH when materially valid architectural options remain. HUMAN
+decisions cannot be simulated by an agent.
+
+## Transition Graph
+
+The graph below is deterministic. A transition is legal only when the current
+artifact and gate result satisfy the listed edge.
+
+```text
+START
+  -> Design
+  -> Architecture Review
+       PASS -> Tasks
+       BLOCKED -> Design Refinement -> Architecture Review
+  -> Tasks Review
+       PASS -> Workload Guard -> Apply 7.1 -> 7.2 -> 7.3 -> 7.4 -> 7.5 -> 7.6
+       BLOCKED -> Tasks Refinement -> Tasks Review
+  -> Verify
+       PASS -> Archive -> Health Report -> Repository Ready
+       BLOCKED -> orchestrator-owned Direct Fix -> Verify
+  -> Commit -> Push -> Merge
 ```
 
----
+The graph is read as a sequence, not as permission to skip an earlier phase.
+The only omitted edges are the conditional refinement edges when their review
+is not BLOCKED and the maintainer handoff after Repository Ready.
 
-## 📐 Exploration Optimization
+## Gates and Results
 
-### Objective
+Every phase returns a structured result with an explicit normalized gate result:
 
-Reduce repository exploration during Apply by making Design produce an explicit execution plan and by making Verify/Archive measure its accuracy.
+| Result | Meaning |
+|---|---|
+| PASS | The phase contract is satisfied and the graph's next edge may be taken |
+| BLOCKED | The phase contract is not satisfied; no ordinary next edge is legal |
+| CONDITION | A recorded non-blocking condition with owner and evidence; it does not change PASS |
+| BASELINE_DEBT | A proven pre-existing unrelated issue; it is recorded and does not change PASS |
+| NEEDS_EVIDENCE | Required bounded evidence is missing; stop until the evidence is closed |
 
-### Workflow
+Architecture Review and Tasks Review normalize to PASS only when all material
+findings are closed or explicitly non-blocking. A BLOCKED review may enter only
+its corresponding refinement. Verify normalizes to PASS only when the approved
+Design, Tasks, implementation, and required evidence agree.
 
-```
-Design
-  → Working Set (Primary + Secondary + Tests + Config + NOT-to-change)
-  → Read Order (optimal file reading sequence)
-  → Expected Commands (build, test, lint, etc.)
-  → Design Confidence (High/Medium/Low)
-  → Exploration Budget (max searches, reads, modifications)
-     ↓
-Apply
-  → Consume Working Set + Read Order
-  → Follow Read Order strictly
-  → No repo-wide searches unless Working Set is insufficient
-  → Document every excess read/search + which Design assumption was incomplete
-     ↓
-Verify
-  → Working Set Validation (Planned vs Actual vs Unexpected)
-  → Exploration Review (unnecessary reads/searches, budget compliance)
-     ↓
-Archive
-  → Learning
-     → Working Set Accuracy (%)
-     → Unexpected Dependencies
-     → Verify Iterations
-     → Lessons Learned
-     → Future Recommendations
-  → JSON artifact (machine-readable metrics)
-  → PR Description (GitHub-ready markdown)
-  → Architecture Decisions (historical record)
-```
+## Conditional Refinement and Correction Budget
 
----
+The correction budget is one retry for each bounded correction loop:
 
-## 🗂️ Estados de una Spec
+1. An initial BLOCKED Architecture Review permits one Design Refinement, then a
+   fresh Architecture Review is mandatory.
+2. An initial BLOCKED Tasks Review permits one Tasks Refinement, then a fresh
+   Tasks Review is mandatory.
+3. A BLOCKED Verify result permits one orchestrator-owned Direct Fix, then a
+   fresh Verify is mandatory.
 
-| Estado | Significado | Quién lo cambia |
-|--------|-------------|-----------------|
-| `design` | Design en creación | Tech Lead |
-| `architecture-review` | Design bajo revisión | Architecture Reviewer |
-| `approved` | Design aprobado, listo para Tasks | Architecture Reviewer |
-| `tasks` | Tasks en creación | Orquestador |
-| `tasks-review` | Tasks bajo revisión | Tasks Reviewer |
-| `apply-*` | Apply en progreso (fases 1–5) | Tech Lead |
-| `apply-summary` | Consolidación Apply | Tech Lead |
-| `verify` | Verificación final | Verify Reviewer |
-| `archive` | Archivando | Orquestador |
-| `health-report` | Reporte de salud | Orquestador |
-| `repository-ready` | Listo para handoff | Orquestador |
-| `committed` | Commiteado (manual) | Maintainer |
-| `merged` | Mergeado (manual) | Maintainer |
-| `deprecated` | Spec descartada | Product Owner o Tech Lead |
-| `superseded` | Reemplazada por otra spec | Tech Lead |
+A retry consumes its budget even when the correction makes no file change. A
+second BLOCKED result on the same loop is a stop condition. The orchestrator
+must preserve the evidence, report the exact blocker, and escalate rather than
+inventing a second automatic retry or broadening scope.
 
----
+## Workload Guard Gate
 
-## ⚡ Escenarios especiales
+Workload Guard executes only after a PASS Tasks Review and before Apply. It is a
+gate, not a lifecycle phase and not a substitute for review.
 
-### Hotfix / Bug crítico
-Si hay un bug en producción que impide operar:
-1. Se crea Design mínimo con contexto del bug, test que reproduce, y fix mínimo.
-2. Ricardo aprueba verbalmente.
-3. Se implementa con TDD.
-4. Se mergea con PR prioritario.
+- Forecast at or below 400 changed lines passes the gate with the forecast
+  recorded.
+- Forecast above 400 lines requires bounded context analysis after Tasks Review.
+  The analysis records whether the change is cohesive enough for a Size
+  Exception or requires Chained PRs.
+- A HUMAN / MAINTAINER decision is required before Apply when the forecast is
+  above 400 lines. Apply cannot start while that decision is absent.
 
-### Spike / Investigación
-Si no sabemos si algo es técnicamente viable:
-1. Se crea Design de tipo `spike`.
-2. Timebox (ej: 2 horas).
-3. Resultado: informe de viabilidad + Design real si es viable.
+The guard never runs before Tasks Review and never bypasses a blocked review.
 
----
+## Evidence and Recovery
 
-## ✅ Checklist de iniciación de SDD
+The active artifact store is the canonical change directory. A phase executor
+must consume its approved Working Set and Read Order before additional reads.
+Additional inspection is allowed only for a bounded missing fact, direct
+contradiction, or strictly necessary deviation. Record the path, reason, and
+new evidence in the phase artifact.
 
-Para que el SDD funcione, necesitamos:
+Closed evidence is an execution contract: the executor performs the minimal
+contradiction check, takes the named action, and returns to the current
+checkpoint. It must not repeat a broad repository inventory, reopen rejected
+alternatives, inspect unrelated history, or silently expand the Working Set.
 
-- [x] Enterprise Design Standard (`docs/templates/design-enterprise-template.md`)
-- [x] Estructura de carpetas (`openspec/changes/`, `openspec/archive/`)
-- [x] Workflow canónico activo
-- [x] Workflow Guard (`docs/sdd-workflow-guard.md`)
-- [x] Plantillas de tasks, verify, archive
-- [ ] **Este workflow aprobado por Ricardo** ← Ahora mismo
-- [ ] Configurar CI para ejecutar tests en cada PR
-- [ ] Script de doorbell test (test de fuga) en CI
+Material contradictions stop the affected action and are classified as
+BLOCKED or NEEDS_EVIDENCE. A new bounded evidence packet may be requested once;
+the correction budget still controls any resulting review retry.
 
----
+## Baseline Debt
 
-## 📜 Histórico
+A failing check blocks only when it is caused by the active change, violates an
+approved acceptance criterion, or prevents safe completion. A pre-existing,
+unrelated, reproducible failure is classified as BASELINE_DEBT with exact
+evidence and remains outside the implementation task. Baseline debt is never
+silently fixed, relabeled as a new task, or used to claim a clean repository.
 
-El modelo anterior de 8 fases (Idea → Draft → Aprobada → Design → Red → Green → Refactor → Archive) ha sido reemplazado por el workflow canónico de 15 fases documentado arriba. El modelo anterior se mantiene como evidencia histórica en el git history de este archivo.
+## Apply Boundaries
+
+Apply may modify only files in the approved Design and Tasks Working Set. A
+strictly necessary bounded deviation is allowed only when one unambiguous
+mechanical correction is proven, no public contract or architecture changes,
+security or tenant isolation is weakened, and the deviation is recorded before
+continuing.
+
+Apply follows RED → GREEN → REFACTOR and records evidence for each nested work
+unit. It may not rewrite the approved Design or Tasks to hide drift, inspect or
+modify unrelated active changes, or perform Commit, Push, Merge, Release, or
+Tag. Apply Summary is the 7.6 output and consolidates the five preceding work
+units; it does not introduce another phase.
+
+## Hybrid Persistence Contract
+
+`hybrid` is the only active persistence vocabulary for CRM-Master:
+
+1. Exact technical artifacts and phase evidence are stored in
+   `openspec/changes/<change-name>/`.
+2. Engram stores durable bounded context, decisions, status summaries, and
+   recovery metadata under the `crm-master` project key.
+3. Repository files remain the exact artifact record; Engram does not replace,
+   reinterpret, or override them.
+4. Neither OpenSpec configuration nor Engram defines lifecycle transitions.
+   This document remains the semantic authority.
+
+No active governance file may use an alternate persistence mode or a legacy
+non-hybrid vocabulary.
+
+## Enterprise Design Standard
+
+`docs/templates/design-enterprise-template.md` is the sole canonical Design
+shape. It contains exactly 18 numbered sections and the seven Architecture
+Review topics A–G. The template owns section shape, required content slots,
+and artifact formatting. This workflow owns when Design is created, reviewed,
+refined, and accepted. No active document may add a competing Design shape,
+generic word-count constraint, direct Design-to-Tasks shortcut, or alternate
+Architecture Review topic set.
+
+## Terminal Maintainer Handoff
+
+Repository Ready produces the final bounded evidence packet and explicitly lists
+the remaining manual gates. Commit, Push, and Merge are user-facing lifecycle
+phases but are HUMAN / MAINTAINER-only. Agents may prepare instructions and
+reports; they may not execute those operations or simulate authorization.
+Release and Tag are maintainer-controlled actions outside the 14-phase CRM
+lifecycle. The workflow terminates after the Merge handoff.
+
+## Related Artifacts
+
+- `AGENTS.md` — startup, precedence, recovery, tiers, escalation, and Git boundaries
+- `docs/sdd-workflow-guard.md` — compatibility and mechanical-enforcement pointer
+- `docs/architecture/sdd-direct.md` — project-local execution adapter
+- `.opencode/sdd-model-map.json` — sole concrete role and local-agent mapping
+- `docs/templates/design-enterprise-template.md` — sole Design shape
+- `scripts/validate-sdd-direct.mjs` — deterministic governance validator
+- `scripts/validate-enterprise-design.mjs` — bounded Design pre-gate validator

@@ -1,4 +1,13 @@
-# Architecture Review Prompt — SDD v2.1
+---
+classification: HISTORICAL
+semantic_authority: false
+runtime: not-loaded
+---
+
+# Historical Architecture Review Prompt — SDD v2.1
+
+> Preserved as historical evidence. It is not loaded by CRM-SDD runtime;
+> `docs/SDD-WORKFLOW.md` and the Enterprise Design template are authoritative.
 
 ## Objetivo
 

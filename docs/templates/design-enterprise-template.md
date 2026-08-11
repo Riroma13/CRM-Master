@@ -1,4 +1,6 @@
 ---
+classification: TEMPLATE
+semantic_authority: false
 status: active
 role: enterprise design standard (18 sections + 7 AR topics)
 ---
@@ -7,8 +9,8 @@ role: enterprise design standard (18 sections + 7 AR topics)
 
 > **Estado:** Draft
 > **Documento de trabajo.** No modifica el pipeline SDD.
-> Template authority is limited to artifact shape. Workflow transitions belong
-> exclusively to `docs/sdd-workflow-guard.md`.
+> Template authority is limited to artifact shape. Workflow semantics belong
+> exclusively to `docs/SDD-WORKFLOW.md`.
 
 ---
 
@@ -319,7 +321,7 @@ Common mistakes:
 | `<COMPONENT>` | `<MODULE>` | <WHAT>  |
 | `<COMPONENT>` | `<MODULE>` | <WHAT>  |
 
-## 15. Extensibilidad
+## 15. Extensibility
 
 <!--
 Propósito: Documentar cómo se añadirán capacidades futuras sin rediseño.

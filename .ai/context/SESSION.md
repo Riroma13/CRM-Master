@@ -1,70 +1,35 @@
-# SESSION — SPEC-0025 Identity & Organization Platform
+---
+classification: PROJECT CONTEXT
+semantic_authority: false
+---
 
-> Fecha: 8 Ago 2026
+# SESSION — Current Repository State
 
-## Estado
+> Date: 11 Aug 2026
 
-- **Branch**: `main`
-- **SPEC-0025 Identity & Organization Platform**: ✅ **COMPLETED** — archivado y mergeado a `main` mediante PR #18
-- **Fase SDD visible actual**: `Archive` completado; PR #18 mergeado
-- **SPEC-0025**:
-  - Proposal: ✅ Creado (compatibilidad)
-  - Design: ✅ APPROVED_WITH_CONDITIONS
-  - Architecture Review: ✅ APPROVED_WITH_CONDITIONS (sin blockers)
-  - Tasks: ✅ Creado
-  - Tasks Review: ✅ APPROVED_WITH_CONDITIONS (sin blockers)
-  - Apply: ✅ Completado
-  - Verify: ✅ Completado
-  - Archive: ✅ Completado
+## Factual State
 
-## Final CI
+- The repository is undergoing a one-time CRM-SDD governance consolidation.
+- The migration is bounded to governance documentation, project-local OpenCode
+  wiring, model mapping, OpenSpec governance metadata, and deterministic
+  validators.
+- Product/runtime source, product behavior tests, Prisma/schema, and unrelated
+  application configuration are outside this migration.
+- SPEC-0025 Identity & Organization Platform is completed, archived, and
+  merged to `main` through PR #18.
+- OAuth social login is the next product candidate; no new product SPEC is
+  being advanced by this migration.
 
-- Database tests: ✅ PASS
-- Lint: ✅ PASS
-- Generated scope verification: ✅ PASS
+## Protected User Work
 
-## Deudas técnicas
+- `openspec/changes/SPEC-0028-jobs-background-processing-platform/` is existing
+  untracked user work and is not part of this migration.
+- Its `design.md` remains untouched and has verified SHA-256:
+  `0969a1c2d8d256156245657a4339ca9f2588bc57cdb33b1f0c3cc4700798f56b`.
 
-- **API ESLint configuration**: ✅ Deuda de configuración resuelta
-- **Rate limiter service-side double check redundancy**: ⏳ Sigue sin resolverse; conservar como pendiente
+## Repository Boundary
 
-## Condiciones aprobadas (no bloqueantes)
-
-1. Matriz exacta de rutas protegidas
-2. Semántica fail-closed Host/session/membership/tenant/RBAC
-3. `hostTenantId` inmutable
-4. Exclusión de invitación-aceptación
-5. Propiedad de retry solo BullMQ
-
-## Execution gates (no bloqueantes)
-
-- Better Auth catalog/declaration preflight
-- Guard execution
-- Route exclusions
-- Tenant isolation
-- Lease behavior
-- BullMQ retry ownership
-- Terminal DLQ behavior
-
-## Exclusiones
-
-SPEC-0027, SPEC-0028, frontend, client-portal RBAC, SSO/SCIM, Better Auth cleanup no relacionado, `c1a2f90` sin cambios.
-
-## Condiciones de Tasks Review (no bloqueantes)
-
-- Hacer explícitos en RED los casos RED-9 de Host: spoofed, malformed, multiple Host y proxy conflict.
-- Verificar literalmente la matriz de rutas/permisos y todas las exclusiones.
-- Vincular cada implementación a los paths concretos del Working Set.
-
-## Próximo paso visible
-
-- **OAuth social login** — siguiente candidato del roadmap
-- No se ha creado un SPEC nuevo todavía
-
-## Para arrancar
-
-```bash
-cd /home/ubuntu/.openclaw/workspace/CRM-Master
-opencode
-# No iniciar un SPEC nuevo todavía; el siguiente candidato es OAuth social login.
-```
+- Global OpenCode/Gentle configuration remains external read-only evidence.
+- No Git lifecycle operation is authorized by this session.
+- Product progress and SDD phase progress for active product changes are not
+  inferred from this governance migration.

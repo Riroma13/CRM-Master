@@ -1,15 +1,16 @@
 ---
-description: Run the project-local SDD-Direct workflow for a named change.
+description: Run the project-local CRM-SDD workflow for a named change.
 agent: sdd-direct-orchestrator
 ---
 
-Run the project-local SDD-Direct workflow for `$ARGUMENTS`.
+Classification: EXECUTION ADAPTER.
 
-The change name is required. Operate only on
-`openspec/changes/<change-name>/` and repository paths declared by the current
-Working Set. Write technical artifacts in English. Do not commit, push, merge,
-release, or tag; those are maintainer-controlled destructive transitions.
+Start the project-local CRM-SDD execution adapter for `$ARGUMENTS`. The change
+name is required. Load `AGENTS.md`, then the semantic workflow authority at
+`docs/SDD-WORKFLOW.md`, and recover the active state from
+`openspec/changes/<change-name>/` before any additional inspection.
 
-Use the shared Workflow Guard Direct-mode section. Stop at Repository Ready.
-Commit, Push, Merge, Release, and Tag are manual maintainer-controlled
-destructive gates.
+Use only project-local Direct agents and `.opencode/sdd-model-map.json`. Persist
+artifacts under the canonical change directory and mirror bounded status and
+evidence under the `hybrid` contract. Run `pnpm sdd:validate` before execution
+and at handoff. Do not commit, push, merge, release, or tag.

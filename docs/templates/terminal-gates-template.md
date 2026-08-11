@@ -1,3 +1,8 @@
+---
+classification: TEMPLATE
+semantic_authority: false
+---
+
 # Direct Terminal Gates Template
 
 > Reusable template for `health-report.md` and `repository-ready.md`.
