@@ -1,4 +1,5 @@
 import { MetricsRegistry } from '../metrics/metrics-registry';
+import { HealthController } from '../../health/health.controller';
 
 describe('MetricsRegistry', () => {
   let registry: MetricsRegistry;
@@ -72,5 +73,52 @@ describe('MetricsRegistry', () => {
     expect(output).toContain('# HELP');
     expect(output).toContain('# TYPE');
     expect(output).toContain('http_requests_total');
+  });
+
+  it('MUST expose aggregate job metrics without payload or tenant labels', async () => {
+    registry.jobDuration.observe({ queue: 'jobs', job: 'example-job' }, 42);
+    registry.jobFailuresTotal.inc({ queue: 'jobs', job: 'example-job', errorType: 'TimeoutError' });
+    registry.activeJobs.set({ queue: 'jobs' }, 2);
+
+    const output = await registry.getMetrics();
+
+    expect(output).toContain('job_duration_ms');
+    expect(output).toContain('job_failures_total');
+    expect(output).toContain('jobs_active');
+    expect(output).not.toMatch(/payload|tenantId|correlationId|jobData/);
+  });
+
+  it('MUST report Redis readiness from the Jobs provider instead of unknown', async () => {
+    const jobs = {
+      getReadiness: jest.fn().mockResolvedValue({ redis: 'ok', jobs: 'ok' }),
+    };
+    const controller = new HealthController(
+      { admin: { $queryRawUnsafe: jest.fn().mockResolvedValue(1) } } as any,
+      { runAllChecks: jest.fn().mockResolvedValue([]) } as any,
+      jobs as any,
+    );
+
+    const result = await controller.check();
+
+    expect(jobs.getReadiness).toHaveBeenCalledTimes(1);
+    expect(result.checks.redis).toBe('ok');
+    expect(result.checks.jobs).toBe('ok');
+    expect(result.checks.redis).not.toBe('unknown');
+  });
+
+  it('MUST degrade health when the Jobs provider reports Redis failure', async () => {
+    const jobs = {
+      getReadiness: jest.fn().mockResolvedValue({ redis: 'error', jobs: 'degraded' }),
+    };
+    const controller = new HealthController(
+      { admin: { $queryRawUnsafe: jest.fn().mockResolvedValue(1) } } as any,
+      { runAllChecks: jest.fn().mockResolvedValue([]) } as any,
+      jobs as any,
+    );
+
+    const result = await controller.check();
+
+    expect(result.status).toBe('degraded');
+    expect(result.checks).toMatchObject({ redis: 'error', jobs: 'degraded' });
   });
 });

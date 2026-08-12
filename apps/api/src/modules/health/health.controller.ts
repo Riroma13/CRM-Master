@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { PrismaService } from '../../common/prisma.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { HealthService } from '../observability/health/health.service';
+import { JobsLifecycleService } from '../jobs/jobs-lifecycle.service';
 
 @ApiTags('Health')
 @Controller('api/v1/health')
@@ -12,6 +13,7 @@ export class HealthController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly healthService: HealthService,
+    private readonly jobs: JobsLifecycleService,
   ) {}
 
   @Get()
@@ -28,8 +30,9 @@ export class HealthController {
       checks.database = 'error';
     }
 
-    // Redis check (via simple ping through any Redis call)
-    checks.redis = 'unknown';
+    const jobsReadiness = await this.jobs.getReadiness();
+    checks.redis = jobsReadiness.redis;
+    checks.jobs = jobsReadiness.jobs;
 
     // Extended health indicators from HealthService
     const indicators = await this.healthService.runAllChecks();
@@ -37,7 +40,7 @@ export class HealthController {
       checks[indicator.name] = indicator.status;
     }
 
-    const allOk = Object.values(checks).every((s) => s === 'ok' || s === 'unknown' || s === 'healthy');
+    const allOk = Object.values(checks).every((s) => s === 'ok' || s === 'healthy');
 
     return {
       status: allOk ? 'ok' : 'degraded',

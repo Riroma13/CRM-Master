@@ -1,9 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { getQueueToken } from '@nestjs/bullmq';
 import {
   ACTIVITY_TIMELINE_DLQ_QUEUE,
   ACTIVITY_TIMELINE_INGESTION_QUEUE,
-  getActivityTimelineRedisConnectionOptions,
 } from '../activity-timeline-queue.constants';
+import { getJobsRedisConnectionOptions } from '../../jobs/jobs-redis.config';
 
 describe('ActivityTimeline queue and Redis configuration', () => {
   const originalRedisUrl = process.env.REDIS_URL;
@@ -21,7 +23,7 @@ describe('ActivityTimeline queue and Redis configuration', () => {
     process.env.REDIS_HOST = 'wrong-host';
     process.env.REDIS_PORT = '6390';
 
-    expect(getActivityTimelineRedisConnectionOptions()).toEqual({
+    expect(getJobsRedisConnectionOptions()).toEqual({
       url: 'redis://redis.internal:6380',
     });
   });
@@ -31,7 +33,7 @@ describe('ActivityTimeline queue and Redis configuration', () => {
     process.env.REDIS_HOST = 'localhost';
     process.env.REDIS_PORT = '6379';
 
-    expect(() => getActivityTimelineRedisConnectionOptions()).toThrow('REDIS_URL is required');
+    expect(() => getJobsRedisConnectionOptions()).toThrow('REDIS_URL is required');
   });
 
   it('defines colon-free ingestion and DLQ queue identities consistently', () => {
@@ -39,5 +41,46 @@ describe('ActivityTimeline queue and Redis configuration', () => {
     expect(ACTIVITY_TIMELINE_DLQ_QUEUE).toBe('activity-timeline-dlq');
     expect(getQueueToken(ACTIVITY_TIMELINE_INGESTION_QUEUE)).toContain(ACTIVITY_TIMELINE_INGESTION_QUEUE);
     expect(getQueueToken(ACTIVITY_TIMELINE_DLQ_QUEUE)).toContain(ACTIVITY_TIMELINE_DLQ_QUEUE);
+  });
+
+  it('does not own the BullMQ root or Redis configuration', () => {
+    const activityTimelineModule = readFileSync(join(__dirname, '../activity-timeline.module.ts'), 'utf8');
+    const activityTimelineQueueConstants = readFileSync(
+      join(__dirname, '../activity-timeline-queue.constants.ts'),
+      'utf8',
+    );
+
+    expect(activityTimelineModule).not.toContain('BullModule.forRoot');
+    expect(activityTimelineModule).not.toContain('REDIS_URL');
+    expect(activityTimelineQueueConstants).not.toContain('REDIS_URL');
+  });
+
+  it('requires InfrastructureModule and HealthModule to expose Jobs readiness', () => {
+    const infrastructureModule = readFileSync(
+      join(__dirname, '../../infrastructure/infrastructure.module.ts'),
+      'utf8',
+    );
+    const healthModule = readFileSync(join(__dirname, '../../health/health.module.ts'), 'utf8');
+    const healthController = readFileSync(join(__dirname, '../../health/health.controller.ts'), 'utf8');
+
+    expect(infrastructureModule).toContain("import { JobsModule } from '../jobs/jobs.module';");
+    expect(infrastructureModule).toMatch(/imports:\s*\[[\s\S]*JobsModule/);
+    expect(healthModule).toContain("import { JobsModule } from '../jobs/jobs.module';");
+    expect(healthModule).toMatch(/imports:\s*\[[\s\S]*JobsModule/);
+    expect(healthController).toContain('JobsLifecycleService');
+    expect(healthController).toContain('getReadiness()');
+  });
+
+  it('preserves Activity Timeline queue registrations and default options during root extraction', () => {
+    const activityTimelineModule = readFileSync(join(__dirname, '../activity-timeline.module.ts'), 'utf8');
+
+    expect(activityTimelineModule).toContain('BullModule.registerQueue');
+    expect(activityTimelineModule).toContain('attempts: 3');
+    expect(activityTimelineModule).toContain("delay: 1000");
+    expect(activityTimelineModule).toContain('removeOnComplete: true');
+    expect(activityTimelineModule).toContain('removeOnFail: 100');
+    expect(activityTimelineModule).toContain('attempts: 1');
+    expect(activityTimelineModule).toContain('name: ACTIVITY_TIMELINE_INGESTION_QUEUE');
+    expect(activityTimelineModule).toContain('name: ACTIVITY_TIMELINE_DLQ_QUEUE');
   });
 });

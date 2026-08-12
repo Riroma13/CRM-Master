@@ -11,14 +11,10 @@ import { PrismaService } from '../../common/prisma.service';
 import {
   ACTIVITY_TIMELINE_DLQ_QUEUE,
   ACTIVITY_TIMELINE_INGESTION_QUEUE,
-  getActivityTimelineRedisConnectionOptions,
 } from './activity-timeline-queue.constants';
 
 @Module({
   imports: [
-    BullModule.forRoot({
-      connection: getActivityTimelineRedisConnectionOptions(),
-    }),
     BullModule.registerQueue(
       {
         name: ACTIVITY_TIMELINE_INGESTION_QUEUE,
