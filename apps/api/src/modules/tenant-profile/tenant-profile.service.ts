@@ -28,7 +28,7 @@ export class TenantProfileService {
     };
   }
 
-  async updateProfile(tenantId: string, data: { name?: string; logo?: string; config?: any }) {
+  async updateProfile(tenantId: string, data: { name?: string; logo?: string | null; config?: any }) {
     const tenant = await this.prisma.admin.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) throw new NotFoundException('Tenant no encontrado');
     return this.prisma.admin.tenant.update({

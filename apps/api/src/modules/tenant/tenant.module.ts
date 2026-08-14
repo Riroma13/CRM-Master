@@ -18,6 +18,7 @@ import { TenantPresupuestosModule } from '../tenant-presupuestos/tenant-presupue
 import { TenantProfileModule } from '../tenant-profile/tenant-profile.module';
 import { TenantRecursosModule } from '../tenant-recursos/tenant-recursos.module';
 import { TenantSistemasModule } from '../tenant-sistemas/tenant-sistemas.module';
+import { TenantSettingsModule } from '../tenant-settings/tenant-settings.module';
 import { TenantTareasModule } from '../tenant-tareas/tenant-tareas.module';
 import { TenantWebhooksModule } from '../tenant-webhooks/tenant-webhooks.module';
 
@@ -56,6 +57,7 @@ import { TenantWebhooksModule } from '../tenant-webhooks/tenant-webhooks.module'
     TenantProfileModule,
     TenantRecursosModule,
     TenantSistemasModule,
+    TenantSettingsModule,
     TenantTareasModule,
     TenantWebhooksModule,
   ],

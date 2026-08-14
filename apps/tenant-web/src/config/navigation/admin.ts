@@ -58,6 +58,15 @@ export const adminNavItems: NavItem[] = [
     module: 'documentos',
   },
   {
+    id: 'settings',
+    label: 'Configuración',
+    href: '/admin/settings',
+    icon: Settings,
+    order: 450,
+    category: 'admin',
+    module: 'settings',
+  },
+  {
     id: 'modules',
     label: 'Módulos',
     href: '/admin/modules',
