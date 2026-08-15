@@ -3,7 +3,11 @@ import { Logger, Injectable } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../../common/prisma.service';
-import { createAuditAppendOnlyMiddleware, computeGenesisHash, computeAuditEventHash } from '../audit-append-only.middleware';
+import {
+  createAuditAppendOnlyMiddleware,
+  computeGenesisHash,
+  computeAuditEventHash,
+} from '../audit-append-only.middleware';
 import { z } from 'zod';
 import { IdentityAuditDispatcherService } from '../../identity/identity-audit-dispatcher.service';
 import { IDENTITY_AUDIT_DLQ_QUEUE, IDENTITY_AUDIT_INGESTION_QUEUE } from '../audit-queue.constants';
@@ -14,10 +18,42 @@ export const AuditIngestionEventSchema = z.object({
   actorType: z.enum(['user', 'system', 'integration', 'workflow', 'admin', 'api']),
   actorId: z.string().min(1),
   actorName: z.string().optional(),
-  resourceType: z.enum(['user', 'role', 'permission', 'tenant', 'configuration', 'workflow', 'notification', 'document', 'integration', 'automation', 'communication', 'auth', 'api']),
+  resourceType: z.enum([
+    'user',
+    'role',
+    'permission',
+    'tenant',
+    'configuration',
+    'workflow',
+    'notification',
+    'document',
+    'integration',
+    'automation',
+    'communication',
+    'auth',
+    'api',
+  ]),
   resourceId: z.string().min(1),
   resourceName: z.string().optional(),
-  action: z.enum(['create', 'read', 'update', 'delete', 'login', 'logout', 'authenticate', 'authorize', 'deny', 'assign', 'revoke', 'start', 'complete', 'fail', 'export', 'import', 'purge']),
+  action: z.enum([
+    'create',
+    'read',
+    'update',
+    'delete',
+    'login',
+    'logout',
+    'authenticate',
+    'authorize',
+    'deny',
+    'assign',
+    'revoke',
+    'start',
+    'complete',
+    'fail',
+    'export',
+    'import',
+    'purge',
+  ]),
   outcome: z.enum(['success', 'failure', 'denied', 'error']),
   ipAddress: z.string().optional(),
   userAgent: z.string().optional(),
@@ -43,11 +79,16 @@ export class IngestionService extends WorkerHost {
     super();
   }
 
-  async process(job: Job<AuditIngestionEvent, any, string>): Promise<{ eventId: string; deduplicated?: boolean }> {
+  async process(
+    job: Job<AuditIngestionEvent, any, string>,
+  ): Promise<{ eventId: string; deduplicated?: boolean }> {
     const parsed = AuditIngestionEventSchema.safeParse(job.data);
     if (!parsed.success) {
       this.logger.warn(`Invalid audit event for job ${job.id}: ${parsed.error.message}`);
-      await this.identityAuditDispatcher.handleInvalidPayload(job, 'IDENTITY_AUDIT_INVALID_PAYLOAD');
+      await this.identityAuditDispatcher.handleInvalidPayload(
+        job,
+        'IDENTITY_AUDIT_INVALID_PAYLOAD',
+      );
       return { eventId: 'invalid' };
     }
 
@@ -60,7 +101,9 @@ export class IngestionService extends WorkerHost {
     while (retries < this.MAX_RETRIES) {
       try {
         const result = await this.insertWithHashChain(eventId, tenantId, event, occurredAt);
-        this.logger.debug(`Persisted audit event ${eventId} for tenant ${tenantId} (seq=${result.sequence})`);
+        this.logger.debug(
+          `Persisted audit event ${eventId} for tenant ${tenantId} (seq=${result.sequence})`,
+        );
         return { eventId };
       } catch (error: any) {
         if (error?.code === 'P2002') {
@@ -72,19 +115,38 @@ export class IngestionService extends WorkerHost {
           if (target?.includes('sequence')) {
             retries++;
             if (retries >= this.MAX_RETRIES) {
-              this.logger.error(`Sequence fork persists after ${this.MAX_RETRIES} retries for tenant ${tenantId}, event ${eventId}`);
+              this.logger.error(
+                `Sequence fork persists after ${this.MAX_RETRIES} retries for tenant ${tenantId}, event ${eventId}`,
+              );
               throw error;
             }
-            this.logger.warn(`Sequence conflict for tenant ${tenantId}, retry ${retries}/${this.MAX_RETRIES}`);
+            this.logger.warn(
+              `Sequence conflict for tenant ${tenantId}, retry ${retries}/${this.MAX_RETRIES}`,
+            );
             continue;
           }
         }
-        this.logger.error(`Failed to persist audit event ${eventId}: ${error.message}`, error.stack);
+        this.logger.error(
+          `Failed to persist audit event ${eventId}: ${error.message}`,
+          error.stack,
+        );
         throw error;
       }
     }
 
     throw new Error(`Exhausted retries for event ${eventId}`);
+  }
+
+  async persistRequired(event: AuditIngestionEvent): Promise<{ eventId: string }> {
+    const parsed = AuditIngestionEventSchema.parse(event);
+    const eventId = parsed.eventId ?? randomUUID();
+    await this.insertWithHashChain(
+      eventId,
+      parsed.tenantId,
+      parsed,
+      parsed.occurredAt ?? new Date().toISOString(),
+    );
+    return { eventId };
   }
 
   private async insertWithHashChain(

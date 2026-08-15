@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Optional,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'node:crypto';
@@ -6,6 +11,7 @@ import { PrismaService } from '../../common/prisma.service';
 import { AuditEventQuery, PaginatedResult } from './dto';
 import { PinoLoggerService } from '../observability/logging/pino-logger.service';
 import { IDENTITY_AUDIT_INGESTION_QUEUE } from './audit-queue.constants';
+import { IngestionService } from './ingestion/ingestion.service';
 
 export interface AuditEventRow {
   id: string;
@@ -36,10 +42,16 @@ export class AuditService {
   constructor(
     private readonly logger: PinoLoggerService,
     private readonly prisma: PrismaService,
-    @Optional() @InjectQueue(IDENTITY_AUDIT_INGESTION_QUEUE) private readonly ingestionQueue?: Queue,
+    private readonly ingestion: IngestionService,
+    @Optional()
+    @InjectQueue(IDENTITY_AUDIT_INGESTION_QUEUE)
+    private readonly ingestionQueue?: Queue,
   ) {}
 
-  async getEvents(tenantId: string, filters: AuditEventQuery): Promise<PaginatedResult<AuditEventRow>> {
+  async getEvents(
+    tenantId: string,
+    filters: AuditEventQuery,
+  ): Promise<PaginatedResult<AuditEventRow>> {
     const page = filters.page ?? 1;
     const limit = Math.min(filters.limit ?? 50, 100);
     const skip = (page - 1) * limit;
@@ -111,7 +123,9 @@ export class AuditService {
     outcome?: string;
   }): Promise<void> {
     if (!this.ingestionQueue) {
-      this.logger.warn(`Audit queue not available, skipping audit log: ${data.action} ${data.resource}`);
+      this.logger.warn(
+        `Audit queue not available, skipping audit log: ${data.action} ${data.resource}`,
+      );
       return;
     }
     await this.ingestionQueue.add('event', {
@@ -127,5 +141,33 @@ export class AuditService {
       metadata: data.details ? { details: data.details } : {},
       occurredAt: new Date().toISOString(),
     });
+  }
+
+  async requiredLog(data: {
+    tenantId: string;
+    actorId: string;
+    organizationId: string;
+    action: 'export';
+    resource: 'configuration';
+    outcome: 'success' | 'failure';
+    correlationId: string;
+    metadata: Record<string, unknown>;
+  }): Promise<void> {
+    try {
+      await this.ingestion.persistRequired({
+        tenantId: data.tenantId,
+        actorType: 'user',
+        actorId: data.actorId,
+        resourceType: data.resource,
+        resourceId: data.organizationId,
+        action: data.action,
+        outcome: data.outcome,
+        correlationId: data.correlationId,
+        metadata: { ...data.metadata, organizationId: data.organizationId },
+      });
+    } catch (error) {
+      this.logger.error(`Required audit persistence failed: ${(error as Error).message}`);
+      throw new ServiceUnavailableException('EXPORT_AUDIT_UNAVAILABLE');
+    }
   }
 }

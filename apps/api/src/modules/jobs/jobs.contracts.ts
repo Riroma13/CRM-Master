@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 export interface TrustedJobContext {
   tenantId: string;
+  actorId?: string;
+  organizationId?: string;
   correlationId?: string;
   idempotencyKey: string;
 }
@@ -21,7 +23,11 @@ export interface JobsClient {
     definition: JobDefinition<T>,
     context: TrustedJobContext,
     data: unknown,
-    options?: { delay?: number },
+    options?: {
+      delay?: number;
+      removeOnComplete?: boolean;
+      removeOnFail?: { age: number; count: number };
+    },
   ): Promise<{ id: string }>;
   schedule<T>(
     definition: JobDefinition<T>,

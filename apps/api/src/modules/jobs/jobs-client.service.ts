@@ -32,7 +32,11 @@ export class JobsClientService implements JobsClient {
     definition: JobDefinition<T>,
     context: TrustedJobContext,
     data: unknown,
-    options: { delay?: number } = {},
+    options: {
+      delay?: number;
+      removeOnComplete?: boolean;
+      removeOnFail?: { age: number; count: number };
+    } = {},
   ): Promise<{ id: string }> {
     const parsedData = this.parseData(definition, data);
     const jobId = this.getJobId(definition, context);
@@ -47,6 +51,10 @@ export class JobsClientService implements JobsClient {
           attempts: definition.attempts,
           backoff: definition.backoff,
           ...(options.delay === undefined ? {} : { delay: options.delay }),
+          ...(options.removeOnComplete === undefined
+            ? {}
+            : { removeOnComplete: options.removeOnComplete }),
+          ...(options.removeOnFail === undefined ? {} : { removeOnFail: options.removeOnFail }),
         },
       );
       return { id: String(job.id ?? jobId) };
