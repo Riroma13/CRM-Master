@@ -48,6 +48,8 @@ model Tenant {
   clientUsers ClientUser[]
   identityAuthorizationOperations IdentityAuthorizationOperation[]
   identityAuditOutboxEvents IdentityAuditOutbox[]
+  lifecyclePolicies DataLifecyclePolicy[]
+  lifecycleRuns DataLifecycleRun[]
 
   @@map("tenants")
 }
@@ -1898,4 +1900,38 @@ model IdentityAuditOutbox {
   @@unique([tenantId, mutationId, eventType])
   @@index([tenantId, status, leaseExpiresAt])
   @@map("identity_audit_outbox")
+}
+
+// ─── Data Retention & Lifecycle Platform (SPEC-0032) ──────────────────
+
+model DataLifecyclePolicy {
+  id       String  @id @default(uuid())
+  tenantId String  @map("tenant_id")
+  target   String
+  schedule String
+  enabled  Boolean @default(true)
+
+  tenant Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  runs   DataLifecycleRun[]
+
+  @@unique([tenantId, target])
+  @@index([tenantId, enabled])
+  @@map("data_lifecycle_policies")
+}
+
+model DataLifecycleRun {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  policyId     String   @map("policy_id")
+  scheduledFor DateTime @map("scheduled_for")
+  status       String
+  purgedCount  Int      @default(0) @map("purged_count")
+  failureCode  String?  @map("failure_code")
+
+  tenant Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  policy DataLifecyclePolicy  @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@unique([policyId, scheduledFor])
+  @@index([tenantId, scheduledFor(sort: Desc)])
+  @@map("data_lifecycle_runs")
 }

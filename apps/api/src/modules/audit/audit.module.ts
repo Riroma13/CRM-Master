@@ -23,6 +23,7 @@ import {
   IDENTITY_AUDIT_DLQ_QUEUE,
   IDENTITY_AUDIT_INGESTION_QUEUE,
 } from './audit-queue.constants';
+import { AUDIT_LIFECYCLE_TARGET_ADAPTER } from '../../../../../packages/shared/src/lifecycle';
 
 @Global()
 @Module({
@@ -69,6 +70,7 @@ import {
     SOC2ComplianceRule,
     LoginMFAExpectationRule,
     RetentionEngine,
+    { provide: AUDIT_LIFECYCLE_TARGET_ADAPTER, useExisting: RetentionEngine },
     LegalHoldService,
     RedactionService,
     ExportService,
@@ -76,6 +78,6 @@ import {
     CsvExporter,
     IdentityAuditDispatcherService,
   ],
-  exports: [AuditService],
+  exports: [AuditService, RetentionEngine, AUDIT_LIFECYCLE_TARGET_ADAPTER],
 })
 export class AuditModule {}

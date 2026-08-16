@@ -7,6 +7,8 @@ import { JobsModule } from '../jobs/jobs.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ObservabilityModule } from '../observability/observability.module';
 import { SearchModule } from '../search/search.module';
+import { DocumentEngineModule } from '../document-engine/document-engine.module';
+import { LifecycleModule } from '../lifecycle/lifecycle.module';
 
 /**
  * Aggregation module for cross-cutting infrastructure concerns.
@@ -18,12 +20,14 @@ import { SearchModule } from '../search/search.module';
   imports: [
     AdminToolsModule,
     AuditModule,
+    DocumentEngineModule,
     ExportModule,
     HealthModule,
     JobsModule,
     NotificationsModule,
     ObservabilityModule,
     SearchModule,
+    LifecycleModule,
   ],
 })
 export class InfrastructureModule {}

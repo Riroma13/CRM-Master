@@ -1,11 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma.service';
+import { LifecycleExecutionContext, LifecyclePolicyInput, LifecycleRunResult } from '../../../../../../packages/shared/src/lifecycle';
 
 @Injectable()
 export class RetentionEngine {
+  readonly target = 'audit-events' as const;
   private readonly logger = new Logger(RetentionEngine.name);
 
   constructor(private readonly prisma: PrismaService) {}
+
+  async execute(context: LifecycleExecutionContext, _policy: LifecyclePolicyInput): Promise<LifecycleRunResult> {
+    const result = await this.applyRetention(context.tenantId);
+    return { purgedCount: result.deletedCount + result.purgedCount };
+  }
 
   async applyRetention(tenantId: string): Promise<{ deletedCount: number; purgedCount: number }> {
     const policy = await this.prisma.admin.auditRetentionPolicy.findUnique({

@@ -36,4 +36,15 @@ describe('RetentionService', () => {
     const count = await service.purgeExpiredTrash();
     expect(count).toBe(0);
   });
+
+  it('should scope lifecycle trash to the trusted tenant and return a structured count', async () => {
+    mockPrisma.admin.documentTrash.findMany.mockResolvedValue([
+      { id: '1', documentId: 'doc-1', tenantId: 'tenant-a', expiresAt: new Date('2020-01-01'), restoredAt: null },
+    ]);
+    mockPrisma.admin.documentTrash.delete.mockResolvedValue({});
+
+    await expect(service.execute({ tenantId: 'tenant-a', idempotencyKey: 'run-1' }, { target: 'document-trash', schedule: '0 2 * * *', enabled: true }))
+      .resolves.toEqual({ purgedCount: 1 });
+    expect(mockPrisma.admin.documentTrash.findMany).toHaveBeenCalledWith({ where: expect.objectContaining({ tenantId: 'tenant-a', restoredAt: null, expiresAt: { lte: expect.any(Date) } }) });
+  });
 });

@@ -55,6 +55,16 @@ function parseSchema(filePath: string): ParsedModel[] {
   return models;
 }
 
+function readModelBlock(filePath: string, modelName: string): string {
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const match = content.match(
+    new RegExp(`model\\s+${modelName}\\s*\\{([\\s\\S]*?)\\n\\}`),
+  );
+
+  expect(match).not.toBeNull();
+  return match?.[1] ?? '';
+}
+
 describe('Tenant Scope Integrity (cross-referenced against schema.prisma)', () => {
   let models: ParsedModel[];
 
@@ -128,5 +138,21 @@ describe('Tenant Scope Integrity (cross-referenced against schema.prisma)', () =
     for (const m of expected) {
       expect(CLIENTE_SCOPED_MODELS).toContain(m);
     }
+  });
+
+  it('proves lifecycle schema constraints and generated tenant participation', () => {
+    const policy = readModelBlock(SCHEMA_PATH, 'DataLifecyclePolicy');
+    const run = readModelBlock(SCHEMA_PATH, 'DataLifecycleRun');
+
+    expect(TENANT_SCOPED_MODELS).toContain('DataLifecyclePolicy');
+    expect(TENANT_SCOPED_MODELS).toContain('DataLifecycleRun');
+
+    expect(policy).toContain('tenantId String');
+    expect(policy).toContain('@@unique([tenantId, target])');
+    expect(policy).toContain('@@index([tenantId, enabled])');
+
+    expect(run).toContain('tenantId     String');
+    expect(run).toContain('@@unique([policyId, scheduledFor])');
+    expect(run).toContain('@@index([tenantId, scheduledFor(sort: Desc)])');
   });
 });

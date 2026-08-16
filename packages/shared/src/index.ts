@@ -154,6 +154,9 @@ export type {
 
 export type { PublicApiResponse } from './public-api';
 
+// ─── Data Retention & Lifecycle Platform (SPEC-0032) ───────────────────
+export * from './lifecycle';
+
 // ─── Plugin Platform (SPEC-0022) ─────────────────────────────────────────
 
 export type {

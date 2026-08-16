@@ -118,4 +118,13 @@ describe('RetentionEngine', () => {
       expect(call[0]).toContain('legal_hold = false');
     }
   });
+
+  it('should expose a lifecycle result while preserving held rows', async () => {
+    prisma.admin.auditRetentionPolicy.findUnique.mockResolvedValue(mockPolicy);
+    prisma.admin.$executeRawUnsafe.mockResolvedValueOnce(3).mockResolvedValueOnce(0);
+
+    await expect(engine.execute({ tenantId: 'tenant-test', idempotencyKey: 'run-1' }, { target: 'audit-events', schedule: '0 2 * * *', enabled: true }))
+      .resolves.toEqual({ purgedCount: 3 });
+    expect(prisma.admin.$executeRawUnsafe.mock.calls[0][0]).toContain('legal_hold = false');
+  });
 });

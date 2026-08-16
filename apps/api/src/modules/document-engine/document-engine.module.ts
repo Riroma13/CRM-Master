@@ -18,6 +18,7 @@ import { RetentionService } from './retention/retention-service';
 import { PermissionInheritance } from './permissions/permission-inheritance';
 import { DocumentEventHandlers } from './document.event-handlers';
 import { DocumentAttachmentResolver } from './document-attachment-resolver';
+import { DOCUMENT_TRASH_LIFECYCLE_TARGET_ADAPTER } from '../../../../../packages/shared/src/lifecycle';
 
 @Module({
   controllers: [DocumentController, FolderController],
@@ -36,15 +37,18 @@ import { DocumentAttachmentResolver } from './document-attachment-resolver';
     QuarantineService,
     QuarantineNotifier,
     RetentionService,
+    { provide: DOCUMENT_TRASH_LIFECYCLE_TARGET_ADAPTER, useExisting: RetentionService },
     PermissionInheritance,
     DocumentEventHandlers,
     DocumentAttachmentResolver,
+    RetentionService,
   ],
   exports: [
     DocumentService,
     FolderService,
     LocalStorageProvider,
     DocumentAttachmentResolver,
+    DOCUMENT_TRASH_LIFECYCLE_TARGET_ADAPTER,
   ],
 })
 export class DocumentEngineModule {}

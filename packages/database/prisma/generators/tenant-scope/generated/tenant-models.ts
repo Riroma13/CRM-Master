@@ -1,7 +1,7 @@
 // ⚡ AUTO-GENERATED — DO NOT EDIT
 // Source: prisma/schema.prisma
 // Generator: prisma/generators/tenant-scope/generator.ts
-// Generated: 2026-07-30T16:41:27.951Z
+// Generated: 2026-08-16T11:22:55.447Z
 
 /**
  * Models that have a `tenantId` field and receive automatic
@@ -27,6 +27,8 @@ export const TENANT_SCOPED_MODELS = [
   "Comunicacion",
   "Dashboard",
   "DashboardWidget",
+  "DataLifecyclePolicy",
+  "DataLifecycleRun",
   "DatasetIngestionLog",
   "Disponibilidad",
   "Document",
@@ -131,6 +133,8 @@ export const ALL_MODELS = [
   "Comunicacion",
   "Dashboard",
   "DashboardWidget",
+  "DataLifecyclePolicy",
+  "DataLifecycleRun",
   "DatasetIngestionLog",
   "Disponibilidad",
   "Document",
@@ -287,7 +291,9 @@ export const MODELS_BY_SCOPED_FIELD = {
     "UsageMeter",
     "Invoice",
     "IdentityAuthorizationOperation",
-    "IdentityAuditOutbox"
+    "IdentityAuditOutbox",
+    "DataLifecyclePolicy",
+    "DataLifecycleRun"
   ],
   "clienteId": [
     "ClientUser",
