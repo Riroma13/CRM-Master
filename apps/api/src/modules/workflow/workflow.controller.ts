@@ -1,12 +1,15 @@
 import {
   Controller, Get, Post, Param, Query, Body,
   ParseUUIDPipe, HttpCode, HttpStatus,
-  UseGuards,
+  UseGuards, Req,
 } from '@nestjs/common';
+import { RequirePermission } from '../../common/decorators/permissions.decorator';
+import { IdentityOrganizationGuard } from '../identity/identity-organization.guard';
 import { WorkflowService } from './workflow.service';
 import { DefinitionService } from './definition.service';
 import { WorkflowDefinitionGuard } from './guards/workflow-definition.guard';
 import { WorkflowExecutionGuard } from './guards/workflow-execution.guard';
+import { WorkflowTenantContextGuard } from './guards/workflow-tenant-context.guard';
 
 @Controller('api/v1/workflow')
 export class WorkflowController {
@@ -18,119 +21,133 @@ export class WorkflowController {
   // ─── Definition CRUD ────────────────────────────────────────
 
   @Post('definitions')
-  @UseGuards(WorkflowDefinitionGuard)
+  @RequirePermission('workflow', 'write')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowDefinitionGuard)
   @HttpCode(HttpStatus.CREATED)
   async createDefinition(
     @Body() body: { name: string; description?: string; nodes: any; startNode: string },
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
   ) {
-    return this.definitionService.create(tenantId, body);
+    return this.definitionService.create(request.workflowContext.tenantId, body);
   }
 
   @Get('definitions')
-  @UseGuards(WorkflowDefinitionGuard)
+  @RequirePermission('workflow', 'read')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowDefinitionGuard)
   async listDefinitions(
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.definitionService.findAll(tenantId, Number(page) || 1, Number(limit) || 20);
+    return this.definitionService.findAll(request.workflowContext.tenantId, Number(page) || 1, Number(limit) || 20);
   }
 
   @Get('definitions/:id')
-  @UseGuards(WorkflowDefinitionGuard)
+  @RequirePermission('workflow', 'read')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowDefinitionGuard)
   async getDefinition(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
   ) {
-    return this.definitionService.findOne(tenantId, id);
+    return this.definitionService.findOne(request.workflowContext.tenantId, id);
   }
 
   @Post('definitions/:id/versions')
-  @UseGuards(WorkflowDefinitionGuard)
+  @RequirePermission('workflow', 'write')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowDefinitionGuard)
   @HttpCode(HttpStatus.CREATED)
   async createVersion(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
     @Body() body: { nodes: any; startNode: string },
   ) {
-    return this.definitionService.createVersion(tenantId, id, body);
+    return this.definitionService.createVersion(request.workflowContext.tenantId, id, body);
   }
 
   @Post('definitions/:id/publish')
-  @UseGuards(WorkflowDefinitionGuard)
+  @RequirePermission('workflow', 'write')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowDefinitionGuard)
   async publishDefinition(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
   ) {
-    return this.definitionService.publish(tenantId, id);
+    return this.definitionService.publish(request.workflowContext.tenantId, id);
   }
 
   // ─── Instance Management ────────────────────────────────────
 
   @Post('instances')
+  @RequirePermission('workflow', 'execute')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowDefinitionGuard)
   @HttpCode(HttpStatus.CREATED)
   async startWorkflow(
     @Body() body: { definitionId: string; variables?: Record<string, unknown>; correlationId?: string },
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
   ) {
-    return this.workflowService.startWorkflow(tenantId, body.definitionId, body.variables, body.correlationId);
+    return this.workflowService.startWorkflow(request.workflowContext.tenantId, body.definitionId, body.variables, body.correlationId);
   }
 
   @Get('instances')
+  @RequirePermission('workflow', 'read')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard)
   async listInstances(
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
     @Query('status') status?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.workflowService.listInstances(tenantId, status, Number(page) || 1, Number(limit) || 20);
+    return this.workflowService.listInstances(request.workflowContext.tenantId, status, Number(page) || 1, Number(limit) || 20);
   }
 
   @Get('instances/:id')
-  @UseGuards(WorkflowExecutionGuard)
+  @RequirePermission('workflow', 'read')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowExecutionGuard)
   async getInstance(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
   ) {
-    return this.workflowService.getInstance(tenantId, id);
+    return this.workflowService.getInstance(request.workflowContext.tenantId, id);
   }
 
   @Post('instances/:id/resume')
-  @UseGuards(WorkflowExecutionGuard)
+  @RequirePermission('workflow', 'execute')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowExecutionGuard)
   async resumeInstance(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
     @Body() body?: Record<string, unknown>,
   ) {
-    return this.workflowService.resumeWorkflow(tenantId, id, body);
+    return this.workflowService.resumeWorkflow(request.workflowContext.tenantId, id, body);
   }
 
   @Post('instances/:id/suspend')
-  @UseGuards(WorkflowExecutionGuard)
+  @RequirePermission('workflow', 'execute')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowExecutionGuard)
   async suspendInstance(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
   ) {
-    return this.workflowService.suspendWorkflow(tenantId, id);
+    return this.workflowService.suspendWorkflow(request.workflowContext.tenantId, id);
   }
 
   @Post('instances/:id/cancel')
-  @UseGuards(WorkflowExecutionGuard)
+  @RequirePermission('workflow', 'execute')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowExecutionGuard)
   async cancelInstance(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
   ) {
-    return this.workflowService.cancelWorkflow(tenantId, id);
+    return this.workflowService.cancelWorkflow(request.workflowContext.tenantId, id);
   }
 
   @Post('instances/:id/retry/:executionId')
-  @UseGuards(WorkflowExecutionGuard)
+  @RequirePermission('workflow', 'execute')
+  @UseGuards(IdentityOrganizationGuard, WorkflowTenantContextGuard, WorkflowExecutionGuard)
   async retryStep(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('executionId', ParseUUIDPipe) executionId: string,
-    @Query('tenantId') tenantId: string,
+    @Req() request: any,
   ) {
-    return this.workflowService.retryStep(tenantId, id, executionId);
+    return this.workflowService.retryStep(request.workflowContext.tenantId, id, executionId);
   }
 }

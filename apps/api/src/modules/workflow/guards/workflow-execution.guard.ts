@@ -7,10 +7,10 @@ export class WorkflowExecutionGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const tenantId = request.query.tenantId || request.body?.tenantId;
+    const tenantId = request.workflowContext?.tenantId;
     const instanceId = request.params.id;
 
-    if (!tenantId) throw new ForbiddenException('tenantId is required');
+    if (!tenantId) throw new ForbiddenException('WORKFLOW_TENANT_CONTEXT_REQUIRED');
 
     if (instanceId) {
       const instance = await this.prisma.forTenant(tenantId).workflowInstance.findFirst({
@@ -19,7 +19,6 @@ export class WorkflowExecutionGuard implements CanActivate {
       if (!instance) throw new ForbiddenException('Workflow instance not found or access denied');
     }
 
-    (request as any).tenantId = tenantId;
     return true;
   }
 }

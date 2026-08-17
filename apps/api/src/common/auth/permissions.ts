@@ -9,6 +9,7 @@ export const statement = {
   sistemas: ['create', 'read', 'update', 'delete'],
   recursos: ['create', 'read', 'update', 'delete'],
   configuracion: ['read', 'update'],
+  workflow: ['read', 'write', 'execute'],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -23,6 +24,7 @@ export const owner = ac.newRole({
   sistemas: ['create', 'read', 'update', 'delete'],
   recursos: ['create', 'read', 'update', 'delete'],
   configuracion: ['read', 'update'],
+  workflow: ['read', 'write', 'execute'],
 });
 
 export const operador = ac.newRole({
@@ -47,8 +49,12 @@ export const lector = ac.newRole({
   configuracion: [],
 });
 
+// Identity's canonical admin role is intentionally limited to workflow actions here.
+export const workflowAdmin = ac.newRole({ workflow: ['read', 'write', 'execute'] });
+
 export const ROLE_MAP: Record<string, ReturnType<typeof ac.newRole>> = {
   owner,
   operador,
   lector,
+  admin: workflowAdmin,
 };

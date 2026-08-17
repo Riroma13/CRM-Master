@@ -35,7 +35,12 @@ import {
     IdentityOrganizationGuard,
     PrismaService,
   ],
-  exports: [AUTH_CLIENT, IdentityAuditDispatcherService],
+  exports: [
+    AUTH_CLIENT,
+    IdentityAuditDispatcherService,
+    IdentityOrganizationGuard,
+    IdentityMembershipRepository,
+  ],
 })
 export class IdentityModule implements OnModuleInit {
   constructor(private readonly preflight: IdentityCatalogPreflightService) {}

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
 import { DefinitionService } from './definition.service';
 import { PrismaService } from '../../common/prisma.service';
@@ -29,8 +29,8 @@ describe('WorkflowService', () => {
       workflowDefinition: {
         findFirst: jest.fn().mockResolvedValue({ id: 'def-1', tenantId: 'tenant-1', name: 'Test Workflow' }),
       },
-      workflowDefinitionVersion: {
-        findFirst: jest.fn().mockResolvedValue({ id: 'v-1', version: 1, nodes: [{ id: 'start', type: 'start', name: 'Start' }, { id: 'end', type: 'end', name: 'End' }], startNode: 'start', isPublished: true }),
+        workflowDefinitionVersion: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'v-1', version: 1, nodes: [{ id: 'start', type: 'start', name: 'Start', config: {}, next: ['end'] }, { id: 'end', type: 'end', name: 'End', config: {} }], startNode: 'start', isPublished: true }),
       },
       workflowExecution: {
         create: jest.fn().mockResolvedValue({ id: 'exec-1', instanceId: 'instance-1', nodeId: 'start', status: 'running' }),
@@ -57,7 +57,7 @@ describe('WorkflowService', () => {
     };
 
     mockDefinitionService = {
-      getLatestPublished: jest.fn().mockResolvedValue({ id: 'v-1', version: 1, nodes: [{ id: 'start', type: 'start', name: 'Start' }, { id: 'end', type: 'end', name: 'End' }], startNode: 'start', isPublished: true }),
+      getLatestPublished: jest.fn().mockResolvedValue({ id: 'v-1', version: 1, nodes: [{ id: 'start', type: 'start', name: 'Start', config: {}, next: ['end'] }, { id: 'end', type: 'end', name: 'End', config: {} }], startNode: 'start', isPublished: true }),
     };
 
     mockExecutorRegistry = new Map();
@@ -87,6 +87,22 @@ describe('WorkflowService', () => {
     it('should fail when definition has no published version', async () => {
       mockDefinitionService.getLatestPublished.mockRejectedValueOnce(new NotFoundException('No published version'));
       await expect(service.startWorkflow('tenant-1', 'def-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('rejects an invalid stored definition before creating an instance', async () => {
+      mockDefinitionService.getLatestPublished.mockResolvedValueOnce({ id: 'v-1', nodes: [{ expression: 'x' }], startNode: 'start' });
+      await expect(service.startWorkflow('tenant-1', 'def-1')).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.workflowInstance.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resumeWorkflow', () => {
+    it('rejects an invalid stored definition before changing status or auditing', async () => {
+      mockPrisma.workflowInstance.findFirst.mockResolvedValueOnce({ id: 'instance-1', definitionId: 'def-1', status: 'suspended', version: 1, executions: [], variables: [], activeBranches: [], audits: [] });
+      mockDefinitionService.getLatestPublished.mockResolvedValueOnce({ id: 'v-1', nodes: [{ expression: 'x' }], startNode: 'start' });
+      await expect(service.resumeWorkflow('tenant-1', 'instance-1')).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.workflowInstance.update).not.toHaveBeenCalled();
+      expect(mockPrisma.workflowAudit.create).not.toHaveBeenCalled();
     });
   });
 

@@ -7,10 +7,10 @@ export class WorkflowDefinitionGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const tenantId = request.query.tenantId || request.body?.tenantId;
-    const definitionId = request.params.id;
+    const tenantId = request.workflowContext?.tenantId;
+    const definitionId = request.params.id ?? request.body?.definitionId;
 
-    if (!tenantId) throw new ForbiddenException('tenantId is required');
+    if (!tenantId) throw new ForbiddenException('WORKFLOW_TENANT_CONTEXT_REQUIRED');
 
     if (definitionId) {
       const definition = await this.prisma.forTenant(tenantId).workflowDefinition.findFirst({
@@ -19,7 +19,6 @@ export class WorkflowDefinitionGuard implements CanActivate {
       if (!definition) throw new ForbiddenException('Workflow definition not found or access denied');
     }
 
-    (request as any).tenantId = tenantId;
     return true;
   }
 }

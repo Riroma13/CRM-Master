@@ -1,7 +1,7 @@
 import { Injectable, Inject, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { DefinitionService } from './definition.service';
-import { NodeExecutorRegistry } from '../../../../../packages/shared/src/workflow';
+import { NodeExecutorRegistry, parseWorkflowDefinition } from '../../../../../packages/shared/src/workflow';
 import type { InstanceStatus } from '../../../../../packages/shared/src/workflow';
 import { PinoLoggerService } from '../observability/logging/pino-logger.service';
 
@@ -21,7 +21,8 @@ export class WorkflowService {
     correlationId?: string,
   ) {
     const version = await this.definitionService.getLatestPublished(tenantId, definitionId);
-    const nodes = version.nodes as any[];
+    const parsed = this.parseStored(version.nodes, version.startNode);
+    const nodes = parsed.nodes as any[];
     const startNode = nodes.find((n: any) => n.id === version.startNode);
     if (!startNode) throw new BadRequestException(`Start node '${version.startNode}' not found in definition`);
 
@@ -45,7 +46,7 @@ export class WorkflowService {
     await this.createAudit(tenantId, instance.id, null, 'started');
 
     const execution = await this.createExecution(tenantId, instance.id, startNode.id, { variables });
-    await this.resolveNextNodes(tenantId, instance.id, startNode, variables, version.nodes as any[]);
+    await this.resolveNextNodes(tenantId, instance.id, startNode, variables, parsed.nodes as any[]);
 
     return { instanceId: instance.id, executionId: execution.id };
   }
@@ -57,6 +58,7 @@ export class WorkflowService {
     }
 
     const version = await this.definitionService.getLatestPublished(tenantId, instance.definitionId);
+    const parsed = this.parseStored(version.nodes, version.startNode);
     const variables = await this.getVariables(tenantId, instanceId);
     const mergedVars = { ...variables, ...data };
 
@@ -70,7 +72,7 @@ export class WorkflowService {
 
     await this.createAudit(tenantId, instanceId, null, 'resumed');
 
-    const nodes = version.nodes as any[];
+    const nodes = parsed.nodes as any[];
     const pendingExecutions = await this.prisma.forTenant(tenantId).workflowExecution.findMany({
       where: { instanceId, status: { in: ['pending', 'running'] } },
     });
@@ -257,5 +259,13 @@ export class WorkflowService {
     return this.prisma.forTenant(tenantId).workflowAudit.create({
       data: { instanceId, nodeId, tenantId, eventType },
     });
+  }
+
+  private parseStored(nodes: unknown, startNode: unknown) {
+    try {
+      return parseWorkflowDefinition({ nodes, startNode });
+    } catch {
+      throw new BadRequestException('WORKFLOW_DEFINITION_INVALID');
+    }
   }
 }
