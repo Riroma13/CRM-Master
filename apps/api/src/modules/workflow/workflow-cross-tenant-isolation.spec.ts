@@ -8,7 +8,7 @@ describe('Workflow Cross-Tenant Isolation (Doorbell)', () => {
   let executionGuard: WorkflowExecutionGuard;
 
   const mockRequest = (tenantId: string, id?: string) => ({
-    query: { tenantId },
+    workflowContext: { tenantId },
     params: { id },
     headers: {},
   });
@@ -87,9 +87,9 @@ describe('Workflow Cross-Tenant Isolation (Doorbell)', () => {
   it('should require tenantId', async () => {
     const context: any = {
       switchToHttp: () => ({
-        getRequest: () => ({ query: {}, params: {}, headers: {} }),
+        getRequest: () => ({ workflowContext: undefined, query: {}, params: {}, headers: {} }),
       }),
     };
-    await expect(definitionGuard.canActivate(context)).rejects.toThrow('tenantId is required');
+    await expect(definitionGuard.canActivate(context)).rejects.toThrow('WORKFLOW_TENANT_CONTEXT_REQUIRED');
   });
 });

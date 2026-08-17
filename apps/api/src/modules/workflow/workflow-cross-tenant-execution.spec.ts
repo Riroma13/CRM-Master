@@ -77,7 +77,7 @@ describe('Workflow Cross-Tenant Execution Isolation (Doorbell)', () => {
             create: jest.fn().mockResolvedValue({ id: 'new-inst', tenantId }),
           },
           workflowDefinitionVersion: {
-            findFirst: jest.fn().mockResolvedValue({ id: 'v-1', version: 1, nodes: [{ id: 'start', type: 'start' }], startNode: 'start', isPublished: true }),
+            findFirst: jest.fn().mockResolvedValue({ id: 'v-1', version: 1, nodes: [{ id: 'start', type: 'start', name: 'Start', config: {} }], startNode: 'start', isPublished: true }),
           },
           workflowActiveBranch: {
             findMany: jest.fn().mockResolvedValue([]),
@@ -91,7 +91,7 @@ describe('Workflow Cross-Tenant Execution Isolation (Doorbell)', () => {
     };
 
     mockDefinitionService = {
-      getLatestPublished: jest.fn().mockResolvedValue({ id: 'v-1', version: 1, nodes: [{ id: 'start', type: 'start', name: 'Start' }, { id: 'end', type: 'end', name: 'End' }], startNode: 'start', isPublished: true }),
+      getLatestPublished: jest.fn().mockResolvedValue({ id: 'v-1', version: 1, nodes: [{ id: 'start', type: 'start', name: 'Start', config: {}, next: ['end'] }, { id: 'end', type: 'end', name: 'End', config: {} }], startNode: 'start', isPublished: true }),
     };
 
     mockExecutorRegistry = new Map();

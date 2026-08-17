@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma.service';
-import { NodeType } from '../../../../../../packages/shared/src/workflow';
+import { NodeType, Predicate } from '../../../../../../packages/shared/src/workflow';
 import type { NodeExecutor, WorkflowExecutionContext, WorkflowExecutionResult } from '../../../../../../packages/shared/src/workflow';
 
 export const WORKFLOW_NODE_EXECUTOR = 'WORKFLOW_NODE_EXECUTOR';
@@ -59,12 +59,12 @@ export class DecisionExecutor implements NodeExecutor {
   private readonly logger = new Logger(DecisionExecutor.name);
 
   async execute(context: WorkflowExecutionContext, config: Record<string, unknown>): Promise<WorkflowExecutionResult> {
-    const conditions = config.conditions as Array<{ expression: string; next: string }> | undefined;
+    const conditions = config.conditions as Array<{ when: Predicate; next: string }> | undefined;
     const defaultNext = config.defaultNext as string | undefined;
 
     if (conditions) {
       for (const condition of conditions) {
-        const matched = this.evaluateExpression(condition.expression, context.variables);
+        const matched = this.evaluatePredicate(condition.when, context.variables);
         if (matched) {
           return { success: true, nextNodes: [condition.next] };
         }
@@ -76,13 +76,9 @@ export class DecisionExecutor implements NodeExecutor {
     return { success: true, nextNodes: [] };
   }
 
-  private evaluateExpression(expression: string, variables: Record<string, unknown>): boolean {
-    try {
-      const fn = new Function(...Object.keys(variables), `return ${expression};`);
-      return !!fn(...Object.values(variables));
-    } catch {
-      return false;
-    }
+  private evaluatePredicate(predicate: Predicate, variables: Record<string, unknown>): boolean {
+    const left = Object.hasOwn(variables, predicate.left.field) ? variables[predicate.left.field] : undefined;
+    return predicate.operator === 'equals' ? left === predicate.right : left !== predicate.right;
   }
 }
 

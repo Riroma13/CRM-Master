@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { IdentityModule } from '../identity/identity.module';
 import { PrismaService } from '../../common/prisma.service';
 import { WorkflowController } from './workflow.controller';
 import { WorkflowService } from './workflow.service';
@@ -17,9 +18,11 @@ import {
 } from './executor/node-executor';
 import { WorkflowDefinitionGuard } from './guards/workflow-definition.guard';
 import { WorkflowExecutionGuard } from './guards/workflow-execution.guard';
+import { WorkflowTenantContextGuard } from './guards/workflow-tenant-context.guard';
 
 @Module({
   controllers: [WorkflowController],
+  imports: [IdentityModule],
   providers: [
     WorkflowService,
     DefinitionService,
@@ -35,6 +38,7 @@ import { WorkflowExecutionGuard } from './guards/workflow-execution.guard';
     CompensationExecutor,
     WorkflowDefinitionGuard,
     WorkflowExecutionGuard,
+    WorkflowTenantContextGuard,
     PrismaService,
     {
       provide: 'NODE_EXECUTOR_REGISTRY',

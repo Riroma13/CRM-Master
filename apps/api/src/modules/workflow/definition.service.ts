@@ -1,5 +1,6 @@
-import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { parseWorkflowDefinition } from '../../../../../packages/shared/src/workflow';
 
 @Injectable()
 export class DefinitionService {
@@ -8,7 +9,8 @@ export class DefinitionService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(tenantId: string, data: { name: string; description?: string; nodes: any; startNode: string }) {
-    const definition = await this.prisma.forTenant(tenantId).workflowDefinition.create({
+    const definition = this.parse({ nodes: data.nodes, startNode: data.startNode });
+    const created = await this.prisma.forTenant(tenantId).workflowDefinition.create({
       data: {
         tenantId,
         name: data.name,
@@ -16,14 +18,14 @@ export class DefinitionService {
         versions: {
           create: {
             version: 1,
-            nodes: data.nodes,
-            startNode: data.startNode,
+            nodes: definition.nodes,
+            startNode: definition.startNode,
           },
         },
       },
       include: { versions: { orderBy: { version: 'desc' }, take: 1 } },
     });
-    return definition;
+    return created;
   }
 
   async findAll(tenantId: string, page = 1, limit = 20) {
@@ -52,6 +54,7 @@ export class DefinitionService {
 
   async createVersion(tenantId: string, definitionId: string, data: { nodes: any; startNode: string }) {
     const definition = await this.findOne(tenantId, definitionId);
+    const parsed = this.parse(data);
     const latestVersion = definition.versions[0];
     const nextVersion = latestVersion ? latestVersion.version + 1 : 1;
 
@@ -59,8 +62,8 @@ export class DefinitionService {
       data: {
         definitionId,
         version: nextVersion,
-        nodes: data.nodes,
-        startNode: data.startNode,
+        nodes: parsed.nodes,
+        startNode: parsed.startNode,
       },
     });
     return version;
@@ -70,6 +73,7 @@ export class DefinitionService {
     const definition = await this.findOne(tenantId, definitionId);
     const latestVersion = definition.versions[0];
     if (!latestVersion) throw new NotFoundException('No versions to publish');
+    this.parse({ nodes: latestVersion.nodes, startNode: latestVersion.startNode });
 
     await this.prisma.forTenant(tenantId).workflowDefinitionVersion.updateMany({
       where: { definitionId, isPublished: true },
@@ -85,10 +89,18 @@ export class DefinitionService {
 
   async getLatestPublished(tenantId: string, definitionId: string) {
     const version = await this.prisma.forTenant(tenantId).workflowDefinitionVersion.findFirst({
-      where: { definitionId, isPublished: true },
+      where: { definitionId, isPublished: true, definition: { tenantId } },
       orderBy: { version: 'desc' },
     });
     if (!version) throw new NotFoundException('No published version found for this definition');
     return version;
+  }
+
+  private parse(data: unknown) {
+    try {
+      return parseWorkflowDefinition(data);
+    } catch {
+      throw new BadRequestException('WORKFLOW_DEFINITION_INVALID');
+    }
   }
 }
