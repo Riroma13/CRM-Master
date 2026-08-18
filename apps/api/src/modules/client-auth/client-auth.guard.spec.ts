@@ -10,9 +10,11 @@ function makeToken(payload: any): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 }
 
-function mockContext(cookieHeader: string): ExecutionContext {
+function mockContext(cookieHeader: string, hostTenantId?: string): ExecutionContext {
   const request = {
     headers: { cookie: cookieHeader },
+    hostTenantId,
+    tenantId: hostTenantId,
   };
   return {
     switchToHttp: () => ({
@@ -39,7 +41,7 @@ describe('ClientAuthGuard', () => {
   describe('valid client cookie', () => {
     it('should allow access with valid __Secure-client-session and role client', () => {
       const token = makeToken({ sub: 'user1', clienteId: 'cliente1', tenantId: 'tenant1', role: 'client' });
-      const context = mockContext(`__Secure-client-session=${token}`);
+      const context = mockContext(`__Secure-client-session=${token}`, 'tenant1');
 
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
 
@@ -106,6 +108,18 @@ describe('ClientAuthGuard', () => {
       expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
       expect(() => guard.canActivate(context)).toThrow(/Rol inválido/);
     });
+  });
+
+  it('rejects a client cookie bound to another Host tenant without overwriting Host context', () => {
+    const token = makeToken({ sub: 'user1', clienteId: 'cliente1', tenantId: 'tenant-b', role: 'client' });
+    const context = mockContext(`__Secure-client-session=${token}`, 'tenant-a');
+
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
+
+    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+    const req = context.switchToHttp().getRequest() as any;
+    expect(req.tenantId).toBe('tenant-a');
+    expect(req.clientUserId).toBeUndefined();
   });
 
   describe('@Public() decorator', () => {

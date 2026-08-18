@@ -2,6 +2,7 @@ import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TenantScopeGuard } from './tenant-scope.guard';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { AUTH_BOUNDARY_KEY } from '../decorators/public.decorator';
 
 describe('TenantScopeGuard', () => {
   let guard: TenantScopeGuard;
@@ -54,6 +55,45 @@ describe('TenantScopeGuard', () => {
         [context.getHandler(), context.getClass()],
       );
     });
+
+    it('does not bypass tenant scope for an authenticated principal', () => {
+      const context = createContext({
+        isPublic: true,
+        tenantId: 'tenant-a',
+        user: { tenantId: 'tenant-b' },
+      });
+      mockReflector.getAllAndOverride.mockImplementation((key: string) =>
+        key === IS_PUBLIC_KEY ? true : undefined,
+      );
+      const request = context.switchToHttp().getRequest();
+      request.hostTenantId = 'tenant-a';
+
+      expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+    });
+
+    it('allows anonymous public routes only when no scoped principal exists', () => {
+      const context = createContext({ isPublic: true, tenantId: 'tenant-a' });
+
+      expect(guard.canActivate(context)).toBe(true);
+    });
+  });
+
+  it('hands classified routes to their named guard without requiring Better Auth', () => {
+    const context = createContext({ tenantId: 'tenant-a' });
+    mockReflector.getAllAndOverride.mockImplementation((key: string) =>
+      key === AUTH_BOUNDARY_KEY ? 'identity-session' : undefined,
+    );
+    expect(guard.canActivate(context)).toBe(true);
+  });
+
+  it('uses immutable Host tenant context for ordinary authenticated routes', () => {
+    const context = createContext({
+      tenantId: 'forged-request-tenant',
+      user: { tenantId: 'tenant-a' },
+    });
+    const request = context.switchToHttp().getRequest();
+    request.hostTenantId = 'tenant-a';
+    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
   });
 
   describe('isAdminRequest with auth', () => {
