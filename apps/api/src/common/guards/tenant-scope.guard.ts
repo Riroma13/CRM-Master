@@ -6,22 +6,25 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { AUTH_BOUNDARY_KEY, IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class TenantScopeGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    // Check @Public() decorator first — allows bypass for health, login, etc.
+    // @Public() bypasses authentication in BetterAuthGuard, but it does not
+    // disable scope checks when an authenticated principal is present.
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (isPublic) {
-      return true;
-    }
+    const authBoundary = this.reflector.getAllAndOverride<string | undefined>(AUTH_BOUNDARY_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (authBoundary) return true;
 
     const request = context.switchToHttp().getRequest();
 
@@ -41,15 +44,21 @@ export class TenantScopeGuard implements CanActivate {
       return true;
     }
 
-    const tenantId = request.tenantId;
+    const tenantId = request.hostTenantId ?? request.tenantId;
     if (!tenantId) {
+      if (isPublic && !request.user) return true;
       throw new ForbiddenException(
         'Acceso denegado: no se pudo resolver el tenant',
       );
     }
 
     // Si hay token, verificar que el tenantId del token coincida
-    if (request.user?.tenantId && request.user.tenantId !== tenantId) {
+    if (!request.user) {
+      if (isPublic) return true;
+      throw new UnauthorizedException('Se requiere autenticación');
+    }
+
+    if (request.user.tenantId && request.user.tenantId !== tenantId) {
       throw new ForbiddenException(
         'Acceso denegado: discrepancia entre el token y el tenant',
       );

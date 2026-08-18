@@ -6,7 +6,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { ClientAuthService } from './client-auth.service';
 import { ClientLoginDto, RegisterDto } from './dto/client-auth.dto';
-import { Public } from '../../common/decorators/public.decorator';
+import { ExternalAuth, Public } from '../../common/decorators/public.decorator';
 import { ClientAuthGuard } from './client-auth.guard';
 
 const COOKIE_OPTIONS = {
@@ -83,6 +83,7 @@ export class ClientAuthController {
   }
 
   @UseGuards(ClientAuthGuard)
+  @ExternalAuth('client-session')
   @Get('me')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get client profile from cookie' })

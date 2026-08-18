@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../common/prisma.service';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { AUTH_BOUNDARY_KEY, IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { AUTH_CLIENT } from '../auth-client.provider';
 import { IdentityProvider } from '../../modules/identity/identity.contracts';
 
@@ -30,6 +30,12 @@ export class BetterAuthGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
+    const authBoundary = this.reflector.getAllAndOverride<string | undefined>(AUTH_BOUNDARY_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (authBoundary) return true;
+
     const request = context.switchToHttp().getRequest();
     const path: string = request.path ?? request.originalUrl ?? '';
 
@@ -48,8 +54,9 @@ export class BetterAuthGuard implements CanActivate {
       }
     }
 
-    // If no session credential on non-admin routes, allow anonymous (PermissionsGuard handles restrictions)
-    if (!hasSessionCredential) return true;
+    if (!hasSessionCredential) {
+      throw new UnauthorizedException('Se requiere autenticación');
+    }
 
     // Resolve the session through the canonical Better Auth provider boundary.
     const sessionHeaders = new Headers();
@@ -61,7 +68,7 @@ export class BetterAuthGuard implements CanActivate {
       if (path.startsWith(ADMIN_ROUTE_PREFIX)) {
         throw new UnauthorizedException('Token inválido o expirado');
       }
-      return true; // Allow anonymous for non-admin routes even with bad token
+      throw new UnauthorizedException('Token inválido o expirado');
     }
 
     // Look up legacy User by betterAuthUserId (which stores the ba_users.id)

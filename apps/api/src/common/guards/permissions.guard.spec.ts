@@ -11,6 +11,7 @@ jest.mock('better-auth/plugins/access', () => ({
 }));
 import { ForbiddenException } from '@nestjs/common';
 import { ROLE_MAP } from '../auth/permissions';
+import { PermissionsGuard } from './permissions.guard';
 
 describe('workflow permission contract', () => {
   it.each(['read', 'write', 'execute'] as const)('allows owner and exact Identity admin for %s', (action) => {
@@ -25,5 +26,19 @@ describe('workflow permission contract', () => {
   it('has no anonymous fallback capability', () => {
     expect(ROLE_MAP.lector.authorize({ workflow: ['execute'] }).success).toBe(false);
     expect(() => { throw new ForbiddenException(); }).toThrow(ForbiddenException);
+  });
+
+  it('denies a permissioned request without an authenticated principal', () => {
+    const reflector = { getAllAndOverride: jest.fn().mockReturnValue({ resource: 'workflow', action: 'read' }) };
+    const audit = { log: jest.fn() };
+    const guard = new PermissionsGuard(reflector as any, audit as any);
+    const context = {
+      getHandler: () => ({}),
+      getClass: () => ({}),
+      switchToHttp: () => ({ getRequest: () => ({}) }),
+    } as any;
+
+    expect(() => guard.canActivate(context)).toThrow(/autenticación/i);
+    expect(audit.log).not.toHaveBeenCalled();
   });
 });

@@ -49,8 +49,12 @@ export class ClientAuthGuard implements CanActivate {
       throw new ForbiddenException('Rol inválido: se requiere rol de cliente');
     }
 
+    const hostTenantId = (request as any).hostTenantId;
+    if (hostTenantId && payload.tenantId !== hostTenantId) {
+      throw new ForbiddenException('Acceso denegado: discrepancia entre el token y el tenant');
+    }
+
     (request as any).clientUserId = payload.sub;
-    (request as any).tenantId = payload.tenantId;
     (request as any).clienteId = payload.clienteId;
 
     return true;

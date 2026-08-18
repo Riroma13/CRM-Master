@@ -19,7 +19,7 @@ import { ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
-import { Public } from '../../common/decorators/public.decorator';
+import { ExternalAuth } from '../../common/decorators/public.decorator';
 import {
   hasIdentityPermission,
   IdentityOrganizationGuard,
@@ -41,7 +41,7 @@ export class ExportCapabilityGuard implements CanActivate {
 @ApiTags('Export')
 @ApiBearerAuth()
 @Controller('api/v1/export')
-@Public()
+@ExternalAuth('identity-session')
 @UseGuards(IdentityOrganizationGuard, ExportCapabilityGuard)
 export class ExportController {
   constructor(private readonly service: ImportExportService) {}

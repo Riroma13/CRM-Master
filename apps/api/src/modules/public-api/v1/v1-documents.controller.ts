@@ -2,11 +2,13 @@ import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { TokenAuthGuard } from '../auth/token-auth.guard';
 import { ScopeGuard, RequireScope } from '../guards/scope.guard';
 import { RateLimitGuard } from '../rate-limit/rate-limit.guard';
+import { ExternalAuth } from '../../../common/decorators/public.decorator';
 import { DocumentService } from '../../document-engine/document.service';
 import { toV1 } from './mappers/document-response.mapper';
 import type { V1DocumentResponse, PublicApiResponse } from '@shared/public-api';
 
 @Controller('api/v1/public/documents')
+@ExternalAuth('api-token-deferred')
 @UseGuards(TokenAuthGuard, ScopeGuard, RateLimitGuard)
 export class V1DocumentsController {
   constructor(private readonly documentService: DocumentService) {}

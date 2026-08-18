@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { ROLE_MAP } from '../auth/permissions';
@@ -24,11 +24,15 @@ export class PermissionsGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = (request as any).user;
 
+    if (!user) {
+      throw new UnauthorizedException('Se requiere autenticación');
+    }
+
     // Superadmin bypasses permission checks
     if (user?.role === 'superadmin') return true;
 
     // Resolve role from our role name (stored in user.role)
-    const roleName = user?.role || 'lector';
+    const roleName = user.role;
     const role = ROLE_MAP[roleName];
     if (!role) {
       this.audit.log({

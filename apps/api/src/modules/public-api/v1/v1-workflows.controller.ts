@@ -2,11 +2,13 @@ import { Controller, Get, Param, Query, UseGuards, ParseUUIDPipe } from '@nestjs
 import { TokenAuthGuard } from '../auth/token-auth.guard';
 import { ScopeGuard, RequireScope } from '../guards/scope.guard';
 import { RateLimitGuard } from '../rate-limit/rate-limit.guard';
+import { ExternalAuth } from '../../../common/decorators/public.decorator';
 import { WorkflowService } from '../../workflow/workflow.service';
 import { toV1 } from './mappers/workflow-response.mapper';
 import type { V1WorkflowResponse, PublicApiResponse } from '@shared/public-api';
 
 @Controller('api/v1/public/workflows')
+@ExternalAuth('api-token-deferred')
 @UseGuards(TokenAuthGuard, ScopeGuard, RateLimitGuard)
 export class V1WorkflowsController {
   constructor(private readonly workflowService: WorkflowService) {}
