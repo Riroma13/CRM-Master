@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as path from 'path';
 import * as fs from 'fs/promises';
@@ -6,7 +6,8 @@ import * as zlib from 'zlib';
 import { PrismaService } from '../../common/prisma.service';
 import { PluginValidatorService } from './plugin-validator.service';
 import { PluginRegistryService } from './registry/plugin-registry.service';
-import type { PluginManifestOutput } from '@shared/plugin';
+import type { PluginManifestOutput } from '@shared/plugin/plugin-manifest.schema';
+import { PLUGIN_EXECUTION_DISABLED } from '@shared/plugin/plugin.types';
 
 const PLUGINS_DIR = process.env.PLUGINS_STORAGE_PATH
   || path.join(process.cwd(), 'data', 'plugins');
@@ -49,11 +50,9 @@ export class PluginManagerService {
 
     const { id: pluginId } = await this.registry.register(tenantId, manifest, contentHash);
 
-    await this.storePackage(tenantId, pluginId, packageBuffer);
-
     this.logger.log(`Plugin installed: ${pluginId} (${manifest.name} v${manifest.version})`);
 
-    return { pluginId, status: 'active' };
+    return { pluginId, status: 'inactive' };
   }
 
   async activate(tenantId: string, pluginId: string): Promise<void> {
@@ -62,12 +61,7 @@ export class PluginManagerService {
       throw new NotFoundException('Plugin not found');
     }
 
-    await this.prisma.admin.plugin.update({
-      where: { id: pluginId },
-      data: { status: 'active' },
-    });
-
-    this.logger.log(`Plugin activated: ${pluginId}`);
+    throw new ConflictException({ code: PLUGIN_EXECUTION_DISABLED });
   }
 
   async deactivate(tenantId: string, pluginId: string): Promise<void> {
@@ -76,10 +70,7 @@ export class PluginManagerService {
       throw new NotFoundException('Plugin not found');
     }
 
-    await this.prisma.admin.plugin.update({
-      where: { id: pluginId },
-      data: { status: 'inactive' },
-    });
+    await this.registry.setInactive(tenantId, pluginId);
 
     this.logger.log(`Plugin deactivated: ${pluginId}`);
   }
@@ -110,35 +101,20 @@ export class PluginManagerService {
   }
 
   private extractManifestFromTgz(buffer: Buffer): PluginManifestJson {
-    let decompressed: Buffer;
-    try {
-      decompressed = zlib.gunzipSync(buffer);
-    } catch {
-      throw new Error('Failed to decompress tgz package');
-    }
-
+    const decompressed = zlib.gunzipSync(buffer);
     let offset = 0;
     while (offset + 512 <= decompressed.length) {
       const header = decompressed.subarray(offset, offset + 512);
       if (header[0] === 0) break;
-
-      const rawName = header.subarray(0, 100).toString('utf-8');
-      const name = rawName.replace(/\0.*$/, '');
-      const sizeStr = header.subarray(124, 136).toString('utf-8').replace(/\0.*$/, '');
-      const size = parseInt(sizeStr, 8);
-
-      if (isNaN(size) || size < 0) break;
-
+      const name = header.subarray(0, 100).toString('utf8').replace(/\0.*$/, '');
+      const size = parseInt(header.subarray(124, 136).toString('utf8').replace(/\0.*$/, ''), 8);
+      if (!Number.isFinite(size) || size < 0 || offset + 512 + size > decompressed.length) break;
       offset += 512;
-
-      if (name === 'manifest.json' || name.endsWith('/manifest.json')) {
-        const content = decompressed.subarray(offset, offset + size).toString('utf-8');
-        return JSON.parse(content) as PluginManifestJson;
+      if (name === 'manifest.json') {
+        return JSON.parse(decompressed.subarray(offset, offset + size).toString('utf8'));
       }
-
       offset += Math.ceil(size / 512) * 512;
     }
-
     throw new Error('manifest.json not found in package');
   }
 
@@ -192,7 +168,7 @@ export class PluginManagerService {
           data = buffer.subarray(dataOffset, dataOffset + uncompressedSize);
         } else if (compressionMethod === 8) {
           const compressed = buffer.subarray(dataOffset, dataOffset + compressedSize);
-          data = zlib.inflateRawSync(compressed);
+         data = zlib.inflateRawSync(compressed);
         } else {
           throw new Error(`Unsupported zip compression method: ${compressionMethod}`);
         }
@@ -206,13 +182,4 @@ export class PluginManagerService {
     throw new Error('manifest.json not found in package');
   }
 
-  private async storePackage(
-    tenantId: string,
-    pluginId: string,
-    buffer: Buffer,
-  ): Promise<void> {
-    const dir = path.join(PLUGINS_DIR, tenantId, pluginId);
-    await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(path.join(dir, 'package'), buffer);
-  }
 }

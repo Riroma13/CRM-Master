@@ -18,7 +18,9 @@ export class PluginRegistryService {
         tenantId,
         name: manifest.name,
         version: manifest.version,
-        manifest: manifest as object,
+          manifest: manifest as object,
+          status: 'inactive',
+          enabled: false,
         contentHash,
         schemaVersion: manifest.schemaVersion ?? 1,
         hooks: {
@@ -86,5 +88,13 @@ export class PluginRegistryService {
     });
 
     this.logger.log(`Plugin unregistered: ${pluginId}`);
+  }
+
+  async setInactive(tenantId: string, pluginId: string): Promise<void> {
+    const result = await this.prisma.admin.plugin.updateMany({
+      where: { id: pluginId, tenantId },
+      data: { status: 'inactive', enabled: false },
+    });
+    if (result.count === 0) throw new NotFoundException('Plugin not found');
   }
 }

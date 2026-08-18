@@ -24,7 +24,7 @@ describe('PluginRegistryService', () => {
     eventTypes: ['workflow.completed', 'document.created'],
     permissions: ['storage:read' as const],
     allowedDomains: [],
-    schemaVersion: 1,
+    schemaVersion: 1 as const,
   };
 
   const mockPluginRecord = {
@@ -87,6 +87,8 @@ describe('PluginRegistryService', () => {
           name: 'test-plugin',
           version: '1.0.0',
           manifest: validManifest,
+          status: 'inactive',
+          enabled: false,
           contentHash: 'abc123',
           schemaVersion: 1,
           hooks: {

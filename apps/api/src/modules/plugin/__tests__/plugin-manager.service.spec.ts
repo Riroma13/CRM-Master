@@ -5,6 +5,7 @@ import { PrismaService } from '../../../common/prisma.service';
 import { PluginValidatorService } from '../plugin-validator.service';
 import { PluginRegistryService } from '../registry/plugin-registry.service';
 import { PluginManagerService } from '../plugin-manager.service';
+import { PLUGIN_EXECUTION_DISABLED } from '@shared/plugin/plugin.types';
 
 const TENANT_ID = 'test-tenant-mgr-001';
 const PLUGIN_ID = 'plg-manager-001';
@@ -67,6 +68,7 @@ describe('PluginManagerService', () => {
       list: jest.fn(),
       getByEventType: jest.fn(),
       unregister: jest.fn(),
+      setInactive: jest.fn(),
     } as any;
 
     mockPrisma = {
@@ -115,7 +117,7 @@ describe('PluginManagerService', () => {
       const result = await service.install(TENANT_ID, validTgz);
 
       expect(result.pluginId).toBe(PLUGIN_ID);
-      expect(result.status).toBe('active');
+      expect(result.status).toBe('inactive');
 
       expect(mockValidator.validatePackage).toHaveBeenCalledWith(validTgz);
       expect(mockValidator.validateManifest).toHaveBeenCalled();
@@ -123,6 +125,26 @@ describe('PluginManagerService', () => {
       expect(mockRegistry.register).toHaveBeenCalledWith(
         TENANT_ID,
         expect.objectContaining({ name: 'test-plugin' }),
+        expect.any(String),
+      );
+    });
+
+    it('does not persist the uploaded package and registers inactive metadata', async () => {
+      mockValidator.validatePackage.mockReturnValue(undefined);
+      mockValidator.validateManifest.mockReturnValue({
+        name: 'test-plugin', version: '1.0.0', description: 'A test plugin', author: 'tester',
+        extensionApi: 'v1', eventTypes: ['workflow.completed'], permissions: [],
+        allowedDomains: [], schemaVersion: 1,
+      });
+      mockValidator.checkName.mockResolvedValue(undefined);
+      mockRegistry.register.mockResolvedValue({ id: PLUGIN_ID });
+
+      const result = await service.install(TENANT_ID, validTgz);
+
+      expect(result).toEqual({ pluginId: PLUGIN_ID, status: 'inactive' });
+      expect(mockRegistry.register).toHaveBeenCalledWith(
+        TENANT_ID,
+        expect.anything(),
         expect.any(String),
       );
     });
@@ -198,17 +220,17 @@ describe('PluginManagerService', () => {
   });
 
   describe('activate', () => {
-    it('sets plugin status to active', async () => {
+    it('rejects activation with the stable disabled contract before mutation', async () => {
       mockRegistry.get.mockResolvedValue({ id: PLUGIN_ID });
-      mockPrisma.admin.plugin.update.mockResolvedValue({});
+       mockRegistry.setInactive.mockResolvedValue(undefined);
 
-      await service.activate(TENANT_ID, PLUGIN_ID);
+      await expect(service.activate(TENANT_ID, PLUGIN_ID)).rejects.toMatchObject({
+        response: { code: PLUGIN_EXECUTION_DISABLED },
+        status: 409,
+      });
 
       expect(mockRegistry.get).toHaveBeenCalledWith(TENANT_ID, PLUGIN_ID);
-      expect(mockPrisma.admin.plugin.update).toHaveBeenCalledWith({
-        where: { id: PLUGIN_ID },
-        data: { status: 'active' },
-      });
+       expect(mockPrisma.admin.plugin.update).not.toHaveBeenCalled();
     });
 
     it('throws when plugin not found', async () => {
@@ -223,14 +245,11 @@ describe('PluginManagerService', () => {
   describe('deactivate', () => {
     it('sets plugin status to inactive', async () => {
       mockRegistry.get.mockResolvedValue({ id: PLUGIN_ID });
-      mockPrisma.admin.plugin.update.mockResolvedValue({});
+       mockRegistry.setInactive.mockResolvedValue(undefined);
 
       await service.deactivate(TENANT_ID, PLUGIN_ID);
 
-      expect(mockPrisma.admin.plugin.update).toHaveBeenCalledWith({
-        where: { id: PLUGIN_ID },
-        data: { status: 'inactive' },
-      });
+       expect(mockRegistry.setInactive).toHaveBeenCalledWith(TENANT_ID, PLUGIN_ID);
     });
 
     it('throws when plugin not found', async () => {
@@ -245,7 +264,7 @@ describe('PluginManagerService', () => {
   describe('uninstall', () => {
     it('deactivates, removes files, and unregisters plugin', async () => {
       mockRegistry.get.mockResolvedValue({ id: PLUGIN_ID });
-      mockPrisma.admin.plugin.update.mockResolvedValue({});
+       mockRegistry.setInactive.mockResolvedValue(undefined);
       mockRegistry.unregister.mockResolvedValue(undefined);
 
       const fs = jest.requireActual('fs');
@@ -255,17 +274,14 @@ describe('PluginManagerService', () => {
 
       await service.uninstall(TENANT_ID, PLUGIN_ID);
 
-      expect(mockPrisma.admin.plugin.update).toHaveBeenCalledWith({
-        where: { id: PLUGIN_ID },
-        data: { status: 'inactive' },
-      });
+       expect(mockRegistry.setInactive).toHaveBeenCalledWith(TENANT_ID, PLUGIN_ID);
       expect(mockRegistry.unregister).toHaveBeenCalledWith(TENANT_ID, PLUGIN_ID);
       expect(fs.existsSync(pluginDir)).toBe(false);
     });
 
     it('handles missing plugin directory gracefully', async () => {
       mockRegistry.get.mockResolvedValue({ id: PLUGIN_ID });
-      mockPrisma.admin.plugin.update.mockResolvedValue({});
+       mockRegistry.setInactive.mockResolvedValue(undefined);
       mockRegistry.unregister.mockResolvedValue(undefined);
 
       await expect(

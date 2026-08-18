@@ -1,6 +1,18 @@
+export const PLUGIN_EXECUTION_DISABLED = 'PLUGIN_EXECUTION_DISABLED' as const;
+
 export type PluginStatus = 'active' | 'inactive' | 'error';
 
 export type Permission = 'storage:read' | 'storage:write' | 'http:outbound' | 'events:emit';
+
+export interface TrustedPluginContext {
+  tenantId: string;
+  actorId: string;
+  role: 'owner' | 'admin';
+}
+
+export interface PluginExecutionDisabledContract {
+  code: typeof PLUGIN_EXECUTION_DISABLED;
+}
 
 export interface PluginManifest {
   name: string;
@@ -21,6 +33,7 @@ export interface PluginMetadata {
   version: string;
   manifest: PluginManifest;
   status: PluginStatus;
+  enabled: false;
   createdAt: string;
   updatedAt: string;
 }
