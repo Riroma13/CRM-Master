@@ -67,6 +67,15 @@ describe('V1WorkflowsController', () => {
   });
 
   describe('GET /api/v1/public/workflows', () => {
+    it('uses token-bound request authority without a caller tenant selector', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/public/workflows')
+        .set('Authorization', AUTH)
+        .expect(200);
+
+      expect(mockWorkflowService.listInstances).toHaveBeenCalledWith('tenant-1', undefined, 1, 20);
+    });
+
     it('should return a paginated list of workflows', async () => {
       const res = await request(app.getHttpServer())
         .get('/api/v1/public/workflows')
@@ -113,6 +122,15 @@ describe('V1WorkflowsController', () => {
   });
 
   describe('GET /api/v1/public/workflows/:id', () => {
+    it('uses token-bound request authority without a caller tenant selector', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/v1/public/workflows/${UUID_WF}`)
+        .set('Authorization', AUTH)
+        .expect(200);
+
+      expect(mockWorkflowService.getInstance).toHaveBeenCalledWith('tenant-1', UUID_WF);
+    });
+
     it('should return a single workflow', async () => {
       const res = await request(app.getHttpServer())
         .get(`/api/v1/public/workflows/${UUID_WF}`)

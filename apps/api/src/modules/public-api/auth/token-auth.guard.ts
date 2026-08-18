@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { TokenService } from './token.service';
 
 @Injectable()
@@ -28,7 +34,20 @@ export class TokenAuthGuard implements CanActivate {
       throw new UnauthorizedException('Token invalid, expired, or revoked');
     }
 
+    const suppliedTenantIds = [request.query?.tenantId, request.params?.tenantId, request.body?.tenantId]
+      .flatMap((value) => (Array.isArray(value) ? value : [value]))
+      .filter((value): value is string => typeof value === 'string');
+    const conflictingSelector = suppliedTenantIds.some((tenantId) => tenantId !== payload.tenantId);
+    const conflictingHost = request.hostTenantId && request.hostTenantId !== payload.tenantId;
+    const conflictingExistingTenant =
+      request.tenantId && !request.hostTenantId && request.tenantId !== payload.tenantId;
+
+    if (conflictingSelector || conflictingHost || conflictingExistingTenant) {
+      throw new ForbiddenException('API token tenant authority conflict');
+    }
+
     request.tenantId = payload.tenantId;
+    request.apiTokenTenantId = payload.tenantId;
     request.apiKeyScopes = payload.scopes;
     request.apiKeyId = payload.id;
 
