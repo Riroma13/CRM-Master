@@ -16,9 +16,9 @@ export const PluginManifestSchema = z.object({
   extensionApi: z.literal('v1'),
   eventTypes: z.array(z.string().min(1)).min(1, 'At least one event type required'),
   permissions: z.array(PermissionSchema).default([]),
-  allowedDomains: z.array(z.string().url()).optional().default([]),
-  schemaVersion: z.number().int().positive().optional().default(1),
-});
+  allowedDomains: z.array(z.string().url()).max(0).default([]),
+  schemaVersion: z.literal(1).default(1),
+}).strict();
 
 export type PluginManifestInput = z.input<typeof PluginManifestSchema>;
 export type PluginManifestOutput = z.output<typeof PluginManifestSchema>;

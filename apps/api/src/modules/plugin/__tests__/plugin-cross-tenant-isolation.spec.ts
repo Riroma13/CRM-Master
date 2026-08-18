@@ -34,7 +34,7 @@ describe('Plugin Cross-Tenant Isolation', () => {
     eventTypes: ['workflow.completed'],
     permissions: ['storage:read' as const],
     allowedDomains: [],
-    schemaVersion: 1,
+    schemaVersion: 1 as const,
   };
 
   const manifestB = {
@@ -46,7 +46,7 @@ describe('Plugin Cross-Tenant Isolation', () => {
     eventTypes: ['workflow.completed'],
     permissions: ['storage:read' as const],
     allowedDomains: [],
-    schemaVersion: 1,
+    schemaVersion: 1 as const,
   };
 
   beforeAll(async () => {
@@ -189,6 +189,16 @@ describe('Plugin Cross-Tenant Isolation', () => {
           name: 'plugin-b',
         }),
       });
+    });
+
+    it('never mutates Tenant B when Tenant A presents a forged tenantId', async () => {
+      mockPluginA.findFirst.mockResolvedValue(null);
+
+      await expect(registryA.unregister(TENANT_B, PLUGIN_ID_B)).rejects.toThrow('Plugin not found');
+      expect(mockPluginA.delete).not.toHaveBeenCalled();
+      expect(mockPluginA.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: PLUGIN_ID_B, tenantId: TENANT_B },
+      }));
     });
   });
 });

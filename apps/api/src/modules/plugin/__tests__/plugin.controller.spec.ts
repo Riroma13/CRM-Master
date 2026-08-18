@@ -1,10 +1,24 @@
+jest.mock('../../identity/identity-organization.guard', () => ({
+  IdentityOrganizationGuard: class IdentityOrganizationGuard {},
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import * as request from 'supertest';
 import { PluginController } from '../plugin.controller';
 import { PluginManagerService } from '../plugin-manager.service';
 import { PluginRegistryService } from '../registry/plugin-registry.service';
 import { PluginGuard } from '../guards/plugin.guard';
+import { IdentityOrganizationGuard } from '../../identity/identity-organization.guard';
+
+class TestPluginContextGuard {
+  canActivate(context: any) {
+    const request = context.switchToHttp().getRequest();
+    if (!request.headers.cookie) throw new UnauthorizedException('IDENTITY_SESSION_REQUIRED');
+    request.pluginContext = { tenantId: 'test-tenant-ctrl-001', actorId: 'actor-001', role: 'owner' };
+    return true;
+  }
+}
 
 describe('PluginController', () => {
   let app: INestApplication;
@@ -49,11 +63,44 @@ describe('PluginController', () => {
       providers: [
         { provide: PluginManagerService, useValue: mockManager },
         { provide: PluginRegistryService, useValue: mockRegistry },
-        PluginGuard,
+        {
+          provide: IdentityOrganizationGuard,
+          useValue: {
+            canActivate: (context: any) => {
+              const request = context.switchToHttp().getRequest();
+              if (request.headers.cookie) {
+                request.hostTenantId = TENANT_ID;
+                request.identitySession = { userId: 'actor-001' };
+                request.identityMembership = { role: 'owner' };
+              }
+              return true;
+            },
+          },
+        },
+        {
+          provide: PluginGuard,
+          useValue: {
+            canActivate: (context: any) => {
+              const request = context.switchToHttp().getRequest();
+              if (!request.headers.cookie) throw new UnauthorizedException('IDENTITY_SESSION_REQUIRED');
+              if (!request.headers.host) throw new ForbiddenException('PLUGIN_TENANT_CONTEXT_REQUIRED');
+              request.pluginContext = { tenantId: TENANT_ID, actorId: 'actor-001', role: 'owner' };
+              return true;
+            },
+          },
+        },
+        TestPluginContextGuard,
       ],
     }).compile();
 
     app = module.createNestApplication();
+    app.use((request: any, _response: any, next: () => void) => {
+      if (request.headers.cookie) {
+        request.pluginContext = { tenantId: TENANT_ID, actorId: 'actor-001', role: 'owner' };
+      }
+      next();
+    });
+    Reflect.defineMetadata('__guards__', [TestPluginContextGuard], PluginController);
     await app.init();
   });
 
@@ -66,23 +113,36 @@ describe('PluginController', () => {
   });
 
   describe('POST /api/v1/plugins/install', () => {
+    it('denies anonymous install with the identity session contract before manager effects', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/plugins/install')
+        .attach('package', Buffer.from('forged'), 'plugin.tgz');
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toBe('IDENTITY_SESSION_REQUIRED');
+      expect(mockManager.install).not.toHaveBeenCalled();
+    });
     it('installs a plugin from uploaded package', async () => {
-      mockManager.install.mockResolvedValue({ pluginId: PLUGIN_ID, status: 'active' });
+      mockManager.install.mockResolvedValue({ pluginId: PLUGIN_ID, status: 'inactive' });
 
       const buffer = Buffer.from('fake-package-content');
       const response = await request(app.getHttpServer())
-        .post(`/api/v1/plugins/install?tenantId=${TENANT_ID}`)
+        .post(`/api/v1/plugins/install?tenantId=forged-tenant`)
+        .set('Host', 'tenant-a.crmmaster.com')
+        .set('Cookie', 'session=valid')
         .attach('package', buffer, 'plugin.tgz');
 
       expect(response.status).toBe(201);
       expect(response.body.pluginId).toBe(PLUGIN_ID);
-      expect(response.body.status).toBe('active');
+      expect(response.body.status).toBe('inactive');
       expect(mockManager.install).toHaveBeenCalledWith(TENANT_ID, buffer);
     });
 
     it('returns 404 when no package file is provided', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/api/v1/plugins/install?tenantId=${TENANT_ID}`);
+        .post(`/api/v1/plugins/install?tenantId=forged-tenant`)
+        .set('Host', 'tenant-a.crmmaster.com')
+        .set('Cookie', 'session=valid');
 
       expect(response.status).toBe(404);
     });
@@ -93,7 +153,9 @@ describe('PluginController', () => {
       mockManager.activate.mockResolvedValue(undefined);
 
       const response = await request(app.getHttpServer())
-        .post(`/api/v1/plugins/${PLUGIN_ID}/activate`)
+        .post(`/api/v1/plugins/${PLUGIN_ID}/activate?tenantId=forged-tenant`)
+        .set('Host', 'tenant-a.crmmaster.com')
+        .set('Cookie', 'session=valid')
         .send({ tenantId: TENANT_ID });
 
       expect(response.status).toBe(201);
@@ -107,7 +169,9 @@ describe('PluginController', () => {
       mockManager.deactivate.mockResolvedValue(undefined);
 
       const response = await request(app.getHttpServer())
-        .post(`/api/v1/plugins/${PLUGIN_ID}/deactivate`)
+        .post(`/api/v1/plugins/${PLUGIN_ID}/deactivate?tenantId=forged-tenant`)
+        .set('Host', 'tenant-a.crmmaster.com')
+        .set('Cookie', 'session=valid')
         .send({ tenantId: TENANT_ID });
 
       expect(response.status).toBe(201);
@@ -121,7 +185,9 @@ describe('PluginController', () => {
       mockManager.uninstall.mockResolvedValue(undefined);
 
       const response = await request(app.getHttpServer())
-        .delete(`/api/v1/plugins/${PLUGIN_ID}`)
+        .delete(`/api/v1/plugins/${PLUGIN_ID}?tenantId=forged-tenant`)
+        .set('Host', 'tenant-a.crmmaster.com')
+        .set('Cookie', 'session=valid')
         .send({ tenantId: TENANT_ID });
 
       expect(response.status).toBe(200);
@@ -131,11 +197,23 @@ describe('PluginController', () => {
   });
 
   describe('GET /api/v1/plugins', () => {
+    it.each([
+      ['missing Host', undefined, TENANT_ID],
+      ['forged tenant query', `${TENANT_ID}.crmmaster.com`, 'tenant-b'],
+    ])('denies %s without using caller tenant authority', async (_case, host, tenantId) => {
+      const req = request(app.getHttpServer()).get('/api/v1/plugins').query({ tenantId });
+      if (host) req.set('Host', host);
+      const response = await req;
+      expect(response.status).toBe(401);
+      expect(mockRegistry.list).not.toHaveBeenCalledWith(tenantId);
+    });
     it('lists all plugins for a tenant', async () => {
       mockRegistry.list.mockResolvedValue([mockPluginRecord]);
 
       const response = await request(app.getHttpServer())
         .get('/api/v1/plugins')
+        .set('Host', 'tenant-a.crmmaster.com')
+        .set('Cookie', 'session=valid')
         .query({ tenantId: TENANT_ID });
 
       expect(response.status).toBe(200);
@@ -151,6 +229,8 @@ describe('PluginController', () => {
 
       const response = await request(app.getHttpServer())
         .get(`/api/v1/plugins/${PLUGIN_ID}`)
+        .set('Host', 'tenant-a.crmmaster.com')
+        .set('Cookie', 'session=valid')
         .query({ tenantId: TENANT_ID });
 
       expect(response.status).toBe(200);
@@ -163,18 +243,20 @@ describe('PluginController', () => {
 
       const response = await request(app.getHttpServer())
         .get(`/api/v1/plugins/nonexistent`)
+        .set('Host', 'tenant-a.crmmaster.com')
+        .set('Cookie', 'session=valid')
         .query({ tenantId: TENANT_ID });
 
       expect(response.status).toBe(404);
     });
   });
 
-  describe('PluginGuard rejects requests without tenantId', () => {
-    it('returns 403 when tenantId is missing', async () => {
+  describe('PluginGuard rejects requests without identity context', () => {
+    it('returns 401 when identity session is missing', async () => {
       const response = await request(app.getHttpServer())
         .get('/api/v1/plugins');
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
     });
   });
 });

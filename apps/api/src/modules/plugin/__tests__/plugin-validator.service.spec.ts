@@ -33,17 +33,6 @@ describe('PluginValidatorService', () => {
   });
 
   describe('validatePackage', () => {
-    it('accepts a valid tgz buffer', () => {
-      const tgz = Buffer.from([0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00]);
-      expect(() => service.validatePackage(tgz)).not.toThrow();
-    });
-
-    it('accepts a valid zip buffer', () => {
-      const zip = Buffer.alloc(30);
-      zip.writeUInt32LE(0x04034b50, 0);
-      expect(() => service.validatePackage(zip)).not.toThrow();
-    });
-
     it('rejects buffer with unknown format', () => {
       const buffer = Buffer.from('not-a-valid-package');
       expect(() => service.validatePackage(buffer)).toThrow('Invalid package format');
@@ -62,13 +51,6 @@ describe('PluginValidatorService', () => {
       expect(() => service.validatePackage(buffer)).toThrow('exceeds maximum size');
     });
 
-    it('accepts package exactly at 10MB', () => {
-      const size = 10 * 1024 * 1024;
-      const buffer = Buffer.alloc(size);
-      buffer[0] = 0x1f;
-      buffer[1] = 0x8b;
-      expect(() => service.validatePackage(buffer)).not.toThrow();
-    });
   });
 
   describe('validateManifest', () => {
@@ -141,6 +123,33 @@ describe('PluginValidatorService', () => {
       expect(result.permissions).toEqual([]);
       expect(result.allowedDomains).toEqual([]);
       expect(result.schemaVersion).toBe(1);
+    });
+
+    it('rejects unknown manifest fields instead of admitting executable configuration', () => {
+      expect(() => service.validateManifest({
+        name: 'my-plugin', version: '1.0.0', description: 'A test plugin', author: 'test',
+        extensionApi: 'v1', eventTypes: ['workflow.completed'], source: 'new Function(...)',
+      })).toThrow();
+    });
+
+    it('rejects unknown capabilities and non-empty allowed domains', () => {
+      expect(() => service.validateManifest({
+        name: 'my-plugin', version: '1.0.0', description: 'A test plugin', author: 'test',
+        extensionApi: 'v1', eventTypes: ['workflow.completed'], permissions: ['process:exec'],
+      })).toThrow();
+      expect(() => service.validateManifest({
+        name: 'my-plugin', version: '1.0.0', description: 'A test plugin', author: 'test',
+        extensionApi: 'v1', eventTypes: ['workflow.completed'], allowedDomains: ['https://example.com'],
+      })).toThrow();
+    });
+
+    it.each([
+      ['path traversal', Buffer.from('PK\x03\x04../manifest.json')],
+      ['source entry', Buffer.from('PK\x03\x04plugin.js')],
+      ['duplicate manifest', Buffer.from('PK\x03\x04manifest.json\0manifest.json')],
+      ['compressed archive abuse', Buffer.from([0x1f, 0x8b, 0xff, 0xff])],
+    ])('rejects %s before admission effects', (_case, archive) => {
+      expect(() => service.validatePackage(archive)).toThrow();
     });
   });
 

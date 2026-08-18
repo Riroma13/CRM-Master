@@ -1,9 +1,6 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PrismaService } from '../../../common/prisma.service';
-import { WorkerPoolService } from '../sandbox/worker-pool.service';
-import { PluginRegistryService } from '../registry/plugin-registry.service';
-import type { EventEnvelope } from '@shared/plugin';
+import { PLUGIN_EXECUTION_DISABLED } from '@shared/plugin/plugin.types';
 
 const PLATFORM_EVENTS = [
   'workflow.completed',
@@ -24,26 +21,16 @@ const PLATFORM_EVENTS = [
   'tarea.overdue',
 ];
 
-interface PluginWithName {
-  id: string;
-  name: string;
-  tenantId: string;
-  [key: string]: unknown;
-}
-
 @Injectable()
 export class EventBridgeService implements OnModuleInit {
   private readonly logger = new Logger(EventBridgeService.name);
 
   constructor(
     private readonly eventEmitter: EventEmitter2,
-    private readonly registry: PluginRegistryService,
-    private readonly workerPool: WorkerPoolService,
-    private readonly prisma: PrismaService,
   ) {}
 
   onModuleInit() {
-    this.subscribeToPlatformEvents();
+    // Execution is intentionally disabled; no event listeners may dispatch plugins.
   }
 
   private subscribeToPlatformEvents() {
@@ -62,55 +49,15 @@ export class EventBridgeService implements OnModuleInit {
     tenantId: string,
     payload: Record<string, unknown>,
   ): Promise<void> {
-    const plugins = await this.registry.getByEventType(tenantId, eventType);
-    if (plugins.length === 0) return;
-
-    const results = await Promise.allSettled(
-      plugins.map((plugin: Record<string, unknown>) =>
-        this.dispatchToPlugin(
-          plugin as unknown as PluginWithName,
-          { eventType, tenantId, payload },
-        ),
-      ),
-    );
-
-    const failures = results.filter(r => r.status === 'rejected');
-    if (failures.length > 0) {
-      this.logger.warn(
-        `EventBridge: ${failures.length}/${plugins.length} plugins failed for ${eventType}`,
-      );
-    }
+    void eventType; void tenantId; void payload;
+    throw new ConflictException({ code: PLUGIN_EXECUTION_DISABLED });
   }
 
   private async dispatchToPlugin(
-    plugin: PluginWithName,
-    envelope: { eventType: string; tenantId: string; payload: Record<string, unknown> },
+    _plugin: { id: string; name: string; tenantId: string },
+    _envelope: { eventType: string; tenantId: string; payload: Record<string, unknown> },
   ): Promise<void> {
-    try {
-      await this.workerPool.execute(plugin.id, 'onEvent', envelope);
-      await this.logEventDelivery(plugin.tenantId, plugin.id, envelope.eventType, envelope.payload);
-    } catch (err) {
-      this.logger.error(
-        `Plugin ${plugin.id} (${plugin.name}) failed on ${envelope.eventType}: ${(err as Error).message}`,
-      );
-    }
-  }
-
-  private async logEventDelivery(
-    tenantId: string,
-    pluginId: string,
-    eventType: string,
-    payload: Record<string, unknown>,
-  ): Promise<void> {
-    try {
-      await this.prisma.admin.pluginEvent.create({
-        data: { tenantId, pluginId, eventType, payload },
-      });
-    } catch (err) {
-      this.logger.error(
-        `Failed to log event delivery for plugin ${pluginId}: ${(err as Error).message}`,
-      );
-    }
+    throw new ConflictException({ code: PLUGIN_EXECUTION_DISABLED });
   }
 
   private extractTenantId(payload: Record<string, unknown>): string | null {
