@@ -64,6 +64,15 @@ describe('V1DocumentsController', () => {
   });
 
   describe('GET /api/v1/public/documents', () => {
+    it('uses token-bound request authority without a caller tenant selector', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/public/documents')
+        .set('Authorization', AUTH)
+        .expect(200);
+
+      expect(mockDocumentService.listDocuments).toHaveBeenCalledWith('tenant-1', undefined);
+    });
+
     it('should return a list of documents', async () => {
       const res = await request(app.getHttpServer())
         .get('/api/v1/public/documents')
@@ -104,6 +113,24 @@ describe('V1DocumentsController', () => {
   });
 
   describe('GET /api/v1/public/documents/:id', () => {
+    it('returns 404 for a scoped resource miss before mapping', async () => {
+      mockDocumentService.getDocument.mockResolvedValueOnce(null);
+
+      await request(app.getHttpServer())
+        .get(`/api/v1/public/documents/${DOC_ID}`)
+        .set('Authorization', AUTH)
+        .expect(404);
+    });
+
+    it('uses token-bound request authority without a caller tenant selector', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/v1/public/documents/${DOC_ID}`)
+        .set('Authorization', AUTH)
+        .expect(200);
+
+      expect(mockDocumentService.getDocument).toHaveBeenCalledWith('tenant-1', DOC_ID);
+    });
+
     it('should return a single document', async () => {
       const res = await request(app.getHttpServer())
         .get(`/api/v1/public/documents/${DOC_ID}`)

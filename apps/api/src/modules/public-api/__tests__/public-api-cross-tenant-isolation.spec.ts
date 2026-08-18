@@ -106,17 +106,13 @@ describe('PublicAPI — Cross-Tenant Isolation', () => {
   });
 
   it('Tenant A token cannot access Tenant B workflows using Tenant B tenantId in query', async () => {
-    mockWorkflowService.listInstances.mockResolvedValueOnce({
-      data: [], pagination: { page: 1, limit: 20, total: 0 },
-    });
-
     await request(app.getHttpServer())
       .get('/api/v1/public/workflows')
       .set('Authorization', `Bearer ${tokenA}`)
       .query({ tenantId: TENANT_B })
-      .expect(200);
+      .expect(403);
 
-    expect(mockWorkflowService.listInstances).toHaveBeenCalledWith(TENANT_B, undefined, 1, 20);
+    expect(mockWorkflowService.listInstances).not.toHaveBeenCalledWith(TENANT_B, undefined, 1, 20);
   });
 
   it('Tenant B token gets 401 with invalid token', async () => {
