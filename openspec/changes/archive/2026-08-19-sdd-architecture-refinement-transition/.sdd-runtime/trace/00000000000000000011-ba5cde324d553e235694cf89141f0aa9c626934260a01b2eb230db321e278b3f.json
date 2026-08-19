@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "sequence": 11,
+  "idempotencyKey": "f1d440f93fa96d619b8a48b3bb42687eccb09147a33ef37b1982cf86170f805c",
+  "previousEventHash": "559f17b9871addb5d240aa877fa6c175ea6700a29e29c213e81ea146112ad883",
+  "chainHash": "065a199d4452b0cf11a838c345d3fe9142862f3397fcd56d1f661ab0256fa082",
+  "change": "sdd-architecture-refinement-transition",
+  "action": "Apply 7.4 Integration",
+  "role": "MID",
+  "inputHash": "7badb03dac83bcf0779b854b0068f0c8dec668c47c7ca08d78f39d4bd8bc6431",
+  "outcomeHash": "7badb03dac83bcf0779b854b0068f0c8dec668c47c7ca08d78f39d4bd8bc6431",
+  "route": {
+    "configured": "MID",
+    "resolved": "sdd-direct-apply",
+    "rejections": []
+  },
+  "beforeStateHash": "dc11925e25a51e749dcc26f3385fc0b585f01d5a926de655c30196a970ee958f",
+  "afterStateHash": "84522f9a3b7dd2aa85e7fa1aab4103652fc4008f28162f1ce7dccdf6e5cce77d",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 11,
+    "checkpoint": {
+      "phase": "Apply 7.4 Integration",
+      "artifact": "scripts/sdd-runtime.integration.test.mjs",
+      "verdict": "PASS",
+      "next": "Apply 7.5 Testing"
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 2,
+      "Design Refinement": 1,
+      "Tasks": 1,
+      "Tasks Review": 1,
+      "Workload Guard": 1,
+      "Apply 7.1 Foundation": 1,
+      "Apply 7.2 Core Engine": 1,
+      "Apply 7.3 Feature Implementation": 1,
+      "Apply 7.4 Integration": 1
+    },
+    "traceCursor": {
+      "sequence": 11,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "f1d440f93fa96d619b8a48b3bb42687eccb09147a33ef37b1982cf86170f805c",
+      "action": "Apply 7.4 Integration",
+      "inputHash": "7badb03dac83bcf0779b854b0068f0c8dec668c47c7ca08d78f39d4bd8bc6431",
+      "outcomeHash": "7badb03dac83bcf0779b854b0068f0c8dec668c47c7ca08d78f39d4bd8bc6431",
+      "afterStateHash": "5084e0dad82b760adcd6c973c976de8af1bb3dfd4404b4df05b3e78f1af21c6f"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "direct": "docs/architecture/sdd-direct.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "workingSet": [
+        "scripts/sdd-runtime.mjs",
+        "scripts/sdd-runtime.test.mjs",
+        "scripts/sdd-runtime.integration.test.mjs",
+        "scripts/sdd-runtime.e2e.test.mjs",
+        "scripts/sdd-resume.test.mjs",
+        "package.json"
+      ],
+      "readOrder": [
+        "docs/SDD-WORKFLOW.md",
+        "scripts/sdd-runtime.mjs",
+        "scripts/sdd-runtime.test.mjs",
+        "scripts/sdd-runtime.integration.test.mjs",
+        "scripts/sdd-runtime.e2e.test.mjs",
+        "scripts/sdd-resume.test.mjs",
+        "package.json"
+      ]
+    }
+  },
+  "timestamp": "2026-08-19T17:52:18.569Z",
+  "eventHash": "ba5cde324d553e235694cf89141f0aa9c626934260a01b2eb230db321e278b3f"
+}

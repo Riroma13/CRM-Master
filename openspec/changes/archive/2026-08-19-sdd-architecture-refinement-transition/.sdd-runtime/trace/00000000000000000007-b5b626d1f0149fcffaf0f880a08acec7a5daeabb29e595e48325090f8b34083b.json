@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "sequence": 7,
+  "idempotencyKey": "55b711ef160a1c2994713b37242de296d1fbacf29aae2b0376a5fd3a26dfb5c8",
+  "previousEventHash": "3b384e2dfb64e4045863f463b332faf338cd2aabc85ce9b0fec1901a8baab6c3",
+  "chainHash": "380edf9b30c7897417a4e4ead9dc24e63face75ea3e1873c8b3a6f092c10136f",
+  "change": "sdd-architecture-refinement-transition",
+  "action": "Workload Guard",
+  "role": "MID",
+  "inputHash": "d65d1f2252cbb9bf3936c101d026b048014fc58a52e36fbd3bdff526aa4fa25f",
+  "outcomeHash": "d65d1f2252cbb9bf3936c101d026b048014fc58a52e36fbd3bdff526aa4fa25f",
+  "route": {
+    "configured": "MID",
+    "resolved": "sdd-direct-orchestrator",
+    "rejections": []
+  },
+  "beforeStateHash": "8c1f4318452da5325bcc228cfcd46e848d4946f38246b07f4d6c5822445b516b",
+  "afterStateHash": "09256488477044c36ab053a8d11c624a7f90cfffa4b66ca0e96e02dcee26634a",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 7,
+    "checkpoint": {
+      "phase": "Workload Guard",
+      "artifact": "workload-guard.md",
+      "verdict": "PASS",
+      "next": "Apply 7.1 Foundation"
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 2,
+      "Design Refinement": 1,
+      "Tasks": 1,
+      "Tasks Review": 1,
+      "Workload Guard": 1
+    },
+    "traceCursor": {
+      "sequence": 7,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "55b711ef160a1c2994713b37242de296d1fbacf29aae2b0376a5fd3a26dfb5c8",
+      "action": "Workload Guard",
+      "inputHash": "d65d1f2252cbb9bf3936c101d026b048014fc58a52e36fbd3bdff526aa4fa25f",
+      "outcomeHash": "d65d1f2252cbb9bf3936c101d026b048014fc58a52e36fbd3bdff526aa4fa25f",
+      "afterStateHash": "6785d29a700c80c4ea6df4449907e3173588626377a8779cdbd31bbc67427616"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "direct": "docs/architecture/sdd-direct.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "workingSet": [
+        "scripts/sdd-runtime.mjs",
+        "scripts/sdd-runtime.test.mjs",
+        "scripts/sdd-runtime.integration.test.mjs",
+        "scripts/sdd-runtime.e2e.test.mjs",
+        "scripts/sdd-resume.test.mjs",
+        "package.json"
+      ],
+      "readOrder": [
+        "docs/SDD-WORKFLOW.md",
+        "scripts/sdd-runtime.mjs",
+        "scripts/sdd-runtime.test.mjs",
+        "scripts/sdd-runtime.integration.test.mjs",
+        "scripts/sdd-runtime.e2e.test.mjs",
+        "scripts/sdd-resume.test.mjs",
+        "package.json"
+      ]
+    }
+  },
+  "timestamp": "2026-08-19T17:42:16.132Z",
+  "eventHash": "b5b626d1f0149fcffaf0f880a08acec7a5daeabb29e595e48325090f8b34083b"
+}

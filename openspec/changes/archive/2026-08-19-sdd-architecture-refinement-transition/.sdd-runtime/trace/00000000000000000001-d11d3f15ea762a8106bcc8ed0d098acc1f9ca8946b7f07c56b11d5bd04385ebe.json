@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "sequence": 1,
+  "idempotencyKey": "546f3d22ab67af4d20d186cc8b7aa05d2f8337feba5ca63d7663b4e93f80f7ab",
+  "previousEventHash": null,
+  "chainHash": "201307fe79f95121efd35ab42ac9d7bc961d034bb7a0483441eae96a5430a60d",
+  "change": "sdd-architecture-refinement-transition",
+  "action": "Design",
+  "role": "HIGH",
+  "inputHash": "79c1183bc93027d226dbe5e84ddd362b78d59656efc8d4f8300e722ec692eb22",
+  "outcomeHash": "79c1183bc93027d226dbe5e84ddd362b78d59656efc8d4f8300e722ec692eb22",
+  "route": {
+    "configured": "HIGH",
+    "resolved": "sdd-direct-design",
+    "rejections": []
+  },
+  "beforeStateHash": "40117cf991bde7ae1eca47d2c146084c3571c75a7d91688a537d969daf63e134",
+  "afterStateHash": "f914c285c44756fb74272a78a65b10c49ed513aab2a1e4a537dc7527feeb295b",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 1,
+    "checkpoint": {
+      "phase": "Design",
+      "artifact": "design.md",
+      "verdict": "PASS",
+      "next": "Architecture Review"
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1"
+    },
+    "attempts": {
+      "Design": 1
+    },
+    "traceCursor": {
+      "sequence": 1,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "546f3d22ab67af4d20d186cc8b7aa05d2f8337feba5ca63d7663b4e93f80f7ab",
+      "action": "Design",
+      "inputHash": "79c1183bc93027d226dbe5e84ddd362b78d59656efc8d4f8300e722ec692eb22",
+      "outcomeHash": "79c1183bc93027d226dbe5e84ddd362b78d59656efc8d4f8300e722ec692eb22",
+      "afterStateHash": "f593dcaba8df93ab3f61ddb6ead60a547c7dd708c8120991fb97e70aef351b87"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "direct": "docs/architecture/sdd-direct.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "workingSet": [
+        "scripts/sdd-runtime.mjs",
+        "scripts/sdd-runtime.test.mjs",
+        "scripts/sdd-runtime.integration.test.mjs",
+        "scripts/sdd-runtime.e2e.test.mjs",
+        "scripts/sdd-resume.test.mjs",
+        "package.json"
+      ],
+      "readOrder": [
+        "docs/SDD-WORKFLOW.md",
+        "scripts/sdd-runtime.mjs",
+        "scripts/sdd-runtime.test.mjs",
+        "scripts/sdd-runtime.integration.test.mjs",
+        "scripts/sdd-runtime.e2e.test.mjs",
+        "scripts/sdd-resume.test.mjs",
+        "package.json"
+      ]
+    }
+  },
+  "timestamp": "2026-08-19T17:23:22.393Z",
+  "eventHash": "d11d3f15ea762a8106bcc8ed0d098acc1f9ca8946b7f07c56b11d5bd04385ebe"
+}
