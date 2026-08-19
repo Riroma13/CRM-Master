@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "sequence": 15,
+  "idempotencyKey": "6ff78cba4aa9c85c92d3b76df39fad4b5fc9a585afe99d6bd4f38f788e3a0fd4",
+  "previousEventHash": "7851c3a74bc29328a754292abfbccd615ee60d5e47a93b5e30033fda94a45606",
+  "chainHash": "87be9b6d7451973606e0783ef1e09197e2640dd5c3647c98d7c99adbb29a2a1c",
+  "change": "sdd-new-change-bootstrap",
+  "action": "Health Report",
+  "role": "LOW",
+  "inputHash": "56692d2fe73ae997f30728c4a0c6936481e2c38b5f13dea3064803f11f9a854c",
+  "outcomeHash": "56692d2fe73ae997f30728c4a0c6936481e2c38b5f13dea3064803f11f9a854c",
+  "route": {
+    "configured": "LOW",
+    "resolved": "sdd-direct-apply",
+    "rejections": [
+      {
+        "id": "low-evidence-primary",
+        "reason": "provider-empty-outcome"
+      },
+      {
+        "id": "low-evidence-fallback",
+        "reason": "provider-empty-outcome"
+      }
+    ]
+  },
+  "beforeStateHash": "64058220f8c2dca77d9d8d4b56a90ecc38125492b4521906148c193ce86d7684",
+  "afterStateHash": "45a4101c6379865a1e9d2ad80f22da1c88b69f54c5b491754635bb28ee0a999e",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 15,
+    "checkpoint": {
+      "phase": "Health Report",
+      "artifact": "health-report.md",
+      "verdict": "PASS",
+      "next": "Repository Ready"
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "4601bd116d683f0cca0057dc81636477dd2177ff1a3feff6168b88702eaf7348"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 1,
+      "Tasks": 1,
+      "Tasks Review": 1,
+      "Workload Guard": 1,
+      "Apply 7.1 Foundation": 1,
+      "Apply 7.2 Core Engine": 1,
+      "Apply 7.3 Feature Implementation": 1,
+      "Apply 7.4 Integration": 1,
+      "Apply 7.5 Testing": 1,
+      "Apply 7.6 Apply Summary": 1,
+      "Verify": 2,
+      "Archive": 1,
+      "Health Report": 1
+    },
+    "traceCursor": {
+      "sequence": 15,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "6ff78cba4aa9c85c92d3b76df39fad4b5fc9a585afe99d6bd4f38f788e3a0fd4",
+      "action": "Health Report",
+      "inputHash": "56692d2fe73ae997f30728c4a0c6936481e2c38b5f13dea3064803f11f9a854c",
+      "outcomeHash": "56692d2fe73ae997f30728c4a0c6936481e2c38b5f13dea3064803f11f9a854c",
+      "afterStateHash": "26bf3eb3848ea2b854cc24b0023ee2f07f3c481c6f899874fd79ddde5bbf0034"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "config": ".opencode/commands/sdd-direct.md"
+    }
+  },
+  "timestamp": "2026-08-19T16:11:19.144Z",
+  "eventHash": "3782788937ae240640ce30c4006ae58aa7939f488b9d1779584282c3687c9105"
+}

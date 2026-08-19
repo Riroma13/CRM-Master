@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "sequence": 3,
+  "idempotencyKey": "b2d0af093f8bd0ced6c722cb639c296b3db85fcb45d56e3c71ff66e6c050979e",
+  "previousEventHash": "269f7b2dc2099a08ebea11f43eb4a7474a3c26f81e6e9e8efbcc1624bdd7294d",
+  "chainHash": "b6b0cd8b331104793404a8fbd2bf9a5e1618f5b52c570ad4aad78e897536e794",
+  "change": "sdd-new-change-bootstrap",
+  "action": "Tasks",
+  "role": "MID",
+  "inputHash": "087c13dcbffb28c89ee83d8bccc700b4c74a60e5298c78bb4e8be664d9060ea4",
+  "outcomeHash": "087c13dcbffb28c89ee83d8bccc700b4c74a60e5298c78bb4e8be664d9060ea4",
+  "route": {
+    "configured": "MID",
+    "resolved": "sdd-direct-tasks",
+    "rejections": []
+  },
+  "beforeStateHash": "95142a51125008218dcbac12a32c34167986eeb2c2062a2c29b4f9a2b2096ea9",
+  "afterStateHash": "e8696cf59dd84b6ed3f1639e5f2b42a755c7aed65b2e64e9d3da6a084fc5cd75",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 3,
+    "checkpoint": {
+      "phase": "Tasks",
+      "artifact": "tasks.md",
+      "verdict": "PASS",
+      "next": "Tasks Review"
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "4601bd116d683f0cca0057dc81636477dd2177ff1a3feff6168b88702eaf7348"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 1,
+      "Tasks": 1
+    },
+    "traceCursor": {
+      "sequence": 3,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "b2d0af093f8bd0ced6c722cb639c296b3db85fcb45d56e3c71ff66e6c050979e",
+      "action": "Tasks",
+      "inputHash": "087c13dcbffb28c89ee83d8bccc700b4c74a60e5298c78bb4e8be664d9060ea4",
+      "outcomeHash": "087c13dcbffb28c89ee83d8bccc700b4c74a60e5298c78bb4e8be664d9060ea4",
+      "afterStateHash": "e5a6ab78bd391e76b3c3acefb6a5b9d788e0d6c6a090ceaf0d7ea580b8a926aa"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "config": ".opencode/commands/sdd-direct.md"
+    }
+  },
+  "timestamp": "2026-08-19T15:30:53.764Z",
+  "eventHash": "48338cca5acbbff28046a29dddbdefa7a5ef53804f33e8eeba3905ca52f47f84"
+}
