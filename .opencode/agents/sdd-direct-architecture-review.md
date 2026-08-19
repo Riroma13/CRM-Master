@@ -16,3 +16,7 @@ alter templates. Use only project-local Direct wiring and the model map.
 
 Return a structured result with status, findings, evidence, and the next action
 prescribed by the canonical workflow.
+
+Return one validated, idempotent outcome packet with the exact review verdict,
+artifacts, evidence, legal next action, and structured blocker when applicable.
+Do not infer routing from prose or dispatch a later phase yourself.

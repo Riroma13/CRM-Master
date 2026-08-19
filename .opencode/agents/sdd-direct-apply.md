@@ -17,3 +17,8 @@ never route implementation through a global executor.
 
 Return a structured result with status, completed substeps, files changed,
 unexpected files or dependencies, acceptance evidence, and blockers.
+
+Return one validated, idempotent outcome packet for each assigned Apply
+substep, including artifacts, evidence, legal next action, and structured
+blocker when applicable. Do not dispatch later substeps or force a stop when a
+canonical non-HUMAN transition remains.

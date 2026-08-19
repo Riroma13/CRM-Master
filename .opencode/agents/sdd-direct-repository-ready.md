@@ -16,3 +16,7 @@ handoff and use `.opencode/sdd-model-map.json` for logical routing.
 
 Return a structured result with status, artifacts, evidence, and the pending
 maintainer action.
+
+Return one validated, idempotent outcome packet with the handoff artifact,
+exact evidence, `HUMAN_GIT` boundary, and maintainer next action. Repository
+Ready is terminal for autonomous dispatch; never execute Git lifecycle work.

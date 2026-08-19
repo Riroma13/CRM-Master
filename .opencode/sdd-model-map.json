@@ -4,6 +4,47 @@
   "project": "crm-master",
   "workflow_version": "v3",
   "persistence": "hybrid",
+  "runtime_routing": {
+    "schema": "crm-master.sdd-runtime-routing/v1",
+    "fallback_policy": "same-role-compatible-only",
+    "quality_required": true,
+    "cost_ordered": true,
+    "exhaustion": "STOP/HUMAN_HANDOFF",
+    "primary": {
+      "LOW": "low-evidence-primary"
+    },
+    "candidates": {
+      "LOW": [
+        {
+          "id": "low-evidence-primary",
+          "model": "longcat/LongCat-2.0",
+          "local_executor": "sdd-direct-archive",
+          "role": "LOW",
+          "capabilities": ["evidence"],
+          "quality": 0.95,
+          "cost": 1,
+          "available": true
+        },
+        {
+          "id": "low-evidence-fallback",
+          "model": "longcat/LongCat-2.0",
+          "local_executor": "sdd-direct-archive",
+          "role": "LOW",
+          "capabilities": ["evidence"],
+          "quality": 0.9,
+          "cost": 2,
+          "available": true,
+          "fallback_for": "low-evidence-primary"
+        }
+      ]
+    },
+    "fallbacks": {
+      "HIGH": [],
+      "MID": [],
+      "LOW": ["low-evidence-fallback"],
+      "HUMAN": []
+    }
+  },
   "roles": {
     "HIGH": {
       "name": "ARCHITECT",

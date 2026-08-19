@@ -10,6 +10,7 @@
     "lint": "turbo lint",
     "sdd:validate": "node scripts/validate-sdd-direct.mjs",
     "sdd:validate:design": "node scripts/validate-enterprise-design.mjs",
+    "test:sdd-runtime": "node --test scripts/sdd-runtime.test.mjs",
     "test:sdd-resume": "node --test scripts/sdd-resume.test.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "turbo clean"

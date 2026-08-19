@@ -41,6 +41,28 @@ An evidence record is not permission to broaden scope. Architectural or
 implementation judgment is escalated to the logical role named by the canonical
 workflow.
 
+## Mechanical Runtime Evidence
+
+The project-local `scripts/sdd-runtime.mjs` is a mechanical contract and
+recovery adapter. It validates change identity, fingerprints, typed outcomes and
+blockers, selects legal transitions from constrained workflow inputs, and
+records routing/context evidence without storing prompt bodies. Direct and
+Resume use the same runtime boundary; normal phase transitions reuse the live
+context packet rather than rereading global bootstrap documents.
+
+When execution output is required, materialized state is located only at
+`openspec/changes/<change-name>/.sdd-runtime/state.json` and immutable events
+are located only under its change-local `trace/` directory. Event-first
+exclusive publication followed by atomic state replacement supports one-event
+interruption reconciliation. Corrupt, ambiguous, stale, foreign, or
+state-ahead evidence stops fail-closed. These files are cache/audit evidence;
+they never replace `docs/SDD-WORKFLOW.md` as lifecycle authority.
+
+Autonomous dispatch ends at Repository Ready and emits a maintainer Git
+handoff. Commit, Push, Merge, Rebase, Release, Deploy, Tag, and direct-to-main
+requests are rejected before subprocess execution. Legacy commands remain
+STOP-only compatibility boundaries.
+
 ## Model Fallback Evidence
 
 Concrete bindings are resolved from `.opencode/sdd-model-map.json`. If runtime

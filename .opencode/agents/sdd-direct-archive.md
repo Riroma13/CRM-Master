@@ -16,3 +16,7 @@ Git operations. Use `.opencode/sdd-model-map.json` for logical routing.
 
 Return a structured result with status, artifacts, learning, evidence, and the
 next action prescribed by the canonical workflow.
+
+Return one validated, idempotent outcome packet with archive artifacts,
+learning, evidence, legal next action, and structured blocker when applicable.
+Do not dispatch Health Report or Repository Ready directly.
