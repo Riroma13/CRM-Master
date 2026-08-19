@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import {
   BLOCKER_POLICIES,
   atomicWriteJson,
+  bootstrapChange,
   canonicalJson,
   createTraceEvent,
   fingerprintFiles,
@@ -241,5 +242,46 @@ test('legacy active changes reconstruct without generated runtime state', async 
     assert.equal(recovered.checkpoint.next, 'Workload Guard');
   } finally {
     await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('bootstrap creates the exact READY Design checkpoint for an absent change', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-bootstrap-'));
+  try {
+    const result = await bootstrapChange({ root, change: 'new-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
+    assert.equal(result.disposition, 'CREATED');
+    assert.equal(result.state.schemaVersion, 2);
+    assert.equal(result.state.status, 'READY');
+    assert.equal(result.state.sequence, 0);
+    assert.deepEqual(result.state.checkpoint, { phase: null, artifact: null, verdict: null, next: 'Design' });
+    assert.deepEqual(JSON.parse(await readFile(join(result.changePath, '.sdd-runtime', 'state.json'), 'utf8')), result.state);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('bootstrap reuses a valid matching state and rejects existing provenance conflicts', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-bootstrap-reuse-'));
+  const fingerprints = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
+  try {
+    const created = await bootstrapChange({ root, change: 'reuse-change', fingerprints });
+    const reused = await bootstrapChange({ root, change: 'reuse-change', fingerprints });
+    assert.equal(reused.disposition, 'REUSED');
+    assert.deepEqual(reused.state, created.state);
+
+    await rm(join(root, 'openspec', 'changes', 'missing-state'), { recursive: true, force: true });
+    const missingPath = join(root, 'openspec', 'changes', 'missing-state');
+    await import('node:fs/promises').then(({ mkdir }) => mkdir(missingPath, { recursive: true }));
+    await assert.rejects(() => bootstrapChange({ root, change: 'missing-state', fingerprints }), /provenance/i);
+
+    const corrupt = await bootstrapChange({ root, change: 'corrupt-state', fingerprints });
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(join(corrupt.changePath, '.sdd-runtime', 'state.json'), '{broken'));
+    await assert.rejects(() => bootstrapChange({ root, change: 'corrupt-state', fingerprints }), /provenance/i);
+
+    const foreign = await bootstrapChange({ root, change: 'foreign-state', fingerprints });
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(join(foreign.changePath, '.sdd-runtime', 'state.json'), JSON.stringify({ ...foreign.state, change: 'other-change' })));
+    await assert.rejects(() => bootstrapChange({ root, change: 'foreign-state', fingerprints }), /provenance/i);
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });

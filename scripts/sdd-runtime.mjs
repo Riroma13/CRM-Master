@@ -154,6 +154,39 @@ export function buildInitialState({ root, change, fingerprints } = {}) {
   });
 }
 
+export async function bootstrapChange({ root, change, fingerprints } = {}) {
+  const identity = validateIdentity({ root, change });
+  const initialState = buildInitialState({ root, change, fingerprints });
+  let created = false;
+
+  await mkdir(dirname(identity.changePath), { recursive: true });
+  try {
+    await mkdir(identity.changePath);
+    created = true;
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+  }
+
+  const statePath = join(identity.changePath, '.sdd-runtime', 'state.json');
+  if (created) {
+    await writeExclusiveJson(statePath, initialState);
+    return { changePath: identity.changePath, state: initialState, disposition: 'CREATED' };
+  }
+
+  let existing;
+  try {
+    existing = JSON.parse(await readFile(statePath, 'utf8'));
+    validateRuntimeState(existing);
+  } catch (error) {
+    throw new TypeError(`bootstrap provenance conflict: ${error.message}`);
+  }
+  if (existing.change !== change || existing.canonicalPath !== identity.changePath
+      || canonicalJson(existing.fingerprints) !== canonicalJson(initialState.fingerprints)) {
+    throw new TypeError('bootstrap provenance conflict: existing state does not match identity');
+  }
+  return { changePath: identity.changePath, state: existing, disposition: 'REUSED' };
+}
+
 export function selectNextTransition(state, outcome, projection = projectCanonicalWorkflow()) {
   validateRuntimeState(state);
   validateOutcomePacket(outcome);

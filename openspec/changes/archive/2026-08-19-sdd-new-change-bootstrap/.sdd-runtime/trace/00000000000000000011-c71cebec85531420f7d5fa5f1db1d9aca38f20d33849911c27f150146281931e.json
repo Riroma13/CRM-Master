@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "sequence": 11,
+  "idempotencyKey": "117b01ea9366cd6b330c6a3337855b656deb19f33e79699693227b5f3b156211",
+  "previousEventHash": "5f94968cee9b64ff48003a44852c718f5e761160cc7653eb4123ae5513b96b5f",
+  "chainHash": "d9fc7f2a46a7de057dd0fe61c8620377c3e27be0d7bd978ab09d3fc6523f36ce",
+  "change": "sdd-new-change-bootstrap",
+  "action": "Apply 7.6 Apply Summary",
+  "role": "MID",
+  "inputHash": "091029fd11a49a552e27b0378a8255a3cb5db7d95d7fe29631338ba2547650c0",
+  "outcomeHash": "091029fd11a49a552e27b0378a8255a3cb5db7d95d7fe29631338ba2547650c0",
+  "route": {
+    "configured": "MID",
+    "resolved": "sdd-direct-apply",
+    "rejections": []
+  },
+  "beforeStateHash": "0f49f7f136f56d0b38524a17b72758aba39be36c778ffd03654bf0d2bac4fed8",
+  "afterStateHash": "4a51a8e73825397e4aa94be739e2f57c5eabb528159cc4bcd5dd13f2b578fd35",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 11,
+    "checkpoint": {
+      "phase": "Apply 7.6 Apply Summary",
+      "artifact": "apply-7.6-apply-summary.md",
+      "verdict": "PASS",
+      "next": "Verify"
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "4601bd116d683f0cca0057dc81636477dd2177ff1a3feff6168b88702eaf7348"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 1,
+      "Tasks": 1,
+      "Tasks Review": 1,
+      "Workload Guard": 1,
+      "Apply 7.1 Foundation": 1,
+      "Apply 7.2 Core Engine": 1,
+      "Apply 7.3 Feature Implementation": 1,
+      "Apply 7.4 Integration": 1,
+      "Apply 7.5 Testing": 1,
+      "Apply 7.6 Apply Summary": 1
+    },
+    "traceCursor": {
+      "sequence": 11,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "117b01ea9366cd6b330c6a3337855b656deb19f33e79699693227b5f3b156211",
+      "action": "Apply 7.6 Apply Summary",
+      "inputHash": "091029fd11a49a552e27b0378a8255a3cb5db7d95d7fe29631338ba2547650c0",
+      "outcomeHash": "091029fd11a49a552e27b0378a8255a3cb5db7d95d7fe29631338ba2547650c0",
+      "afterStateHash": "915b10e2b7348073e5e55dde20fce1adce3887dfdfcdb7aa9ace2efbf285308b"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "config": ".opencode/commands/sdd-direct.md"
+    }
+  },
+  "timestamp": "2026-08-19T15:50:38.251Z",
+  "eventHash": "c71cebec85531420f7d5fa5f1db1d9aca38f20d33849911c27f150146281931e"
+}

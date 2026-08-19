@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { test } from 'node:test';
 
 import {
+  bootstrapChange,
   buildInitialState,
   createContextPacket,
   createTraceEvent,
@@ -76,4 +77,26 @@ test('configured LOW routing selects the actual same-role fallback and fails clo
   noFallback.runtime_routing.fallbacks.LOW = [];
   noFallback.runtime_routing.candidates.LOW[0].available = false;
   await assert.rejects(() => resolveConfiguredRoute({ modelMap: noFallback, role: 'LOW', requiredCapability: 'evidence', minimumQuality: 0.8 }), /no compatible route/);
+});
+
+test('bootstrap publishes one state on a fresh path and preserves collision evidence', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-bootstrap-integration-'));
+  const fingerprints = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
+  try {
+    const first = await bootstrapChange({ root, change: 'race-change', fingerprints });
+    const second = await bootstrapChange({ root, change: 'race-change', fingerprints });
+    assert.equal(first.disposition, 'CREATED');
+    assert.equal(second.disposition, 'REUSED');
+    assert.equal(second.state.sequence, 0);
+    assert.equal(second.state.checkpoint.next, 'Design');
+    assert.deepEqual(await import('node:fs/promises').then(({ readdir }) => readdir(join(first.changePath, '.sdd-runtime'))), ['state.json']);
+    assert.deepEqual(await import('node:fs/promises').then(({ readdir }) => readdir(join(first.changePath, '.sdd-runtime', 'trace'))).catch((error) => error.code), 'ENOENT');
+
+    const existingPath = join(root, 'openspec', 'changes', 'preexisting-change');
+    await import('node:fs/promises').then(({ mkdir, writeFile }) => mkdir(existingPath, { recursive: true }).then(() => writeFile(join(existingPath, 'user-artifact.md'), 'preserve')));
+    await assert.rejects(() => bootstrapChange({ root, change: 'preexisting-change', fingerprints }), /provenance/i);
+    assert.equal(await readFile(join(existingPath, 'user-artifact.md'), 'utf8'), 'preserve');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

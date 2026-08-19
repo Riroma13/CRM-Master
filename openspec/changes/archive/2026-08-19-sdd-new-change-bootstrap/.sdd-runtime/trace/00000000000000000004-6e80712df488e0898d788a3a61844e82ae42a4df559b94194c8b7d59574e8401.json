@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "sequence": 4,
+  "idempotencyKey": "c822b5bd9dc02cf246d249d1fbdcecbbe66a29d929ade892dc39473fa2457ae3",
+  "previousEventHash": "48338cca5acbbff28046a29dddbdefa7a5ef53804f33e8eeba3905ca52f47f84",
+  "chainHash": "c7a410d75f86de45d045c784665f3bab296027243f41725b870b598767f9956c",
+  "change": "sdd-new-change-bootstrap",
+  "action": "Tasks Review",
+  "role": "MID",
+  "inputHash": "47dfd458e96b86adfa0acc6ade580935f6e10338a950487bbcef11db58a38fd2",
+  "outcomeHash": "47dfd458e96b86adfa0acc6ade580935f6e10338a950487bbcef11db58a38fd2",
+  "route": {
+    "configured": "MID",
+    "resolved": "sdd-direct-tasks-review",
+    "rejections": []
+  },
+  "beforeStateHash": "cb2f926fca523d45173f24ec3975ce7e15a5537035c840c0597525c73cd95397",
+  "afterStateHash": "751716f8c4d7f9055389ab812c452ac4cbdc48209fdc5bf3afc7055ed068e67f",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 4,
+    "checkpoint": {
+      "phase": "Tasks Review",
+      "artifact": "tasks-review.md",
+      "verdict": "PASS",
+      "next": "Workload Guard"
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "4601bd116d683f0cca0057dc81636477dd2177ff1a3feff6168b88702eaf7348"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 1,
+      "Tasks": 1,
+      "Tasks Review": 1
+    },
+    "traceCursor": {
+      "sequence": 4,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "c822b5bd9dc02cf246d249d1fbdcecbbe66a29d929ade892dc39473fa2457ae3",
+      "action": "Tasks Review",
+      "inputHash": "47dfd458e96b86adfa0acc6ade580935f6e10338a950487bbcef11db58a38fd2",
+      "outcomeHash": "47dfd458e96b86adfa0acc6ade580935f6e10338a950487bbcef11db58a38fd2",
+      "afterStateHash": "02c5f20865930b16c44b8f586b0acdafeb4047d67342b4704dc32de9b2178d60"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "config": ".opencode/commands/sdd-direct.md"
+    }
+  },
+  "timestamp": "2026-08-19T15:33:23.179Z",
+  "eventHash": "6e80712df488e0898d788a3a61844e82ae42a4df559b94194c8b7d59574e8401"
+}

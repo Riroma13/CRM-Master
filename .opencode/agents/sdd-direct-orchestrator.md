@@ -21,10 +21,16 @@ agents listed in `.opencode/sdd-model-map.json`.
    `openspec/changes/<change-name>/` before exploring further.
 4. Run `pnpm sdd:validate` before phase execution. Resolve the current logical
    role and local executor from the canonical workflow and model map.
-5. Bootstrap and validate `scripts/sdd-runtime.mjs` for the named change before
-   dispatch. Supply the local executor with the immutable authority references,
-   approved Working Set/Read Order, fingerprints, and current checkpoint; reuse
-   that context packet across normal phase transitions.
+5. After governance validation, call the exported `bootstrapChange` operation
+   from `scripts/sdd-runtime.mjs` for the named change, before recovery or any
+   executor dispatch. The runtime must exclusively create the absent canonical
+   directory and READY/schema-v2 state, or return a valid matching state for
+   reuse. Never initialize an existing directory without matching valid state;
+   bootstrap failure is a fail-closed stop. After bootstrap, validate the
+   recovered checkpoint and dispatch only its canonical `next` action (a fresh
+   bootstrap must dispatch `Design`). Supply the local executor with the
+   immutable authority references, approved Working Set/Read Order, fingerprints,
+   and current checkpoint; reuse that context packet across normal transitions.
 6. Invoke only the local executor for the current action. Consume the declared
    Working Set and Read Order before any bounded deviation; stop on provenance
    ambiguity or material contradiction. Select the next action mechanically
