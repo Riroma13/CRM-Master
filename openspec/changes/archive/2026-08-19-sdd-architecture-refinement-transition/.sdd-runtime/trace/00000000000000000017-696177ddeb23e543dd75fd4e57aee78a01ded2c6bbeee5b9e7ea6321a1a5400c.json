@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "sequence": 17,
+  "idempotencyKey": "90d7c742173c14a8a8b2e86337b1e9d1430acc029eb2ff81c21117028fb00d30",
+  "previousEventHash": "af9daefa421bfc595a16d047fab87df227923f04cb0f13734dbff5339b682d4a",
+  "chainHash": "6b57e063ff4302c7edd7512360bbe5d5a9d8238cb828ffde409cb309b75ee532",
+  "change": "sdd-architecture-refinement-transition",
+  "action": "Repository Ready",
+  "role": "LOW",
+  "inputHash": "160ad1538d2cfddbe7033ba8614d8bd6bd7b1d189cf483c53cc297d8ff9610a6",
+  "outcomeHash": "160ad1538d2cfddbe7033ba8614d8bd6bd7b1d189cf483c53cc297d8ff9610a6",
+  "route": {
+    "configured": "LOW",
+    "resolved": "sdd-direct-apply",
+    "rejections": [
+      {
+        "id": "low-repository-ready-primary",
+        "reason": "empty-or-malformed-executor-outcome"
+      }
+    ]
+  },
+  "beforeStateHash": "3971c5c7bcc1aa08f3e650016231cf265078ec6e85691344cda4ccf6fa5b0844",
+  "afterStateHash": "a9a1bf98d3b77fc9b14a9bf43e318954df0e63b5144d3eda7c6b8c0b07490f53",
+  "stateMaterialization": {
+    "status": "HUMAN_HANDOFF",
+    "sequence": 17,
+    "checkpoint": {
+      "phase": "Repository Ready",
+      "artifact": "repository-ready.md",
+      "verdict": "PASS",
+      "next": null
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 2,
+      "Design Refinement": 1,
+      "Tasks": 1,
+      "Tasks Review": 1,
+      "Workload Guard": 1,
+      "Apply 7.1 Foundation": 1,
+      "Apply 7.2 Core Engine": 1,
+      "Apply 7.3 Feature Implementation": 1,
+      "Apply 7.4 Integration": 1,
+      "Apply 7.5 Testing": 1,
+      "Apply 7.6 Apply Summary": 1,
+      "Verify": 1,
+      "Archive": 1,
+      "Health Report": 1,
+      "Repository Ready": 1
+    },
+    "traceCursor": {
+      "sequence": 17,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "90d7c742173c14a8a8b2e86337b1e9d1430acc029eb2ff81c21117028fb00d30",
+      "action": "Repository Ready",
+      "inputHash": "160ad1538d2cfddbe7033ba8614d8bd6bd7b1d189cf483c53cc297d8ff9610a6",
+      "outcomeHash": "160ad1538d2cfddbe7033ba8614d8bd6bd7b1d189cf483c53cc297d8ff9610a6",
+      "afterStateHash": "0aefffcc9c30620371230bfb92dde5a4ff2b4a4ddc0a0df1f500fe91c0ef4ddd"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "direct": "docs/architecture/sdd-direct.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "workingSet": [
+        "scripts/sdd-runtime.mjs",
+        "scripts/sdd-runtime.test.mjs",
+        "scripts/sdd-runtime.integration.test.mjs",
+        "scripts/sdd-runtime.e2e.test.mjs",
+        "scripts/sdd-resume.test.mjs",
+        "package.json"
+      ],
+      "readOrder": [
+        "docs/SDD-WORKFLOW.md",
+        "scripts/sdd-runtime.mjs",
+        "scripts/sdd-runtime.test.mjs",
+        "scripts/sdd-runtime.integration.test.mjs",
+        "scripts/sdd-runtime.e2e.test.mjs",
+        "scripts/sdd-resume.test.mjs",
+        "package.json"
+      ]
+    }
+  },
+  "timestamp": "2026-08-19T18:26:48.167Z",
+  "eventHash": "696177ddeb23e543dd75fd4e57aee78a01ded2c6bbeee5b9e7ea6321a1a5400c"
+}

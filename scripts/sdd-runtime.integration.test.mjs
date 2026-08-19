@@ -79,6 +79,38 @@ test('configured LOW routing selects the actual same-role fallback and fails clo
   await assert.rejects(() => resolveConfiguredRoute({ modelMap: noFallback, role: 'LOW', requiredCapability: 'evidence', minimumQuality: 0.8 }), /no compatible route/);
 });
 
+test('canonical runtime command enumerates every runtime suite exactly once', async () => {
+  const packageJson = JSON.parse(await readFile(join(process.cwd(), 'package.json'), 'utf8'));
+  const command = packageJson.scripts['test:sdd-runtime'];
+  const expected = [
+    'scripts/sdd-runtime.test.mjs',
+    'scripts/sdd-runtime.integration.test.mjs',
+    'scripts/sdd-runtime.e2e.test.mjs',
+    'scripts/sdd-resume.test.mjs',
+  ];
+  const namedSuites = command.match(/scripts\/[^\s]+\.mjs/g) ?? [];
+  assert.deepEqual(namedSuites, expected);
+  assert.equal(new Set(namedSuites).size, expected.length);
+});
+
+test('integration dispatch converts exhausted Architecture refinement to FATAL/HUMAN', async () => {
+  const { dispatchUntilTerminal } = await import('./sdd-runtime.mjs');
+  const state = {
+    ...buildInitialState({ root: '/repo', change: 'integration-change', fingerprints: hashes }),
+    status: 'READY',
+    checkpoint: { phase: 'Architecture Review', artifact: 'architecture-review.md', verdict: 'BLOCKED', next: 'Architecture Review' },
+    attempts: { 'Design Refinement': 1 },
+  };
+  const outcome = {
+    change: 'integration-change', action: 'Architecture Review', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: ['budget'], next: 'Design Refinement',
+    blocker: { class: 'AUTO_REFINE', human_required: false, reason: 'budget', resume_phase: 'Architecture Review' },
+  };
+  const result = dispatchUntilTerminal({ state, outcomes: [outcome] });
+  assert.equal(result.status, 'HUMAN_HANDOFF');
+  assert.equal(result.blocker.class, 'FATAL_INVARIANT');
+  assert.equal(result.blocker.human_required, true);
+});
+
 test('bootstrap publishes one state on a fresh path and preserves collision evidence', async () => {
   const root = await mkdtemp(join(tmpdir(), 'crm-bootstrap-integration-'));
   const fingerprints = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };

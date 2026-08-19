@@ -54,6 +54,21 @@ const PHASE_EDGES = Object.freeze({
   'Apply 7.5 Testing': 'Apply 7.6 Apply Summary', 'Apply 7.6 Apply Summary': 'Verify',
   Verify: 'Archive', Archive: 'Health Report', 'Health Report': 'Repository Ready',
 });
+const REFINEMENT_BY_BLOCKED_REVIEW = Object.freeze({
+  'Architecture Review': 'Design Refinement',
+  'Tasks Review': 'Tasks Refinement',
+});
+const fatalInvariantHandoff = (reason) => ({
+  action: 'HUMAN_HANDOFF',
+  role: 'HUMAN',
+  kind: 'human',
+  blocker: {
+    class: 'FATAL_INVARIANT',
+    human_required: true,
+    reason,
+    resume_phase: null,
+  },
+});
 
 const hex = /^[a-f0-9]{64}$/;
 const own = (value, allowed) => Object.keys(value).every((key) => allowed.has(key));
@@ -191,15 +206,23 @@ export function selectNextTransition(state, outcome, projection = projectCanonic
   validateRuntimeState(state);
   validateOutcomePacket(outcome);
   if (outcome.change !== state.change) fail('scope mismatch');
+  if (state.checkpoint.next !== null && state.checkpoint.next !== outcome.action) {
+    return fatalInvariantHandoff(`outcome ${outcome.action} is not the legal current action ${state.checkpoint.next}`);
+  }
   if (outcome.status !== 'PASS') {
     const policy = validateBlocker(outcome.blocker);
-    if (policy.human_required) return { action: 'HUMAN_HANDOFF', role: 'HUMAN', kind: 'human' };
+    if (policy.human_required) return { action: 'HUMAN_HANDOFF', role: 'HUMAN', kind: 'human', blocker: outcome.blocker };
     if (policy.policy === 'CANONICAL_REFINEMENT') {
-      const refinement = state.checkpoint.phase === 'Architecture Review' ? 'Design Refinement' : 'Tasks Refinement';
-      if (state.attempts[refinement] >= 1) fail('refinement budget exhausted');
+      const refinement = REFINEMENT_BY_BLOCKED_REVIEW[outcome.action];
+      if (!refinement) return fatalInvariantHandoff(`AUTO_REFINE is not legal for ${outcome.action}`);
+      if (state.attempts[refinement] >= 1) {
+        return fatalInvariantHandoff(`${refinement} refinement budget exhausted`);
+      }
       return { action: refinement, role: PHASE_ROLES[refinement], kind: 'refinement' };
     }
-    if (state.attempts[outcome.action] >= 2) fail('retry budget exhausted');
+    if (state.attempts[outcome.action] >= 2) {
+      return fatalInvariantHandoff(`${outcome.action} retry budget exhausted`);
+    }
     return { action: outcome.action, role: PHASE_ROLES[outcome.action], kind: 'retry' };
   }
   if (state.checkpoint.next !== outcome.action && state.checkpoint.next !== null) fail('outcome is not the legal current action');
@@ -432,7 +455,7 @@ export function dispatchUntilTerminal({ state, outcomes = [], execute = null, pr
     const transition = selectNextTransition(current, outcome, projection);
     if (transition.kind === 'human' || transition.kind === 'terminal') {
       current = validateRuntimeState({ ...current, status: 'HUMAN_HANDOFF', sequence: current.sequence + 1, checkpoint: { phase: outcome.action, artifact: outcome.artifacts.at(-1) ?? null, verdict: outcome.status === 'PASS' ? 'PASS' : 'BLOCKED', next: null }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { idempotencyKey: key, action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF' }) } });
-      return { status: current.status, state: current, duplicate };
+      return { status: current.status, state: current, duplicate, blocker: transition.blocker };
     }
     current = recordAttempt(current, outcome.action);
     current = validateRuntimeState({ ...current, sequence: current.sequence + 1, checkpoint: { phase: outcome.action, artifact: outcome.artifacts.at(-1) ?? null, verdict: outcome.status, next: transition.action }, lastTransition: { idempotencyKey: key, action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ action: transition.action }) }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null } });

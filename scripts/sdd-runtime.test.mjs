@@ -122,6 +122,68 @@ test('canonical projection selects only the legal next action', () => {
   assert.throws(() => selectNextTransition(state, { change: 'demo-change', action: 'Design', role: 'HIGH', status: 'PASS', artifacts: [], evidence: [], next: 'Commit' }, projection), /illegal|next/i);
 });
 
+test('blocked Architecture Review selects only Design Refinement when its budget is available', () => {
+  const state = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
+  const blocked = {
+    change: 'demo-change', action: 'Architecture Review', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: ['design contradiction'], next: 'Design Refinement',
+    blocker: { class: 'AUTO_REFINE', human_required: false, reason: 'bounded design correction', resume_phase: 'Architecture Review' },
+  };
+  const transition = selectNextTransition({ ...state, checkpoint: { ...state.checkpoint, next: 'Architecture Review' } }, blocked);
+  assert.deepEqual(transition, { action: 'Design Refinement', role: 'HIGH', kind: 'refinement' });
+});
+
+test('blocked Tasks Review remains on the distinct Tasks Refinement path', () => {
+  const state = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
+  const blocked = {
+    change: 'demo-change', action: 'Tasks Review', role: 'MID', status: 'BLOCKED', artifacts: [], evidence: ['task contradiction'], next: 'Tasks Refinement',
+    blocker: { class: 'AUTO_REFINE', human_required: false, reason: 'bounded task correction', resume_phase: 'Tasks Review' },
+  };
+  const transition = selectNextTransition({ ...state, checkpoint: { ...state.checkpoint, next: 'Tasks Review' } }, blocked);
+  assert.deepEqual(transition, { action: 'Tasks Refinement', role: 'MID', kind: 'refinement' });
+  assert.notEqual(transition.action, 'Design Refinement');
+});
+
+test('Design Refinement PASS returns to a fresh Architecture Review', () => {
+  const state = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
+  const refinementState = {
+    ...state,
+    checkpoint: { phase: 'Architecture Review', artifact: 'architecture-review.md', verdict: 'BLOCKED', next: 'Design Refinement' },
+  };
+  const outcome = { change: 'demo-change', action: 'Design Refinement', role: 'HIGH', status: 'PASS', artifacts: ['design.md'], evidence: ['refinement complete'], next: 'Architecture Review' };
+  assert.deepEqual(selectNextTransition(refinementState, outcome), { action: 'Architecture Review', role: 'HIGH', kind: 'canonical' });
+});
+
+test('exhausted refinement and cross-layer refinement stop with FATAL/HUMAN', () => {
+  const base = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
+  const architectureBlocked = {
+    change: 'demo-change', action: 'Architecture Review', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: ['repeat'], next: 'Design Refinement',
+    blocker: { class: 'AUTO_REFINE', human_required: false, reason: 'repeat', resume_phase: 'Architecture Review' },
+  };
+  const exhausted = selectNextTransition({
+    ...base,
+    checkpoint: { phase: 'Architecture Review', artifact: 'architecture-review.md', verdict: 'BLOCKED', next: 'Architecture Review' },
+    attempts: { 'Design Refinement': 1 },
+  }, architectureBlocked);
+  assert.equal(exhausted.action, 'HUMAN_HANDOFF');
+  assert.equal(exhausted.blocker.class, 'FATAL_INVARIANT');
+  assert.equal(exhausted.blocker.human_required, true);
+
+  const illegal = selectNextTransition({ ...base, checkpoint: { ...base.checkpoint, next: 'Tasks Review' } }, architectureBlocked);
+  assert.equal(illegal.action, 'HUMAN_HANDOFF');
+  assert.equal(illegal.blocker.class, 'FATAL_INVARIANT');
+});
+
+test('PASS checkpoint mismatches stop with the selector-owned FATAL/HUMAN handoff', () => {
+  const state = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
+  const transition = selectNextTransition(
+    { ...state, checkpoint: { ...state.checkpoint, next: 'Tasks Review' } },
+    { change: 'demo-change', action: 'Architecture Review', role: 'HIGH', status: 'PASS', artifacts: [], evidence: [], next: 'Tasks' },
+  );
+  assert.equal(transition.action, 'HUMAN_HANDOFF');
+  assert.equal(transition.blocker.class, 'FATAL_INVARIANT');
+  assert.equal(transition.blocker.human_required, true);
+});
+
 test('outcome roles must match canonical ownership for HIGH, MID, and LOW actions', () => {
   const projection = projectCanonicalWorkflow();
   const state = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
@@ -158,7 +220,9 @@ test('duplicate outcomes are accepted only when their payload is identical', () 
   assert.equal(first.status, 'READY');
   assert.equal(first.duplicate, false);
   assert.equal(dispatchUntilTerminal({ state: first.state, outcomes: [outcome] }).duplicate, true);
-  assert.throws(() => dispatchUntilTerminal({ state: first.state, outcomes: [{ ...outcome, next: 'Tasks' }] }), /duplicate|idempotency|legal/i);
+  const mismatch = dispatchUntilTerminal({ state: first.state, outcomes: [{ ...outcome, next: 'Tasks' }] });
+  assert.equal(mismatch.status, 'HUMAN_HANDOFF');
+  assert.equal(mismatch.blocker.class, 'FATAL_INVARIANT');
 });
 
 test('Git mutation barrier rejects every unauthorized lifecycle request', () => {
