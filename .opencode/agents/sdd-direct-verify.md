@@ -18,3 +18,7 @@ the canonical recovery rule after a blocked result.
 
 Return a structured result with status, acceptance evidence, test/lint/build
 results, findings, and the next action prescribed by the canonical workflow.
+
+Return one validated, idempotent outcome packet with acceptance evidence, the
+review verdict, legal next action, and structured blocker when applicable.
+Verify remains HIGH-owned and may not be self-authorized by an Apply executor.

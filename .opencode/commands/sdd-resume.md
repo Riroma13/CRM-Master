@@ -12,7 +12,8 @@ lifecycle state machine or duplicate the `/sdd-direct` orchestration.
 1. Read the current branch with `git branch --show-current` without mutating
    Git.
 2. Run the repository-local read-only resolver, `node scripts/sdd-resume.mjs`.
-   It first checks the branch suffix against active directories under
+   It validates change-local `.sdd-runtime/state.json` when present, then
+   reconstructs legacy checkpoints from canonical artifacts. It first checks the branch suffix against active directories under
    `openspec/changes/`, then applies the single-active-change fallback. The
    `archive` directory and explicitly completed/archived changes are never
    candidates.
@@ -23,8 +24,9 @@ lifecycle state machine or duplicate the `/sdd-direct` orchestration.
    archived. Never guess from stale or conflicting state.
 4. On exactly one valid resolution, internally delegate to the canonical
    equivalent of `/sdd-direct <resolved-change>` using this same local
-   orchestrator. Recover the existing artifact checkpoint first and continue at
-   the first incomplete canonical action. Do not restart completed phases.
+   orchestrator. Recover the existing runtime/artifact checkpoint first and
+   continue autonomous legal dispatch at the first incomplete canonical action.
+   Do not restart completed phases; corrupt runtime state is `STOP`.
 
 Preserve the current lifecycle checkpoint, the working tree, and all valid user
 changes. Do not create a change, reset or discard files, mutate Git, invoke

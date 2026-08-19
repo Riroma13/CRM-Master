@@ -15,5 +15,10 @@ Working Set, Read Order, Exploration Budget, contracts, risks, and tests.
 Run the bounded Design pre-gate before returning. Do not create a second design
 store, change the template, or perform product implementation.
 
+Return one validated, idempotent outcome packet containing the change, action,
+role, status, artifacts, evidence, legal next action, and structured blocker
+when blocked. Do not select unrelated phases or force a stop when the canonical
+next action is non-HUMAN.
+
 Return a structured result with status, artifact, design confidence, Working
 Set, evidence, and the next action prescribed by the canonical workflow.

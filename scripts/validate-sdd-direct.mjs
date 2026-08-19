@@ -70,6 +70,8 @@ const files = {
   projectConfig: pathOf('opencode.json'),
   modelMap: pathOf('.opencode', 'sdd-model-map.json'),
   command: pathOf('.opencode', 'commands', 'sdd-direct.md'),
+  resumeCommand: pathOf('.opencode', 'commands', 'sdd-resume.md'),
+  runtime: pathOf('scripts', 'sdd-runtime.mjs'),
 };
 
 const localAgentNames = [
@@ -516,8 +518,21 @@ for (const phase of ['Commit', 'Push', 'Merge']) {
 if (!/Commit, Push, and Merge are user-facing lifecycle\s+phases\s+but\s+are HUMAN \/ MAINTAINER-only/is.test(texts.workflow)) {
   fail('workflow: terminal Git phases must be explicitly maintainer-only');
 }
-if (!/Do not commit, push, merge, release, or tag/i.test(texts.command)) {
+if (!/Do not\s+commit,\s*push,\s*merge,\s*release,\s*or\s*tag/i.test(texts.command)) {
   fail('local Direct command must prohibit maintainer Git operations');
+}
+if (!/sdd-runtime|runtime bootstrap/i.test(texts.command) || !/Repository Ready|autonomous dispatch/i.test(texts.command)) {
+  fail('local Direct command must declare runtime bootstrap and autonomous dispatch boundary');
+}
+if (!/sdd-runtime|runtime state/i.test(texts.resumeCommand) || !/corrupt runtime state.*STOP|runtime state.*STOP/i.test(texts.resumeCommand)) {
+  fail('local Resume command must validate runtime state and stop on corruption');
+}
+if (!existsSync(files.runtime)) fail('scripts/sdd-runtime.mjs: runtime implementation is missing');
+if (modelMap?.runtime_routing?.fallback_policy !== 'same-role-compatible-only' || modelMap?.runtime_routing?.exhaustion !== 'STOP/HUMAN_HANDOFF') {
+  fail('model map: runtime fallback metadata must preserve same-role fail-closed routing');
+}
+if (!localAgentTexts['sdd-direct-orchestrator']?.includes('sdd-runtime.mjs')) {
+  fail('orchestrator: runtime bootstrap wiring is missing');
 }
 
 // Package-level entry points are required and must remain governance-only.

@@ -5,6 +5,8 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { validateRuntimeState } from './sdd-runtime.mjs';
+
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const CHANGE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
@@ -94,6 +96,15 @@ function isActiveCandidate(candidate) {
 }
 
 export function recoverCheckpoint(candidate) {
+  if (candidate?.runtimeState) {
+    const checkpoint = candidate.runtimeState.checkpoint;
+    return normalizeCheckpoint({
+      artifact: checkpoint.artifact,
+      phase: checkpoint.phase,
+      status: checkpoint.verdict,
+      next: checkpoint.next,
+    });
+  }
   if (candidate?.checkpoint) {
     return normalizeCheckpoint(candidate.checkpoint);
   }
@@ -119,6 +130,18 @@ export function recoverCheckpoint(candidate) {
   }
 
   return normalizeCheckpoint(null, null, null);
+}
+
+function readRuntimeState(changePath) {
+  const stateFile = join(changePath, '.sdd-runtime', 'state.json');
+  const text = readText(stateFile);
+  if (text === null) return { state: null, invalid: false };
+  try {
+    const state = JSON.parse(text);
+    return { state: validateRuntimeState(state), invalid: false };
+  } catch (error) {
+    return { state: null, invalid: true, error: error.message };
+  }
 }
 
 function hasCompletionMarker(files) {
@@ -172,6 +195,7 @@ export function discoverActiveChanges(changesRoot = join(ROOT, 'openspec', 'chan
     )
     .map((entry) => {
       const path = join(changesRoot, entry.name);
+      const runtime = readRuntimeState(path);
       let files;
       try {
         files = readdirSync(path, { withFileTypes: true });
@@ -187,7 +211,10 @@ export function discoverActiveChanges(changesRoot = join(ROOT, 'openspec', 'chan
         name: entry.name,
         path,
         completed: hasCompletionMarker(filePaths),
-        checkpoint: recoverCheckpoint({ name: entry.name, path }),
+        runtimeState: runtime.state,
+        runtimeStateInvalid: runtime.invalid,
+        runtimeStateError: runtime.error || null,
+        checkpoint: recoverCheckpoint({ name: entry.name, path, runtimeState: runtime.state }),
       };
     })
     .filter(isActiveCandidate)
@@ -225,12 +252,15 @@ function persistedCandidates(state) {
 }
 
 function readyResult({ branch, candidate, source }) {
+  if (candidate.runtimeStateInvalid) {
+    return stopResult(branch, 'corrupt-runtime-state', [candidate]);
+  }
   const checkpoint = recoverCheckpoint(candidate);
   return {
     status: 'READY',
     branch: branch?.trim() || '(detached HEAD)',
     change: candidate.name,
-    source,
+    source: candidate.runtimeState ? 'runtime-state' : source,
     checkpoint,
     delegation: `/sdd-direct ${candidate.name}`,
     next: checkpoint.next || 'first incomplete canonical action',

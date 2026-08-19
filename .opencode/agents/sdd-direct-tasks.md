@@ -17,3 +17,7 @@ and the mapping in `.opencode/sdd-model-map.json`.
 
 Return a structured result with status, change, artifact, working set, workload
 forecast, evidence, and the next action prescribed by the canonical workflow.
+
+Return one validated, idempotent outcome packet with the task artifact, exact
+evidence, legal next action, and structured blocker when applicable. Do not
+force a stop when the runtime has a legal non-HUMAN transition.

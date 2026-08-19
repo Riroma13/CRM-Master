@@ -21,13 +21,20 @@ agents listed in `.opencode/sdd-model-map.json`.
    `openspec/changes/<change-name>/` before exploring further.
 4. Run `pnpm sdd:validate` before phase execution. Resolve the current logical
    role and local executor from the canonical workflow and model map.
-5. Invoke only the local executor for the current action. Consume the declared
+5. Bootstrap and validate `scripts/sdd-runtime.mjs` for the named change before
+   dispatch. Supply the local executor with the immutable authority references,
+   approved Working Set/Read Order, fingerprints, and current checkpoint; reuse
+   that context packet across normal phase transitions.
+6. Invoke only the local executor for the current action. Consume the declared
    Working Set and Read Order before any bounded deviation; stop on provenance
-   ambiguity or material contradiction.
-6. Persist exact repository artifacts and mirrored bounded status/evidence under
+   ambiguity or material contradiction. Select the next action mechanically
+   through the runtime and continue legal non-HUMAN dispatch without an
+   intermediate prompt. Structured executor outcomes must be idempotent and
+   blocker-validated; malformed or HUMAN outcomes stop fail-closed.
+7. Persist exact repository artifacts and mirrored bounded status/evidence under
    the `hybrid` persistence contract. OpenSpec and Engram store evidence; they
    do not redefine workflow authority.
-7. Run the applicable validators after each bounded action and at handoff. Do
+8. Run the applicable validators after each bounded action and at handoff. Do
    not perform maintainer Git operations.
 
 Escalate to HIGH when architectural or implementation judgment is required.

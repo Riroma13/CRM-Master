@@ -148,4 +148,49 @@ describe('/sdd-resume resolution', () => {
     assert.equal(result.source, 'persisted-state');
     assert.equal(result.next, 'Archive');
   });
+
+  test('prefers a validated change-local runtime checkpoint', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'crm-sdd-runtime-state-'));
+    temporaryDirectories.push(directory);
+    const changePath = join(directory, 'runtime-change');
+    await mkdir(join(changePath, '.sdd-runtime'), { recursive: true });
+    await writeFile(join(changePath, 'design.md'), '# Design\n');
+    await writeFile(join(changePath, '.sdd-runtime', 'state.json'), JSON.stringify({
+      schemaVersion: 2, change: 'runtime-change', canonicalPath: changePath, status: 'READY', sequence: 2,
+      checkpoint: { phase: 'Tasks Review', artifact: 'tasks-review.md', verdict: 'PASS', next: 'Workload Guard' },
+      fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64), artifacts: {} },
+      attempts: {}, traceCursor: { sequence: 2, eventHash: 'd'.repeat(64), chainHash: 'e'.repeat(64) }, lastTransition: null,
+    }));
+
+    const [candidate] = discoverActiveChanges(directory);
+    const result = resolveResume({ branch: 'main', activeChanges: [candidate] });
+
+    assert.equal(result.status, 'READY');
+    assert.equal(result.source, 'runtime-state');
+    assert.equal(result.next, 'Workload Guard');
+  });
+
+  test('stops on corrupt change-local runtime state instead of falling back', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'crm-sdd-corrupt-state-'));
+    temporaryDirectories.push(directory);
+    const changePath = join(directory, 'corrupt-change');
+    await mkdir(join(changePath, '.sdd-runtime'), { recursive: true });
+    await writeFile(join(changePath, 'design.md'), '# Design\n');
+    await writeFile(join(changePath, '.sdd-runtime', 'state.json'), '{not-json');
+
+    const [candidate] = discoverActiveChanges(directory);
+    const result = resolveResume({ branch: 'main', activeChanges: [candidate] });
+
+    assert.equal(result.status, 'STOP');
+    assert.equal(result.reason, 'corrupt-runtime-state');
+  });
+
+  test('Direct and Resume commands declare runtime bootstrap and autonomous dispatch boundaries', () => {
+    const direct = readFileSync(new URL('../.opencode/commands/sdd-direct.md', import.meta.url), 'utf8');
+    const resume = readFileSync(new URL('../.opencode/commands/sdd-resume.md', import.meta.url), 'utf8');
+    assert.match(direct, /sdd-runtime|runtime bootstrap/i);
+    assert.match(direct, /Repository Ready|autonomous dispatch/i);
+    assert.match(resume, /sdd-runtime|runtime state/i);
+    assert.match(resume, /STOP/i);
+  });
 });

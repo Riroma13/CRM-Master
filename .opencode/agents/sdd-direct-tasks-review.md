@@ -16,3 +16,7 @@ Direct adapters and `.opencode/sdd-model-map.json`.
 
 Return a structured result with status, findings, evidence, and the next action
 prescribed by the canonical workflow.
+
+Return one validated, idempotent outcome packet with the review verdict,
+artifacts, evidence, legal next action, and structured blocker when applicable.
+Do not infer a transition from explanatory prose.

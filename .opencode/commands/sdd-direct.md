@@ -13,4 +13,9 @@ name is required. Load `AGENTS.md`, then the semantic workflow authority at
 Use only project-local Direct agents and `.opencode/sdd-model-map.json`. Persist
 artifacts under the canonical change directory and mirror bounded status and
 evidence under the `hybrid` contract. Run `pnpm sdd:validate` before execution
-and at handoff. Do not commit, push, merge, release, or tag.
+and at handoff. Bootstrap `scripts/sdd-runtime.mjs` with the validated change
+identity, fingerprints, Working Set, and current checkpoint before dispatch.
+Continue only through legal non-HUMAN actions, persist event-first state/trace
+evidence under the change-local `.sdd-runtime/` path when execution output is
+required, and stop at Repository Ready for the maintainer Git handoff. Do not
+commit, push, merge, release, or tag.

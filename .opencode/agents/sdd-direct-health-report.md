@@ -16,3 +16,7 @@ project-local Direct wiring and `.opencode/sdd-model-map.json`.
 
 Return a structured result with status, findings, evidence, and the next action
 prescribed by the canonical workflow.
+
+Return one validated, idempotent outcome packet with report artifacts, facts,
+evidence, legal next action, and structured blocker when applicable. Do not
+perform maintainer Git operations or infer acceptance.
