@@ -1,6 +1,6 @@
 ---
 description: Produce a bounded CRM-SDD health report after Archive.
-mode: subagent
+mode: all
 model: longcat/LongCat-2.0
 ---
 

@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "sequence": 22,
+  "idempotencyKey": "4cdf869eef50ac42031706e1ffc881651ef89c686fd55482f8921d8365067c94",
+  "previousEventHash": "695bcadc1f4c072cc2c7ad1df538a6a5b75f439e390168a30cda367f932d3244",
+  "chainHash": "278808b656843778ef7ee8e163899daad7178cdd7b8fc65d03a61a7337788cfe",
+  "change": "sdd-opencode-structured-message-recovery",
+  "action": "Apply 7.5 Testing",
+  "role": "HUMAN",
+  "inputHash": "a9819d48a273735a7f3754975b87514c009e34681814adc26e93fc48d96c45ea",
+  "outcomeHash": "5700d05297da71dd3da590f4ec0720d491c1c3b155743a74bb79ca77052864b0",
+  "route": {
+    "configured": "HUMAN",
+    "resolved": "HUMAN",
+    "rejections": []
+  },
+  "beforeStateHash": "f1ca50d389a3bf1af017aa19d0b07e7a3ca872044ec16aeebfacbd63194803e3",
+  "afterStateHash": "f3c462d98e3e04fc93fc8cc30bac36bc7a698fe6500d49f48ab02807de84baf2",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 22,
+    "checkpoint": {
+      "phase": "Apply 7.5 Testing",
+      "artifact": "scripts/opencode-structured-message-recovery.mjs",
+      "verdict": "BLOCKED",
+      "next": "Apply 7.5 Testing"
+    },
+    "fingerprints": {
+      "artifacts": {
+        "openspec/changes/sdd-opencode-structured-message-recovery/design.md": "4f8a0c779a81919a6505d2ca60e927f3b57640b30c4b8902c67d0e56d16073a6",
+        "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md": "f44953485924483ad1447ecae817ba883019626a05569d207cbb25e8d7d1f60f",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks.md": "7bd64040bb66f562787a9040c70c8090d362c74a1e10f923bf316003d601079b",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks-review.md": "fa20973bf1c35a9b527e6dc3693ae6de69f6ccac121ba5c0d7463c99aebc234b",
+        "openspec/changes/sdd-opencode-structured-message-recovery/workload-guard.md": "d8b70817ccad231dd4a9dc2e9e1d302b26a9c2f5c136b83c85022b49b21931d0",
+        "scripts/opencode-structured-message-recovery.mjs": "2de873575dfb3b03e62e162820de123b5f6dd138d0c76a8efe477f7b54b59030",
+        "scripts/opencode-structured-message-recovery.test.mjs": "b9f4cc2ff96c88f1e9c0e260dd8bb4ccdc8b9e835a109335cc7f8eae12bfeab1",
+        "package.json": "ca846dc5e1ada4e9f0d25790ea783e19aeb2ea6b2849dd6e2355f242cb976202"
+      },
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "54f3929eaeafa964cb7893548c5d1c2771c8761c900fe60fa0288f89537b5748"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 2,
+      "Design Refinement": 1,
+      "Tasks": 1,
+      "Tasks Review": 2,
+      "Tasks Refinement": 1,
+      "Workload Guard": 1,
+      "Apply 7.1 Foundation": 1,
+      "Apply 7.2 Core Engine": 1,
+      "Apply 7.3 Feature Implementation": 1,
+      "Apply 7.4 Integration": 1,
+      "Apply 7.5 Testing": 1
+    },
+    "traceCursor": {
+      "sequence": 22,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "4cdf869eef50ac42031706e1ffc881651ef89c686fd55482f8921d8365067c94",
+      "action": "Apply 7.5 Testing",
+      "operation": "HUMAN_REOPEN",
+      "inputHash": "a9819d48a273735a7f3754975b87514c009e34681814adc26e93fc48d96c45ea",
+      "outcomeHash": "5700d05297da71dd3da590f4ec0720d491c1c3b155743a74bb79ca77052864b0",
+      "afterStateHash": "9ce8b402c8f97e1255c256c8251304cfc196dbc658543c67bd778438a35908ad"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {}
+  },
+  "timestamp": "2026-08-25T22:44:51.394Z",
+  "operation": "HUMAN_REOPEN",
+  "previousSequence": 21,
+  "newSequence": 22,
+  "sourceStatus": "HUMAN_HANDOFF",
+  "target": "Apply 7.5 Testing",
+  "reason": "Maintainer explicitly authorizes continuation to correct the proven OpenCode CLI phase-agent eligibility defect and complete the already-approved Apply work.",
+  "authorization": {
+    "actor": "HUMAN",
+    "role": "MAINTAINER",
+    "scope": "bounded OpenCode CLI phase-agent eligibility correction and approved Apply continuation"
+  },
+  "authorityFingerprints": {
+    "artifacts": {
+      "openspec/changes/sdd-opencode-structured-message-recovery/design.md": "4f8a0c779a81919a6505d2ca60e927f3b57640b30c4b8902c67d0e56d16073a6",
+      "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md": "f44953485924483ad1447ecae817ba883019626a05569d207cbb25e8d7d1f60f",
+      "openspec/changes/sdd-opencode-structured-message-recovery/tasks.md": "7bd64040bb66f562787a9040c70c8090d362c74a1e10f923bf316003d601079b",
+      "openspec/changes/sdd-opencode-structured-message-recovery/tasks-review.md": "fa20973bf1c35a9b527e6dc3693ae6de69f6ccac121ba5c0d7463c99aebc234b",
+      "openspec/changes/sdd-opencode-structured-message-recovery/workload-guard.md": "d8b70817ccad231dd4a9dc2e9e1d302b26a9c2f5c136b83c85022b49b21931d0",
+      "scripts/opencode-structured-message-recovery.mjs": "2de873575dfb3b03e62e162820de123b5f6dd138d0c76a8efe477f7b54b59030",
+      "scripts/opencode-structured-message-recovery.test.mjs": "b9f4cc2ff96c88f1e9c0e260dd8bb4ccdc8b9e835a109335cc7f8eae12bfeab1",
+      "package.json": "ca846dc5e1ada4e9f0d25790ea783e19aeb2ea6b2849dd6e2355f242cb976202"
+    },
+    "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+    "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+    "config": "54f3929eaeafa964cb7893548c5d1c2771c8761c900fe60fa0288f89537b5748"
+  },
+  "gitReadiness": "INVALIDATED",
+  "eventHash": "c087942d20b118b7820068c7bbe428e569cc359a916159e34d2d5601f801fefd"
+}

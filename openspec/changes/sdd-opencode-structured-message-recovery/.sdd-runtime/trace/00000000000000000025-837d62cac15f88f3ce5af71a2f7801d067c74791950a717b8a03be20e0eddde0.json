@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "sequence": 25,
+  "idempotencyKey": "8923a5a2d603bc0e119f3ed73d59fcb9697db2665e7886ae405d22eccf130977",
+  "previousEventHash": "ec09d42bcd0195c8ec8637899ff18355060f9792aca26e403c56e64a59efbabc",
+  "chainHash": "cbdef25d03423c97ca742c045559f357b53a3fe65ccf24aeeedfe1a994562802",
+  "change": "sdd-opencode-structured-message-recovery",
+  "action": "Verify",
+  "role": "HIGH",
+  "inputHash": "139af9062e6672f3f7f4502d4e83bdceefa64a6d2aa809b4c14ab06938398681",
+  "outcomeHash": "139af9062e6672f3f7f4502d4e83bdceefa64a6d2aa809b4c14ab06938398681",
+  "route": {
+    "configured": "HIGH",
+    "resolved": "HIGH",
+    "rejections": []
+  },
+  "beforeStateHash": "284f2ad17b7d9f3ec3c2fb7036eed4784354e4df460becfd277650445ad1ff80",
+  "afterStateHash": "c260a6ccec4dd1e85381cfb5fa0b4aba3ca19280f60de2bcbe873515374b57ad",
+  "stateMaterialization": {
+    "status": "HUMAN_HANDOFF",
+    "sequence": 25,
+    "checkpoint": {
+      "phase": "Verify",
+      "artifact": "openspec/changes/sdd-opencode-structured-message-recovery/verify-report.md",
+      "verdict": "BLOCKED",
+      "next": null
+    },
+    "fingerprints": {
+      "artifacts": {
+        "openspec/changes/sdd-opencode-structured-message-recovery/design.md": "4f8a0c779a81919a6505d2ca60e927f3b57640b30c4b8902c67d0e56d16073a6",
+        "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md": "f44953485924483ad1447ecae817ba883019626a05569d207cbb25e8d7d1f60f",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks.md": "d86591f4b7b23feb680d713f3ee0cfe969baa96c6f42b7b85d6ba2ed78dd9de5",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks-review.md": "fa20973bf1c35a9b527e6dc3693ae6de69f6ccac121ba5c0d7463c99aebc234b",
+        "openspec/changes/sdd-opencode-structured-message-recovery/workload-guard.md": "d8b70817ccad231dd4a9dc2e9e1d302b26a9c2f5c136b83c85022b49b21931d0",
+        "scripts/opencode-structured-message-recovery.mjs": "714a6e0750df8c3d3b0c0c41704b6b55012672fd058a60d7d34904fbe1355907",
+        "scripts/opencode-structured-message-recovery.test.mjs": "599925f05dc3ebb97f93fabccdf73bc6f448861d90e38e5c03b79233296de579",
+        "package.json": "ccc6c094dffe1f6442c0068a63de1ec970137c66a04623cd0ac005afae04822b",
+        "openspec/changes/sdd-opencode-structured-message-recovery/apply-summary.md": "ef39c3df205d19d70e8dbb98ae79148ae776828d1b1a87d6870858818a95d871",
+        "scripts/opencode-cli-adapter.mjs": "dd75b376cee333e7c52f8d7d050de8299e9199ce5406270e0d19a2466eddfe2e",
+        "scripts/opencode-cli-adapter.test.mjs": "9b5c6115594c791b62624935505302a9f5873d4959b36d870663195dbabdbeb5",
+        "scripts/sdd-runtime.mjs": "c1abcbdbfbd228474a42b626bebe822ffea6f657cfb1838f0f15e316f004e086",
+        "scripts/sdd-runtime.test.mjs": "da0bc0522ab11e544a3d139e6fefbc25d73aa57e6dc7c1968f72d3ae5cb691db",
+        "scripts/validate-sdd-direct.mjs": "72537497bd72f5e1c1721f6de2662eeae8ba3cbf523f45d2e72ddb54646c5012",
+        ".opencode/agents/sdd-direct-design.md": "19d434b5fa7f53ad3f0e7fadfc25c28cb36c713cd8a4744076938e69cdd2133c",
+        ".opencode/agents/sdd-direct-architecture-review.md": "763a471f779154d27284ee37d05a4a48e8baa499382f938572c2de2e4abc30a2",
+        ".opencode/agents/sdd-direct-apply.md": "501b1f8f74400d4d883f79f86069616d38841716ec5031b87ff4f8eb57ed69c5",
+        ".opencode/agents/sdd-direct-verify.md": "812c73ea730b9496bb7b82c8954ecf11053f670cf5888012c376d87adb78a48b",
+        ".opencode/agents/sdd-direct-archive.md": "5937b199f96c04fff42e437ad57b6f06133474ddc119d593454b28b5c62c6ac4",
+        ".opencode/agents/sdd-direct-health-report.md": "95d4a0f518acb63739567a038973364392b12dff16ae99e10eeb4f212ef402d4",
+        ".opencode/agents/sdd-direct-repository-ready.md": "c49b4465bf1c2bb496ba8e2f9bd66edd480680d45cfe8ade99d2ca67cebcd30e",
+        "openspec/changes/sdd-opencode-structured-message-recovery/verify-report.md": "3d22c22fe8d8b1aaa21960eba04f251ffbbf5f0d3cf76ccbb8238d26065e0e70"
+      },
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "54f3929eaeafa964cb7893548c5d1c2771c8761c900fe60fa0288f89537b5748"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 2,
+      "Design Refinement": 1,
+      "Tasks": 1,
+      "Tasks Review": 2,
+      "Tasks Refinement": 1,
+      "Workload Guard": 1,
+      "Apply 7.1 Foundation": 1,
+      "Apply 7.2 Core Engine": 1,
+      "Apply 7.3 Feature Implementation": 1,
+      "Apply 7.4 Integration": 1,
+      "Apply 7.5 Testing": 2,
+      "Apply 7.6 Apply Summary": 1
+    },
+    "traceCursor": {
+      "sequence": 25,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "8923a5a2d603bc0e119f3ed73d59fcb9697db2665e7886ae405d22eccf130977",
+      "action": "Verify",
+      "inputHash": "139af9062e6672f3f7f4502d4e83bdceefa64a6d2aa809b4c14ab06938398681",
+      "outcomeHash": "139af9062e6672f3f7f4502d4e83bdceefa64a6d2aa809b4c14ab06938398681",
+      "afterStateHash": "253e92ae915a8a94b83657c38b83df6ee9dd0e627201ab386cdaece5f1de6024"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "adapter": "docs/architecture/sdd-direct.md"
+    }
+  },
+  "timestamp": "2026-08-25T23:25:21.496Z",
+  "eventHash": "837d62cac15f88f3ce5af71a2f7801d067c74791950a717b8a03be20e0eddde0"
+}

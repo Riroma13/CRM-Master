@@ -21,6 +21,11 @@ The local Direct orchestrator performs this bounded sequence:
 3. Recover the current change state from
    `openspec/changes/<change-name>/` before additional exploration.
 4. Invoke the local phase executor with the approved Working Set and Read Order.
+   Non-HUMAN semantic execution uses `scripts/opencode-cli-adapter.mjs` through
+   controlled child processes: `opencode run --format json`, followed only after
+   exit by `opencode export <sessionID>`. Server/session SDK prompt calls, SSE,
+   polling, UI scraping, and daemon/supervisor recovery are forbidden semantic
+   execution paths.
 5. Persist exact artifacts in the canonical change directory under the
    `hybrid` contract and mirror bounded status/evidence to Engram.
 6. Invoke the repository validators and record their results in the phase
@@ -32,6 +37,10 @@ The adapter never creates a second artifact store, rewrites a Design or Tasks
 to conceal drift, or silently broadens the Working Set. A missing file,
 provenance conflict, or material contradiction stops the affected action and
 returns an evidence request instead of triggering broad exploration.
+
+The CLI adapter owns only bounded invocation and evidence capture. It does not
+write `.sdd-runtime`; the orchestrator owns lifecycle transitions, trace
+persistence, retry policy, and the canonical outcome contract.
 
 ## Local Wiring
 

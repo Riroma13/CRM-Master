@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "change": "sdd-opencode-structured-message-recovery",
+  "action": "Verify",
+  "sessionID": "ses_fc5145223ffe1PXKgedJ25VD1A",
+  "command": ["opencode", "export", "ses_fc5145223ffe1PXKgedJ25VD1A"],
+  "capture": {
+    "path": "/tmp/opencode/existing-terra-ses_fc5145223ffe1PXKgedJ25VD1A-reexport-20260825.json",
+    "exitCode": 0,
+    "bytes": 424338,
+    "sha256": "b5553b16e48a89b6dec368db096a760598f8bcd21c3523e88941a7668f016cc8",
+    "lineCount": 1985,
+    "framing": "single pretty-printed JSON document with trailing LF",
+    "firstJsonByte": { "offset": 0, "byte": 123, "character": "{" },
+    "finalJsonByte": { "offset": 423185, "byte": 110, "character": "}" },
+    "nonJsonPrefix": "",
+    "nonJsonSuffix": "\n",
+    "jsonParseError": null,
+    "stderr": "Exporting session: ses_fc5145223ffe1PXKgedJ25VD1A\n"
+  },
+  "shape": {
+    "rootType": "object",
+    "rootKeys": ["info", "messages"],
+    "messagesType": "array",
+    "parseExport": "PASS",
+    "assistantPartTypes": ["step-start", "text", "step-finish"],
+    "comparison": {
+      "previousLunaExport": "same root shape; parseExport PASS",
+      "currentParserAssumptions": "satisfied",
+      "differenceFromPriorMalformedCapture": "prior 145125-byte capture was not complete; complete re-export is valid JSON"
+    }
+  },
+  "identity": {
+    "requested": { "agent": "sdd-direct-verify", "providerID": "openai", "modelID": "gpt-5.6-terra" },
+    "persisted": { "agent": "sdd-direct-orchestrator", "providerID": "openai", "modelID": "gpt-5.6-terra" },
+    "result": "RUNTIME_IDENTITY_MISMATCH",
+    "identitySubstituted": false
+  },
+  "terminal": {
+    "completed": true,
+    "finish": "stop",
+    "status": "STOP",
+    "action": "Verify",
+    "blockerClass": "FATAL_INVARIANT",
+    "reason": "Bootstrap provenance conflict prevents canonical state reuse and Verify dispatch."
+  },
+  "metrics": {
+    "duration_ms": 4608,
+    "tokens": { "input": 1462, "output": 138, "reasoning": 0, "total": 67648, "cacheRead": 66048, "cacheWrite": 0 },
+    "cost": 0
+  },
+  "decision": "STOP: persisted identity is not the required sdd-direct-verify HIGH executor; no parser correction is justified."
+}

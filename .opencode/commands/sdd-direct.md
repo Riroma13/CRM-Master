@@ -14,7 +14,11 @@ Use only project-local Direct agents and `.opencode/sdd-model-map.json`. Persist
 artifacts under the canonical change directory and mirror bounded status and
 evidence under the `hybrid` contract. Run `pnpm sdd:validate` before execution
 and at handoff. Bootstrap `scripts/sdd-runtime.mjs` with the validated change
-identity, fingerprints, Working Set, and current checkpoint before dispatch.
+identity, fingerprints, explicit fingerprint provenance (concrete path, raw
+SHA-256, commit, branch, dirty state, timestamp, continuity, and authority),
+Working Set, and current checkpoint before dispatch. Never fabricate provenance
+metadata for a legacy checkpoint; a missing or mismatched provenance packet is
+a fail-closed stop.
 Continue only through legal non-HUMAN actions, persist event-first state/trace
 evidence under the change-local `.sdd-runtime/` path when execution output is
 required, and stop at Repository Ready for the maintainer Git handoff. Do not

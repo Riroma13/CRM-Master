@@ -1,6 +1,6 @@
 ---
 description: Prepare the bounded CRM-SDD maintainer handoff.
-mode: subagent
+mode: all
 model: longcat/LongCat-2.0
 ---
 

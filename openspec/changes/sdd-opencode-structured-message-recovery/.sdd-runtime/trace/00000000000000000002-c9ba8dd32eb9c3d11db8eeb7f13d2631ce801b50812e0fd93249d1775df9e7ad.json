@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "sequence": 2,
+  "idempotencyKey": "65f514d33c450dd204bbb744f6e22f4bd11f7157ca2c04bcf51e234e78797709",
+  "previousEventHash": "5d3b497d14807ae01e635c69b6760cc7471fe19d28df0eb5a48def1c5988355c",
+  "chainHash": "78d3e01098250127440beb2a9f7c318d96fcb6031ecbc9bae7cabd310709f907",
+  "change": "sdd-opencode-structured-message-recovery",
+  "action": "Architecture Review",
+  "role": "HIGH",
+  "inputHash": "844eacc375c1c98dc0e955d1a1a6ec171ee4f39792eb31819a5f92525778c9f8",
+  "outcomeHash": "844eacc375c1c98dc0e955d1a1a6ec171ee4f39792eb31819a5f92525778c9f8",
+  "route": {
+    "configured": "HIGH",
+    "resolved": "HIGH",
+    "rejections": []
+  },
+  "beforeStateHash": "c5610b6c4eeaafa63e46efb2af2fa796724d37a581871ad9b46118fd76b9bd48",
+  "afterStateHash": "22aeddb5f5d4811da0930677a695913935c4c32b3c7102105f33d0e364086c3c",
+  "stateMaterialization": {
+    "status": "BLOCKED",
+    "sequence": 2,
+    "checkpoint": {
+      "phase": "Architecture Review",
+      "artifact": "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md",
+      "verdict": "BLOCKED",
+      "next": "Design Refinement"
+    },
+    "fingerprints": {
+      "artifacts": {
+        "openspec/changes/sdd-opencode-structured-message-recovery/design.md": "efc1c78e09048d50b5cc83ee8767346328a69c3c67da8fd5e00b6d022087b4f1",
+        "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md": "0cb802bf26b4817de38ecdd868289eaecf65d4f9a7a02ad7f2eba7edd54b1172"
+      },
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "54f3929eaeafa964cb7893548c5d1c2771c8761c900fe60fa0288f89537b5748"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 1
+    },
+    "traceCursor": {
+      "sequence": 2,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "65f514d33c450dd204bbb744f6e22f4bd11f7157ca2c04bcf51e234e78797709",
+      "action": "Architecture Review",
+      "inputHash": "844eacc375c1c98dc0e955d1a1a6ec171ee4f39792eb31819a5f92525778c9f8",
+      "outcomeHash": "844eacc375c1c98dc0e955d1a1a6ec171ee4f39792eb31819a5f92525778c9f8",
+      "afterStateHash": "9d6e969fb50cd22e2537229bf4549ab1bc881f9bfc6882e9bcbc52813bd35332"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "adapter": "docs/architecture/sdd-direct.md"
+    }
+  },
+  "timestamp": "2026-08-20T11:04:19.256Z",
+  "eventHash": "c9ba8dd32eb9c3d11db8eeb7f13d2631ce801b50812e0fd93249d1775df9e7ad"
+}

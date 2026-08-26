@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "sequence": 3,
+  "idempotencyKey": "27417777da141544cbacdf44c0b5372b3c223608d7d0ca19aff8db96d7e9e1a8",
+  "previousEventHash": "c9ba8dd32eb9c3d11db8eeb7f13d2631ce801b50812e0fd93249d1775df9e7ad",
+  "chainHash": "1663d5fa05654d03134171077ea458687e299837af239f3a6b9f83194b300f2f",
+  "change": "sdd-opencode-structured-message-recovery",
+  "action": "Design Refinement",
+  "role": "HIGH",
+  "inputHash": "7ae01a7d6ee3ae3dc4d7770f942e18d5d59a4e16c16ed336ffb52ef3c8b245ad",
+  "outcomeHash": "7ae01a7d6ee3ae3dc4d7770f942e18d5d59a4e16c16ed336ffb52ef3c8b245ad",
+  "route": {
+    "configured": "HIGH",
+    "resolved": "HIGH",
+    "rejections": []
+  },
+  "beforeStateHash": "8c60b149e5c8aded5b74596c10e76b48e514366ef4852032ef2c854596a19dc6",
+  "afterStateHash": "b2197a323fbbd24667e77da4851b9e029e42e3f1cb9276e02e1ea23c1b52353b",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 3,
+    "checkpoint": {
+      "phase": "Design Refinement",
+      "artifact": "openspec/changes/sdd-opencode-structured-message-recovery/design.md",
+      "verdict": "PASS",
+      "next": "Architecture Review"
+    },
+    "fingerprints": {
+      "artifacts": {
+        "openspec/changes/sdd-opencode-structured-message-recovery/design.md": "4f8a0c779a81919a6505d2ca60e927f3b57640b30c4b8902c67d0e56d16073a6",
+        "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md": "0cb802bf26b4817de38ecdd868289eaecf65d4f9a7a02ad7f2eba7edd54b1172"
+      },
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "54f3929eaeafa964cb7893548c5d1c2771c8761c900fe60fa0288f89537b5748"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 1,
+      "Design Refinement": 1
+    },
+    "traceCursor": {
+      "sequence": 3,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "27417777da141544cbacdf44c0b5372b3c223608d7d0ca19aff8db96d7e9e1a8",
+      "action": "Design Refinement",
+      "inputHash": "7ae01a7d6ee3ae3dc4d7770f942e18d5d59a4e16c16ed336ffb52ef3c8b245ad",
+      "outcomeHash": "7ae01a7d6ee3ae3dc4d7770f942e18d5d59a4e16c16ed336ffb52ef3c8b245ad",
+      "afterStateHash": "f593dcaba8df93ab3f61ddb6ead60a547c7dd708c8120991fb97e70aef351b87"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "adapter": "docs/architecture/sdd-direct.md"
+    }
+  },
+  "timestamp": "2026-08-20T11:07:17.525Z",
+  "eventHash": "00a1a2e60a4af776722a7083c76634bd20d5a9984b9589f49e8b5e0045744448"
+}

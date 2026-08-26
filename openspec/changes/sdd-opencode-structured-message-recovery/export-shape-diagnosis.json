@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "change": "sdd-opencode-structured-message-recovery",
+  "action": "Apply 7.5 Testing",
+  "sessionID": "ses_fc67ebfe6ffeGiRVjTJCIe7Jaj",
+  "command": ["opencode", "export", "ses_fc67ebfe6ffeGiRVjTJCIe7Jaj"],
+  "capture": {
+    "path": "/tmp/opencode/existing-session-ses_fc67ebfe6ffeGiRVjTJCIe7Jaj-reexport-20260825.json",
+    "exitCode": 0,
+    "bytes": 288808,
+    "sha256": "8c0bba339e8ea44dbc36ef80dea9123e94a8ef9bfa13a5a41751e74d5b0d7cf8",
+    "lineCount": 2215,
+    "framing": "single pretty-printed JSON document",
+    "stderr": "Exporting session: ses_fc67ebfe6ffeGiRVjTJCIe7Jaj\n"
+  },
+  "shape": {
+    "rootType": "object",
+    "rootKeys": ["info", "messages"],
+    "messagesType": "array",
+    "messageCount": 15,
+    "messageEntryKeys": ["info", "parts"],
+    "assistantPartTypes": ["step-start", "reasoning", "text", "step-finish"]
+  },
+  "parser": {
+    "name": "parseExport",
+    "result": "PASS",
+    "parserCorrection": "not-needed"
+  },
+  "proof": {
+    "persistedAgent": "sdd-direct-orchestrator",
+    "persistedProvider": "openai",
+    "persistedModel": "gpt-5.6-luna",
+    "completed": true,
+    "finish": "stop",
+    "terminalResult": {
+      "change": "sdd-opencode-structured-message-recovery",
+      "action": "Apply 7.5 Testing",
+      "role": "HUMAN",
+      "status": "STOP",
+      "next": "HUMAN_HANDOFF"
+    },
+    "tokenMetrics": {
+      "input": 1008,
+      "output": 100,
+      "reasoning": 72,
+      "total": 46748,
+      "cacheRead": 45568,
+      "cacheWrite": 0
+    }
+  }
+}

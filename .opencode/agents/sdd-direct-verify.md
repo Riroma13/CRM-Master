@@ -1,6 +1,6 @@
 ---
 description: Verify CRM-SDD implementation against Design, Tasks, and evidence.
-mode: subagent
+mode: all
 model: openai/gpt-5.6-terra
 ---
 

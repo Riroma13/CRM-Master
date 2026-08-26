@@ -1,6 +1,6 @@
 ---
 description: Produce a CRM-SDD Design using the canonical Enterprise template.
-mode: subagent
+mode: all
 model: openai/gpt-5.6-terra
 ---
 

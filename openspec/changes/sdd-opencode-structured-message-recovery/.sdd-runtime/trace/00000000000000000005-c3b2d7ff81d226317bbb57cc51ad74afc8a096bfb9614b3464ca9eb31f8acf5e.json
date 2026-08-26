@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "sequence": 5,
+  "idempotencyKey": "27d684ae7fff9a78b5c964d95bed6b7b4d7fb7b6ef814ce46cc650f0fcc4c2bb",
+  "previousEventHash": "1a06c06aed2616bc07896b1940b881386f8f9198a84be6f9134ef65c82a44215",
+  "chainHash": "16ace44559790eca131dce4d6e4a023c36be63202f9cc8de34c400fd9933b81c",
+  "change": "sdd-opencode-structured-message-recovery",
+  "action": "Tasks",
+  "role": "MID",
+  "inputHash": "f310b699e171bd7acd80cc278a94285f4484a9ac89cb2c04ccb15771b79c801e",
+  "outcomeHash": "f310b699e171bd7acd80cc278a94285f4484a9ac89cb2c04ccb15771b79c801e",
+  "route": {
+    "configured": "MID",
+    "resolved": "MID",
+    "rejections": []
+  },
+  "beforeStateHash": "e67f86881acc79424ea8ea1ce51e9e29f391c7b0d4ad863fcd34b9086188e2df",
+  "afterStateHash": "f217fdfc642e8763d69b8f40b380194629fd966fcfcb91ac54c8f58ce89bf110",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 5,
+    "checkpoint": {
+      "phase": "Tasks",
+      "artifact": "openspec/changes/sdd-opencode-structured-message-recovery/tasks.md",
+      "verdict": "PASS",
+      "next": "Tasks Review"
+    },
+    "fingerprints": {
+      "artifacts": {
+        "openspec/changes/sdd-opencode-structured-message-recovery/design.md": "4f8a0c779a81919a6505d2ca60e927f3b57640b30c4b8902c67d0e56d16073a6",
+        "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md": "f44953485924483ad1447ecae817ba883019626a05569d207cbb25e8d7d1f60f",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks.md": "3cfaf5b0bc8d98d482c5c8d2fbd9f3f938ce51b2a15f50ac4930ccb880efee65"
+      },
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "54f3929eaeafa964cb7893548c5d1c2771c8761c900fe60fa0288f89537b5748"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 2,
+      "Design Refinement": 1,
+      "Tasks": 1
+    },
+    "traceCursor": {
+      "sequence": 5,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "27d684ae7fff9a78b5c964d95bed6b7b4d7fb7b6ef814ce46cc650f0fcc4c2bb",
+      "action": "Tasks",
+      "inputHash": "f310b699e171bd7acd80cc278a94285f4484a9ac89cb2c04ccb15771b79c801e",
+      "outcomeHash": "f310b699e171bd7acd80cc278a94285f4484a9ac89cb2c04ccb15771b79c801e",
+      "afterStateHash": "e5a6ab78bd391e76b3c3acefb6a5b9d788e0d6c6a090ceaf0d7ea580b8a926aa"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "adapter": "docs/architecture/sdd-direct.md"
+    }
+  },
+  "timestamp": "2026-08-20T11:14:32.845Z",
+  "eventHash": "c3b2d7ff81d226317bbb57cc51ad74afc8a096bfb9614b3464ca9eb31f8acf5e"
+}

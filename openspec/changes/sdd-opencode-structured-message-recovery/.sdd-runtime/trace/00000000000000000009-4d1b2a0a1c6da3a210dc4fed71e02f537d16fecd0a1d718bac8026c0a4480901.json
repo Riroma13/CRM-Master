@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "sequence": 9,
+  "idempotencyKey": "ce8f87fd33052b66a0f394d8042de8ae6201cc29fe8af8f3bb5a63b15821a11e",
+  "previousEventHash": "30da42e6d33b7a0b9b2a16735082c6ed4e70d60a668068d22fe4688dd9aac81f",
+  "chainHash": "729feaf3bcddc39eb6b12e83b8f9eed9c9ea91a96ea1fad8e579c24e46d6f33b",
+  "change": "sdd-opencode-structured-message-recovery",
+  "action": "Workload Guard",
+  "role": "MID",
+  "inputHash": "c2fd672c261faa7b2f1609e2b66527928f69fb67748c686f0e469ad76b274bfb",
+  "outcomeHash": "c2fd672c261faa7b2f1609e2b66527928f69fb67748c686f0e469ad76b274bfb",
+  "route": {
+    "configured": "MID",
+    "resolved": "MID",
+    "rejections": []
+  },
+  "beforeStateHash": "1d66254a398808018c2f6070aa258077766c8951c50f32b3afc89208d40f3c66",
+  "afterStateHash": "a058f2af9b71107317d9938783ed61d74e80eccc68e698e51af8a53497f527e6",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 9,
+    "checkpoint": {
+      "phase": "Workload Guard",
+      "artifact": "openspec/changes/sdd-opencode-structured-message-recovery/workload-guard.md",
+      "verdict": "PASS",
+      "next": "Apply 7.1 Foundation"
+    },
+    "fingerprints": {
+      "artifacts": {
+        "openspec/changes/sdd-opencode-structured-message-recovery/design.md": "4f8a0c779a81919a6505d2ca60e927f3b57640b30c4b8902c67d0e56d16073a6",
+        "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md": "f44953485924483ad1447ecae817ba883019626a05569d207cbb25e8d7d1f60f",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks.md": "7bd64040bb66f562787a9040c70c8090d362c74a1e10f923bf316003d601079b",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks-review.md": "fa20973bf1c35a9b527e6dc3693ae6de69f6ccac121ba5c0d7463c99aebc234b",
+        "openspec/changes/sdd-opencode-structured-message-recovery/workload-guard.md": "d8b70817ccad231dd4a9dc2e9e1d302b26a9c2f5c136b83c85022b49b21931d0"
+      },
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "54f3929eaeafa964cb7893548c5d1c2771c8761c900fe60fa0288f89537b5748"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 2,
+      "Design Refinement": 1,
+      "Tasks": 1,
+      "Tasks Review": 2,
+      "Tasks Refinement": 1,
+      "Workload Guard": 1
+    },
+    "traceCursor": {
+      "sequence": 9,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "ce8f87fd33052b66a0f394d8042de8ae6201cc29fe8af8f3bb5a63b15821a11e",
+      "action": "Workload Guard",
+      "inputHash": "c2fd672c261faa7b2f1609e2b66527928f69fb67748c686f0e469ad76b274bfb",
+      "outcomeHash": "c2fd672c261faa7b2f1609e2b66527928f69fb67748c686f0e469ad76b274bfb",
+      "afterStateHash": "6785d29a700c80c4ea6df4449907e3173588626377a8779cdbd31bbc67427616"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "adapter": "docs/architecture/sdd-direct.md"
+    }
+  },
+  "timestamp": "2026-08-20T11:25:11.778Z",
+  "eventHash": "4d1b2a0a1c6da3a210dc4fed71e02f537d16fecd0a1d718bac8026c0a4480901"
+}

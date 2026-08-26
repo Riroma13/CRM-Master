@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "sequence": 11,
+  "idempotencyKey": "9ead6808214c6175124122137bd779125f60b014b01f1bac1b9e1041cb81f59c",
+  "previousEventHash": "969dea9ee01e0ad13497671fafaeac560c95512e3cba2186a15ede48475d349d",
+  "chainHash": "171e6be8e477e35fc3ef4d02c14c8bb30b31dc591a1c42661c10ce58f516dfd3",
+  "change": "sdd-opencode-structured-message-recovery",
+  "action": "Apply 7.2 Core Engine",
+  "role": "MID",
+  "inputHash": "6fb52a573aaede19c66afcfc10d5b3923d4b6353f0f1a7287120300b12991286",
+  "outcomeHash": "6fb52a573aaede19c66afcfc10d5b3923d4b6353f0f1a7287120300b12991286",
+  "route": {
+    "configured": "MID",
+    "resolved": "MID",
+    "rejections": []
+  },
+  "beforeStateHash": "cf6cd1a452ba8c7afaae3281c64dfdaa31828913edce17e8833561080fb944cd",
+  "afterStateHash": "26560c79de31558ee5a47f80171573acc07d3f716d40011e5f0dcc18361b774c",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 11,
+    "checkpoint": {
+      "phase": "Apply 7.2 Core Engine",
+      "artifact": "scripts/opencode-structured-message-recovery.test.mjs",
+      "verdict": "PASS",
+      "next": "Apply 7.3 Feature Implementation"
+    },
+    "fingerprints": {
+      "artifacts": {
+        "openspec/changes/sdd-opencode-structured-message-recovery/design.md": "4f8a0c779a81919a6505d2ca60e927f3b57640b30c4b8902c67d0e56d16073a6",
+        "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md": "f44953485924483ad1447ecae817ba883019626a05569d207cbb25e8d7d1f60f",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks.md": "7bd64040bb66f562787a9040c70c8090d362c74a1e10f923bf316003d601079b",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks-review.md": "fa20973bf1c35a9b527e6dc3693ae6de69f6ccac121ba5c0d7463c99aebc234b",
+        "openspec/changes/sdd-opencode-structured-message-recovery/workload-guard.md": "d8b70817ccad231dd4a9dc2e9e1d302b26a9c2f5c136b83c85022b49b21931d0",
+        "scripts/opencode-structured-message-recovery.mjs": "3e409ccc2559360844dab03a3b49a6e6066b3282f201c407ca428f5a7b640920",
+        "scripts/opencode-structured-message-recovery.test.mjs": "c639d1e53f4acd0882b5a7e393ef476a4dd33c6ab34d46b51a755c9e4c8e03c1",
+        "package.json": "ca846dc5e1ada4e9f0d25790ea783e19aeb2ea6b2849dd6e2355f242cb976202"
+      },
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "54f3929eaeafa964cb7893548c5d1c2771c8761c900fe60fa0288f89537b5748"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 2,
+      "Design Refinement": 1,
+      "Tasks": 1,
+      "Tasks Review": 2,
+      "Tasks Refinement": 1,
+      "Workload Guard": 1,
+      "Apply 7.1 Foundation": 1,
+      "Apply 7.2 Core Engine": 1
+    },
+    "traceCursor": {
+      "sequence": 11,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "9ead6808214c6175124122137bd779125f60b014b01f1bac1b9e1041cb81f59c",
+      "action": "Apply 7.2 Core Engine",
+      "inputHash": "6fb52a573aaede19c66afcfc10d5b3923d4b6353f0f1a7287120300b12991286",
+      "outcomeHash": "6fb52a573aaede19c66afcfc10d5b3923d4b6353f0f1a7287120300b12991286",
+      "afterStateHash": "bd5616abf9d70f12e6cf5fc2ef2f65c64ed01c7e748393b9cb94795377d51dbe"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "adapter": "docs/architecture/sdd-direct.md"
+    }
+  },
+  "timestamp": "2026-08-20T11:35:32.113Z",
+  "eventHash": "86442af1dd78f8f21cadaa1e60701f4e119b0c19ea4bbd119241d6eeae40c5df"
+}

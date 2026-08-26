@@ -12,6 +12,9 @@
     "sdd:validate:design": "node scripts/validate-enterprise-design.mjs",
     "test:sdd-runtime": "node --test scripts/sdd-runtime.test.mjs scripts/sdd-runtime.integration.test.mjs scripts/sdd-runtime.e2e.test.mjs scripts/sdd-resume.test.mjs",
     "test:sdd-resume": "node --test scripts/sdd-resume.test.mjs",
+    "test:opencode-structured-message-recovery": "node --test scripts/opencode-structured-message-recovery.test.mjs",
+    "test:opencode-cli-adapter": "node --test scripts/opencode-cli-adapter.test.mjs",
+    "opencode:probe:structured-message-recovery": "node scripts/opencode-structured-message-recovery.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "turbo clean"
   },

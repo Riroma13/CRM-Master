@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "sequence": 26,
+  "idempotencyKey": "f4c498150d6c7775fdbdcbd7d7f346ed3e23ab3d55b336847e11a8dcecb66b18",
+  "previousEventHash": "837d62cac15f88f3ce5af71a2f7801d067c74791950a717b8a03be20e0eddde0",
+  "chainHash": "3fc001be95de085ad4bde156eccc36f14ce4629275dc89b64dec3b30adbb6939",
+  "change": "sdd-opencode-structured-message-recovery",
+  "action": "Verify",
+  "role": "HUMAN",
+  "inputHash": "d28d84268db62f2e765ccf240a2780f302a3a03931da2b544c948dc6e7c172f7",
+  "outcomeHash": "5152e82f44c526c45062045c8ee1f72ba7c9aea33a06bb1cbd9fe740a01af5b1",
+  "route": {
+    "configured": "HUMAN",
+    "resolved": "HUMAN",
+    "rejections": []
+  },
+  "beforeStateHash": "c575e7ce447e606b8cd4433a61a4063d6c3a15a35b20065ebc6b590e674fb0bc",
+  "afterStateHash": "a386cbcf82ab4b9f9f0a65fb24f3c3a6b2d5bf030b4cbd6d3be0129bb6a68cbe",
+  "stateMaterialization": {
+    "status": "HUMAN_HANDOFF",
+    "sequence": 26,
+    "checkpoint": {
+      "phase": "Verify",
+      "artifact": "openspec/changes/sdd-opencode-structured-message-recovery/verify-report.md",
+      "verdict": "BLOCKED",
+      "next": null
+    },
+    "fingerprints": {
+      "artifacts": {
+        "openspec/changes/sdd-opencode-structured-message-recovery/design.md": "4f8a0c779a81919a6505d2ca60e927f3b57640b30c4b8902c67d0e56d16073a6",
+        "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md": "f44953485924483ad1447ecae817ba883019626a05569d207cbb25e8d7d1f60f",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks.md": "d86591f4b7b23feb680d713f3ee0cfe969baa96c6f42b7b85d6ba2ed78dd9de5",
+        "openspec/changes/sdd-opencode-structured-message-recovery/tasks-review.md": "fa20973bf1c35a9b527e6dc3693ae6de69f6ccac121ba5c0d7463c99aebc234b",
+        "openspec/changes/sdd-opencode-structured-message-recovery/workload-guard.md": "d8b70817ccad231dd4a9dc2e9e1d302b26a9c2f5c136b83c85022b49b21931d0",
+        "scripts/opencode-structured-message-recovery.mjs": "714a6e0750df8c3d3b0c0c41704b6b55012672fd058a60d7d34904fbe1355907",
+        "scripts/opencode-structured-message-recovery.test.mjs": "599925f05dc3ebb97f93fabccdf73bc6f448861d90e38e5c03b79233296de579",
+        "package.json": "ccc6c094dffe1f6442c0068a63de1ec970137c66a04623cd0ac005afae04822b",
+        "openspec/changes/sdd-opencode-structured-message-recovery/apply-summary.md": "ef39c3df205d19d70e8dbb98ae79148ae776828d1b1a87d6870858818a95d871",
+        "scripts/opencode-cli-adapter.mjs": "dd75b376cee333e7c52f8d7d050de8299e9199ce5406270e0d19a2466eddfe2e",
+        "scripts/opencode-cli-adapter.test.mjs": "9b5c6115594c791b62624935505302a9f5873d4959b36d870663195dbabdbeb5",
+        "scripts/sdd-runtime.mjs": "c1abcbdbfbd228474a42b626bebe822ffea6f657cfb1838f0f15e316f004e086",
+        "scripts/sdd-runtime.test.mjs": "da0bc0522ab11e544a3d139e6fefbc25d73aa57e6dc7c1968f72d3ae5cb691db",
+        "scripts/validate-sdd-direct.mjs": "72537497bd72f5e1c1721f6de2662eeae8ba3cbf523f45d2e72ddb54646c5012",
+        ".opencode/agents/sdd-direct-design.md": "19d434b5fa7f53ad3f0e7fadfc25c28cb36c713cd8a4744076938e69cdd2133c",
+        ".opencode/agents/sdd-direct-architecture-review.md": "763a471f779154d27284ee37d05a4a48e8baa499382f938572c2de2e4abc30a2",
+        ".opencode/agents/sdd-direct-apply.md": "501b1f8f74400d4d883f79f86069616d38841716ec5031b87ff4f8eb57ed69c5",
+        ".opencode/agents/sdd-direct-verify.md": "812c73ea730b9496bb7b82c8954ecf11053f670cf5888012c376d87adb78a48b",
+        ".opencode/agents/sdd-direct-archive.md": "5937b199f96c04fff42e437ad57b6f06133474ddc119d593454b28b5c62c6ac4",
+        ".opencode/agents/sdd-direct-health-report.md": "95d4a0f518acb63739567a038973364392b12dff16ae99e10eeb4f212ef402d4",
+        ".opencode/agents/sdd-direct-repository-ready.md": "c49b4465bf1c2bb496ba8e2f9bd66edd480680d45cfe8ade99d2ca67cebcd30e",
+        "openspec/changes/sdd-opencode-structured-message-recovery/verify-report.md": "3d22c22fe8d8b1aaa21960eba04f251ffbbf5f0d3cf76ccbb8238d26065e0e70"
+      },
+      "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+      "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+      "config": "09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1"
+    },
+    "fingerprintProvenance": {
+      "config": {
+        "artifactPath": "openspec/config.yaml",
+        "rawSha256": "09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1",
+        "commit": "9c8bdc8831704500c4647be64246cbbbec8058ad",
+        "branch": "fix/sdd-opencode-structured-message-recovery",
+        "dirty": false,
+        "timestamp": "2026-08-26T00:10:09.011Z",
+        "continuity": "UNPROVEN",
+        "authority": "HUMAN / MAINTAINER"
+      }
+    },
+    "gitReadiness": "INVALIDATED",
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 2,
+      "Design Refinement": 1,
+      "Tasks": 1,
+      "Tasks Review": 2,
+      "Tasks Refinement": 1,
+      "Workload Guard": 1,
+      "Apply 7.1 Foundation": 1,
+      "Apply 7.2 Core Engine": 1,
+      "Apply 7.3 Feature Implementation": 1,
+      "Apply 7.4 Integration": 1,
+      "Apply 7.5 Testing": 2,
+      "Apply 7.6 Apply Summary": 1
+    },
+    "traceCursor": {
+      "sequence": 26,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "f4c498150d6c7775fdbdcbd7d7f346ed3e23ab3d55b336847e11a8dcecb66b18",
+      "action": "Verify",
+      "operation": "HUMAN_PROVENANCE_RESET",
+      "inputHash": "d28d84268db62f2e765ccf240a2780f302a3a03931da2b544c948dc6e7c172f7",
+      "outcomeHash": "5152e82f44c526c45062045c8ee1f72ba7c9aea33a06bb1cbd9fe740a01af5b1",
+      "afterStateHash": "3e7ee4b846ca3fb0290738bdba63ac0f4d866ada4f60f2b63480996f65bc2f08"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {}
+  },
+  "timestamp": "2026-08-26T00:10:09.011Z",
+  "operation": "HUMAN_PROVENANCE_RESET",
+  "previousSequence": 25,
+  "newSequence": 26,
+  "sourceStatus": "HUMAN_HANDOFF",
+  "target": "Verify",
+  "reason": "Historical provenance preimage is unavailable; current repository version is clean and trusted by explicit maintainer decision. Continuity is intentionally recorded as UNPROVEN rather than fabricated.",
+  "authorization": {
+    "actor": "HUMAN",
+    "role": "MAINTAINER",
+    "scope": "HUMAN_PROVENANCE_RESET for sdd-opencode-structured-message-recovery openspec/config.yaml"
+  },
+  "authorityFingerprints": {
+    "artifacts": {
+      "openspec/changes/sdd-opencode-structured-message-recovery/design.md": "4f8a0c779a81919a6505d2ca60e927f3b57640b30c4b8902c67d0e56d16073a6",
+      "openspec/changes/sdd-opencode-structured-message-recovery/architecture-review.md": "f44953485924483ad1447ecae817ba883019626a05569d207cbb25e8d7d1f60f",
+      "openspec/changes/sdd-opencode-structured-message-recovery/tasks.md": "d86591f4b7b23feb680d713f3ee0cfe969baa96c6f42b7b85d6ba2ed78dd9de5",
+      "openspec/changes/sdd-opencode-structured-message-recovery/tasks-review.md": "fa20973bf1c35a9b527e6dc3693ae6de69f6ccac121ba5c0d7463c99aebc234b",
+      "openspec/changes/sdd-opencode-structured-message-recovery/workload-guard.md": "d8b70817ccad231dd4a9dc2e9e1d302b26a9c2f5c136b83c85022b49b21931d0",
+      "scripts/opencode-structured-message-recovery.mjs": "714a6e0750df8c3d3b0c0c41704b6b55012672fd058a60d7d34904fbe1355907",
+      "scripts/opencode-structured-message-recovery.test.mjs": "599925f05dc3ebb97f93fabccdf73bc6f448861d90e38e5c03b79233296de579",
+      "package.json": "ccc6c094dffe1f6442c0068a63de1ec970137c66a04623cd0ac005afae04822b",
+      "openspec/changes/sdd-opencode-structured-message-recovery/apply-summary.md": "ef39c3df205d19d70e8dbb98ae79148ae776828d1b1a87d6870858818a95d871",
+      "scripts/opencode-cli-adapter.mjs": "dd75b376cee333e7c52f8d7d050de8299e9199ce5406270e0d19a2466eddfe2e",
+      "scripts/opencode-cli-adapter.test.mjs": "9b5c6115594c791b62624935505302a9f5873d4959b36d870663195dbabdbeb5",
+      "scripts/sdd-runtime.mjs": "c1abcbdbfbd228474a42b626bebe822ffea6f657cfb1838f0f15e316f004e086",
+      "scripts/sdd-runtime.test.mjs": "da0bc0522ab11e544a3d139e6fefbc25d73aa57e6dc7c1968f72d3ae5cb691db",
+      "scripts/validate-sdd-direct.mjs": "72537497bd72f5e1c1721f6de2662eeae8ba3cbf523f45d2e72ddb54646c5012",
+      ".opencode/agents/sdd-direct-design.md": "19d434b5fa7f53ad3f0e7fadfc25c28cb36c713cd8a4744076938e69cdd2133c",
+      ".opencode/agents/sdd-direct-architecture-review.md": "763a471f779154d27284ee37d05a4a48e8baa499382f938572c2de2e4abc30a2",
+      ".opencode/agents/sdd-direct-apply.md": "501b1f8f74400d4d883f79f86069616d38841716ec5031b87ff4f8eb57ed69c5",
+      ".opencode/agents/sdd-direct-verify.md": "812c73ea730b9496bb7b82c8954ecf11053f670cf5888012c376d87adb78a48b",
+      ".opencode/agents/sdd-direct-archive.md": "5937b199f96c04fff42e437ad57b6f06133474ddc119d593454b28b5c62c6ac4",
+      ".opencode/agents/sdd-direct-health-report.md": "95d4a0f518acb63739567a038973364392b12dff16ae99e10eeb4f212ef402d4",
+      ".opencode/agents/sdd-direct-repository-ready.md": "c49b4465bf1c2bb496ba8e2f9bd66edd480680d45cfe8ade99d2ca67cebcd30e",
+      "openspec/changes/sdd-opencode-structured-message-recovery/verify-report.md": "3d22c22fe8d8b1aaa21960eba04f251ffbbf5f0d3cf76ccbb8238d26065e0e70"
+    },
+    "workflow": "af63869cce95325bfa544a6ab4cc757cd43d9823ebf8f01b43481e2a71866457",
+    "modelMap": "04dd56562407d7d76d0c88ea2403596baa68e22d56d696aa733b34a04bd526d0",
+    "config": "54f3929eaeafa964cb7893548c5d1c2771c8761c900fe60fa0288f89537b5748"
+  },
+  "gitReadiness": "INVALIDATED",
+  "affectedKey": "config",
+  "affectedPath": "openspec/config.yaml",
+  "oldFingerprint": "54f3929eaeafa964cb7893548c5d1c2771c8761c900fe60fa0288f89537b5748",
+  "newFingerprint": "09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1",
+  "continuity": "UNPROVEN",
+  "resetAuthority": "HUMAN / MAINTAINER",
+  "currentCommit": "9c8bdc8831704500c4647be64246cbbbec8058ad",
+  "currentBranch": "fix/sdd-opencode-structured-message-recovery",
+  "currentDirtyState": false,
+  "validationEvidence": [
+    "Persisted old fingerprint recorded at sequence 1 on 2026-08-20T11:00:27.425Z; no preimage or Git provenance metadata is retained.",
+    "Current openspec/config.yaml raw-byte SHA-256 equals 09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1.",
+    "Current artifact is clean and matches HEAD 9c8bdc8831704500c4647be64246cbbbec8058ad on fix/sdd-opencode-structured-message-recovery.",
+    "pnpm sdd:validate PASS; Enterprise Design validation PASS; pnpm test:sdd-runtime 64/64 PASS; pnpm test:sdd-resume 12/12 PASS; focused provenance tests 5/5 PASS; trace validation 25/25 PASS."
+  ],
+  "eventHash": "d4eae0048ae56f959e495c9842d801f67429f91670c3d0f5e6b4adc07fa149a1"
+}

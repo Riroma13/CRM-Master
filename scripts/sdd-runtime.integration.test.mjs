@@ -17,6 +17,7 @@ import {
 } from './sdd-runtime.mjs';
 
 const hashes = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
+const provenance = { config: { artifactPath: 'openspec/config.yaml', rawSha256: hashes.config, commit: '0'.repeat(40), branch: 'test/bootstrap', dirty: false, timestamp: '2026-08-26T00:00:00.000Z', continuity: 'ESTABLISHED', authority: 'SYSTEM / BOOTSTRAP' } };
 
 test('live dispatch context is reused without bootstrap bodies or repeated reads', () => {
   const packet = createContextPacket({
@@ -115,8 +116,8 @@ test('bootstrap publishes one state on a fresh path and preserves collision evid
   const root = await mkdtemp(join(tmpdir(), 'crm-bootstrap-integration-'));
   const fingerprints = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
   try {
-    const first = await bootstrapChange({ root, change: 'race-change', fingerprints });
-    const second = await bootstrapChange({ root, change: 'race-change', fingerprints });
+    const first = await bootstrapChange({ root, change: 'race-change', fingerprints, provenance });
+    const second = await bootstrapChange({ root, change: 'race-change', fingerprints, provenance });
     assert.equal(first.disposition, 'CREATED');
     assert.equal(second.disposition, 'REUSED');
     assert.equal(second.state.sequence, 0);

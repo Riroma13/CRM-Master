@@ -1,6 +1,6 @@
 ---
 description: Archive a verified CRM-SDD change and record bounded learning.
-mode: subagent
+mode: all
 model: longcat/LongCat-2.0
 ---
 

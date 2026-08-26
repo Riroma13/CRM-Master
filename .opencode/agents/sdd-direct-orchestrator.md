@@ -30,13 +30,21 @@ agents listed in `.opencode/sdd-model-map.json`.
    recovered checkpoint and dispatch only its canonical `next` action (a fresh
    bootstrap must dispatch `Design`). Supply the local executor with the
    immutable authority references, approved Working Set/Read Order, fingerprints,
-   and current checkpoint; reuse that context packet across normal transitions.
+   explicit fingerprint provenance (concrete path, raw SHA-256, commit, branch,
+   dirty state, timestamp, continuity, and authority), and current checkpoint;
+   reuse that context packet across normal transitions. Legacy checkpoints may
+   omit historical provenance only when the runtime accepts them without
+   fabricating metadata; all new checkpoints must supply validated provenance.
 6. Invoke only the local executor for the current action. Consume the declared
    Working Set and Read Order before any bounded deviation; stop on provenance
    ambiguity or material contradiction. Select the next action mechanically
    through the runtime and continue legal non-HUMAN dispatch without an
    intermediate prompt. Structured executor outcomes must be idempotent and
-   blocker-validated; malformed or HUMAN outcomes stop fail-closed.
+   blocker-validated; malformed or HUMAN outcomes stop fail-closed. Non-HUMAN
+    semantic execution uses only `scripts/opencode-cli-adapter.mjs`: controlled
+    `opencode run --format json` followed by post-exit `opencode export
+    <sessionID>`. Server/session SDK prompt APIs, SSE, polling, UI scraping, and
+    daemon or supervisor recovery are prohibited.
 7. Persist exact repository artifacts and mirrored bounded status/evidence under
    the `hybrid` persistence contract. OpenSpec and Engram store evidence; they
    do not redefine workflow authority.

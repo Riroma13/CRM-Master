@@ -393,7 +393,12 @@ if (JSON.stringify(actualAgentFiles) !== JSON.stringify([...localAgentNames].sor
 for (const [name, expectedRole] of Object.entries(expectedAgentRoles)) {
   const parsed = frontmatter(localAgentTexts[name]);
   const expectedModel = expectedRoles[expectedRole][1];
-  if (!parsed || !parsed.description || parsed.mode !== (name === 'sdd-direct-orchestrator' ? 'primary' : 'subagent')) {
+   const expectedMode = name === 'sdd-direct-orchestrator'
+     ? 'primary'
+     : ['sdd-direct-design', 'sdd-direct-architecture-review', 'sdd-direct-apply', 'sdd-direct-verify', 'sdd-direct-archive', 'sdd-direct-health-report', 'sdd-direct-repository-ready'].includes(name)
+       ? 'all'
+       : 'subagent';
+   if (!parsed || !parsed.description || parsed.mode !== expectedMode) {
     fail(`${name}: invalid mode or description`);
   }
   if (parsed?.model !== expectedModel) {

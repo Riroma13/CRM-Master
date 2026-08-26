@@ -1,6 +1,6 @@
 ---
 description: Review a CRM-SDD Design against the Enterprise Design Standard.
-mode: subagent
+mode: all
 model: openai/gpt-5.6-terra
 ---
 
