@@ -19,3 +19,35 @@ Continue only through legal non-HUMAN actions, persist event-first state/trace
 evidence under the change-local `.sdd-runtime/` path when execution output is
 required, and stop at Repository Ready for the maintainer Git handoff. Do not
 commit, push, merge, release, or tag.
+
+Return exactly the canonical Executor Outcome Contract in
+`docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
+its schema.
+
+## Explicit HUMAN stranded-checkpoint recovery
+
+Only an explicit maintainer request may invoke the exported
+`recoverStrandedCheckpoint` operation. Its exact input is
+`{ root, change, canonicalPath, expectedSequence, target,
+authorityRefs: { workflow: "docs/SDD-WORKFLOW.md",
+modelMap: ".opencode/sdd-model-map.json", config: "openspec/config.yaml" },
+fingerprints, authorization: { actor: "HUMAN / MAINTAINER", approval } }`. The operation is limited to a proven
+blocked `HUMAN_HANDOFF` at Apply 7.3, appends one recovery event, and returns a
+READY checkpoint whose verdict remains BLOCKED and whose next action is Apply
+7.3. It must not inspect executor payloads, dispatch an executor, or be used
+against a real product change during hotfix work. Normal HUMAN_HANDOFF remains
+terminal unless this exact HUMAN authorization is separately supplied.
+
+## Exact dispatch-materialization compatibility recovery
+
+Do not invoke this operation during ordinary dispatch. A separate explicit
+HUMAN / MAINTAINER authorization may invoke the runtime's bounded
+`recoverDispatchMaterialization` operation only for the exact sequence-21
+compatibility predicate: the latest accepted event is `Apply 7.5 Testing`, the
+persisted checkpoint is `Apply 7.4 Integration`, and all identity, trace,
+authority, fingerprint, provenance, predecessor-edge, and recoverable BLOCKED
+evidence checks pass, including binding the evidence to the originating
+handoff hashes. It appends one event and returns READY/BLOCKED with
+`next: Apply 7.5 Testing`; the next executor result must be fresh and
+schema-valid. It does not alter the executor outcome contract or the existing
+Apply 7.3 recovery operation.

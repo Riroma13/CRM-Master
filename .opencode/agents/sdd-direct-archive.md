@@ -14,9 +14,13 @@ canonical workflow, and preserve exact evidence paths. Do not modify product
 source, reopen resolved findings without new evidence, or perform maintainer
 Git operations. Use `.opencode/sdd-model-map.json` for logical routing.
 
-Return a structured result with status, artifacts, learning, evidence, and the
-next action prescribed by the canonical workflow.
+Return learning through the packet's string arrays; do not add archive-specific
+top-level fields.
 
 Return one validated, idempotent outcome packet with archive artifacts,
 learning, evidence, legal next action, and structured blocker when applicable.
 Do not dispatch Health Report or Repository Ready directly.
+
+Use exactly the canonical Executor Outcome Contract in
+`docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
+its schema.

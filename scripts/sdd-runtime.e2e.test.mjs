@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { test } from 'node:test';
 
 import {
@@ -11,6 +13,11 @@ import {
   resolveRoute,
   selectNextTransition,
   validateRuntimeState,
+  createTraceEvent,
+  persistTransition,
+  recoverStrandedCheckpoint,
+  hashObject,
+  STRANDED_RECOVERY_TARGET,
 } from './sdd-runtime.mjs';
 
 const hashes = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
@@ -93,4 +100,23 @@ test('local agents and legacy commands remain project-local and STOP-only', asyn
   assert.match(orchestrator, /sdd-runtime\.mjs/);
   assert.match(legacy, /CRM_SDD_LEGACY_BOUNDARY/);
   assert.deepEqual(Object.keys(BLOCKER_POLICIES).length, 12);
+});
+
+test('unrecovered HUMAN_HANDOFF remains terminal and concurrent recovery is fail-closed', async () => {
+  let calls = 0;
+  const stopped = dispatchUntilTerminal({ state: { ...initialState(), status: 'HUMAN_HANDOFF', checkpoint: { phase: 'Apply 7.3 Feature Implementation', artifact: null, verdict: 'BLOCKED', next: null } }, execute: () => { calls += 1; return outcomeFor('e2e-change', 'Apply 7.3 Feature Implementation'); } });
+  assert.equal(stopped.status, 'HUMAN_HANDOFF'); assert.equal(calls, 0);
+
+  const root = await mkdtemp(join(tmpdir(), 'crm-stranded-e2e-')); const change = 'e2e-stranded'; const changePath = join(root, 'openspec', 'changes', change);
+  const refs = { workflow: 'docs/SDD-WORKFLOW.md', modelMap: '.opencode/sdd-model-map.json', config: 'openspec/config.yaml' }; await Promise.all([mkdir(join(root, 'docs'), { recursive: true }), mkdir(join(root, '.opencode'), { recursive: true }), mkdir(join(root, 'openspec'), { recursive: true })]); for (const [key, file] of Object.entries(refs)) await writeFile(join(root, file), key);
+  const fingerprints = { workflow: hashObject(await readFile(join(root, refs.workflow))), modelMap: hashObject(await readFile(join(root, refs.modelMap))), config: hashObject(await readFile(join(root, refs.config))), artifacts: {} };
+  let state = buildInitialState({ root, change, fingerprints });
+  for (const [index, action] of ['Apply 7.2 Core Engine'].entries()) {
+    const after = { ...state, sequence: 1, checkpoint: { phase: action, artifact: null, verdict: 'PASS', next: 'Apply 7.3 Feature Implementation' }, traceCursor: { sequence: 1, eventHash: null, chainHash: null }, lastTransition: { inputHash: 'd'.repeat(64), outcomeHash: 'e'.repeat(64), afterStateHash: hashObject({ action }) } };
+    const event = createTraceEvent({ change, sequence: index + 1, action, role: 'MID', inputHash: after.lastTransition.inputHash, outcomeHash: after.lastTransition.outcomeHash, beforeState: state, afterState: after }); await persistTransition({ changePath, event, state: after }); state = { ...after, traceCursor: { sequence: 1, eventHash: event.eventHash, chainHash: event.chainHash } };
+  }
+  const after = { ...state, status: 'HUMAN_HANDOFF', sequence: 2, checkpoint: { phase: 'Apply 7.3 Feature Implementation', artifact: null, verdict: 'BLOCKED', next: null }, traceCursor: { sequence: 2, eventHash: null, chainHash: null }, lastTransition: { inputHash: 'f'.repeat(64), outcomeHash: 'a'.repeat(64), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF' }) } };
+  const handoff = createTraceEvent({ change, sequence: 2, action: 'Apply 7.3 Feature Implementation', role: 'MID', inputHash: after.lastTransition.inputHash, outcomeHash: after.lastTransition.outcomeHash, beforeState: state, afterState: after }); await persistTransition({ changePath, event: handoff, state: after });
+  const request = { root, change, canonicalPath: changePath, expectedSequence: 2, target: STRANDED_RECOVERY_TARGET, authorityRefs: refs, fingerprints, authorization: { actor: 'HUMAN / MAINTAINER', approval: 'approval' } };
+  try { const results = await Promise.allSettled([recoverStrandedCheckpoint(request), recoverStrandedCheckpoint(request)]); assert.equal(results.filter((item) => item.status === 'fulfilled').length, 1); assert.equal(results.filter((item) => item.status === 'rejected').length, 1); assert.match(results.find((item) => item.status === 'rejected').reason.message, /concurrent|stale/i); } finally { await rm(root, { recursive: true, force: true }); }
 });

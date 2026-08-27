@@ -14,9 +14,13 @@ tenant-isolation requirements, Working Set, and open questions. Classify
 findings using the canonical vocabulary and do not redesign the change or
 alter templates. Use only project-local Direct wiring and the model map.
 
-Return a structured result with status, findings, evidence, and the next action
-prescribed by the canonical workflow.
+Return findings through the packet's string arrays and use its canonical next
+action; do not add review-specific top-level fields.
 
 Return one validated, idempotent outcome packet with the exact review verdict,
 artifacts, evidence, legal next action, and structured blocker when applicable.
 Do not infer routing from prose or dispatch a later phase yourself.
+
+Use exactly the canonical Executor Outcome Contract in
+`docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
+its schema.

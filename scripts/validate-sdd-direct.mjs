@@ -328,6 +328,28 @@ if (/sole workflow|sole transition|Transition Table|Direct Workflow/i.test(texts
   fail('Direct architecture contains a competing workflow definition');
 }
 
+// Every local Direct entry point consumes one canonical executor outcome contract.
+const contractBlock = markedBlock(
+  texts.direct,
+  '<!-- executor-outcome-contract:start -->',
+  '<!-- executor-outcome-contract:end -->',
+);
+for (const required of [
+  'change:', 'action:', 'role:', 'status:', 'artifacts:', 'evidence:', 'next:',
+  'blocker:', 'class:', 'human_required:', 'reason:', 'resume_phase:',
+]) {
+  if (!contractBlock.includes(required)) fail(`Direct outcome contract is missing ${required}`);
+}
+if (!/exactly one JSON\/YAML outcome packet[\s\S]*no others/i.test(texts.direct)) {
+  fail('Direct outcome contract must require exact top-level keys');
+}
+const directContractReference = /canonical Executor Outcome Contract[\s\S]*docs\/architecture\/sdd-direct\.md/;
+for (const [name, text] of [['sdd-direct-command', texts.command], ...Object.entries(localAgentTexts)]) {
+  if (!directContractReference.test(text)) {
+    fail(`${name}: missing canonical Executor Outcome Contract reference`);
+  }
+}
+
 // Concrete model map and logical assignments.
 if (!modelMap || modelMap.persistence !== 'hybrid') fail('model map: persistence must be hybrid');
 const expectedRoles = {

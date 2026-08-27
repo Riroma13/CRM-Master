@@ -14,9 +14,13 @@ status, and maintainer-controlled gates without broad unrelated exploration.
 Do not change product source or execute Git lifecycle operations. Use only the
 project-local Direct wiring and `.opencode/sdd-model-map.json`.
 
-Return a structured result with status, findings, evidence, and the next action
-prescribed by the canonical workflow.
+Return findings through the packet's string arrays and use its canonical next
+action; do not add report-specific top-level fields.
 
 Return one validated, idempotent outcome packet with report artifacts, facts,
 evidence, legal next action, and structured blocker when applicable. Do not
 perform maintainer Git operations or infer acceptance.
+
+Use exactly the canonical Executor Outcome Contract in
+`docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
+its schema.

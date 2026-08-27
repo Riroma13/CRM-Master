@@ -28,6 +28,37 @@ The local Direct orchestrator performs this bounded sequence:
 7. Return control to the orchestrator, the canonical checkpoint, or the
    maintainer handoff prescribed by the workflow.
 
+## Canonical Executor Outcome Contract
+
+Every local Direct executor MUST return exactly one JSON/YAML outcome packet
+with these top-level keys and no others:
+
+<!-- executor-outcome-contract:start -->
+```yaml
+change: <named change string>
+action: <canonical action from docs/SDD-WORKFLOW.md>
+role: HIGH | MID | LOW
+status: PASS | BLOCKED | FAILED
+artifacts: [<string>, ...]
+evidence: [<string>, ...]
+next: <canonical next action string>
+# blocker is required only when status is BLOCKED or FAILED:
+blocker:
+  class: <class listed in scripts/sdd-runtime.mjs>
+  human_required: <boolean matching that class policy>
+  reason: <non-empty string>
+  resume_phase: null | <canonical action>
+```
+<!-- executor-outcome-contract:end -->
+
+`blocker` MUST be absent for `PASS`, and MUST be present for `BLOCKED` or
+`FAILED`. `artifacts` and `evidence` are string arrays (never objects),
+`action`, `role`, and `next` must use canonical workflow values, and unknown or
+phase-specific top-level fields are forbidden. The runtime validator is the
+mechanical enforcement point for this contract; this section is its sole
+documentation source. See this section from every local Direct command and
+agent; do not maintain a second executor schema elsewhere.
+
 The adapter never creates a second artifact store, rewrites a Design or Tasks
 to conceal drift, or silently broadens the Working Set. A missing file,
 provenance conflict, or material contradiction stops the affected action and

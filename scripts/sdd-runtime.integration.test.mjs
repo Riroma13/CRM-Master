@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile, rm, mkdtemp } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, mkdtemp, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
@@ -9,14 +9,86 @@ import {
   buildInitialState,
   createContextPacket,
   createTraceEvent,
+  dispatchUntilTerminal,
   gitMutationBarrier,
   persistTransition,
   reconcileTraceState,
   resolveRoute,
   resolveConfiguredRoute,
+  recoverStrandedCheckpoint,
+  recoverDispatchMaterialization,
+  hashObject,
+  STRANDED_RECOVERY_TARGET,
 } from './sdd-runtime.mjs';
 
 const hashes = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
+
+test('PASS after two environment retries persists the next Apply action without changing history or attempts', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-pass-after-retries-'));
+  const change = 'pass-after-retries';
+  const changePath = join(root, 'openspec', 'changes', change);
+  const action = 'Apply 7.3 Feature Implementation';
+  const before = {
+    ...buildInitialState({ root, change, fingerprints: hashes }),
+    checkpoint: { phase: action, artifact: 'apply-progress.md', verdict: 'BLOCKED', next: action },
+    attempts: { [action]: 2 },
+  };
+  const pass = { change, action, role: 'MID', status: 'PASS', artifacts: ['apply-progress.md'], evidence: ['accepted fresh PASS'], next: 'Apply 7.4 Integration' };
+
+  try {
+    const result = dispatchUntilTerminal({ state: before, outcomes: [pass] });
+    const after = result.state;
+    assert.equal(result.status, 'READY');
+    assert.equal(after.checkpoint.next, 'Apply 7.4 Integration');
+    assert.equal(after.checkpoint.verdict, 'PASS');
+    assert.deepEqual(after.attempts, before.attempts);
+
+    const event = createTraceEvent({
+      change,
+      sequence: after.sequence,
+      action,
+      role: 'MID',
+      inputHash: after.lastTransition.inputHash,
+      outcomeHash: after.lastTransition.outcomeHash,
+      beforeState: before,
+      afterState: after,
+      route: { configured: 'MID', resolved: 'sdd-direct-apply', rejections: [] },
+      contextAudit: { bootstrapReadCount: 1, normalPhaseBootstrapReadCount: 0, references: { workflow: 'docs/SDD-WORKFLOW.md', modelMap: '.opencode/sdd-model-map.json', config: 'openspec/config.yaml' } },
+    });
+    const persisted = await persistTransition({ changePath, event, state: after });
+    const stored = JSON.parse(await readFile(persisted.tracePath, 'utf8'));
+    const traceDirectory = join(changePath, '.sdd-runtime', 'trace');
+    const reconciled = reconcileTraceState(before, [stored]);
+
+    assert.equal(persisted.duplicate, false);
+    assert.equal(stored.operation, undefined);
+    assert.equal(stored.previousEventHash, null);
+    assert.equal(stored.sequence, 1);
+    assert.equal(reconciled.state.checkpoint.next, 'Apply 7.4 Integration');
+    assert.deepEqual(reconciled.state.attempts, before.attempts);
+    assert.deepEqual(await readdir(traceDirectory), [`${String(event.sequence).padStart(20, '0')}-${event.eventHash}.json`]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+async function fixture() {
+  const root = await mkdtemp(join(tmpdir(), 'crm-stranded-integration-')); const change = 'integration-stranded';
+  const changePath = join(root, 'openspec', 'changes', change); const refs = { workflow: 'docs/SDD-WORKFLOW.md', modelMap: '.opencode/sdd-model-map.json', config: 'openspec/config.yaml' };
+  await Promise.all([mkdir(join(root, 'docs'), { recursive: true }), mkdir(join(root, '.opencode'), { recursive: true }), mkdir(join(root, 'openspec'), { recursive: true })]);
+  for (const [key, file] of Object.entries(refs)) await writeFile(join(root, file), key);
+  const fingerprints = { workflow: hashObject(await readFile(join(root, refs.workflow))), modelMap: hashObject(await readFile(join(root, refs.modelMap))), config: hashObject(await readFile(join(root, refs.config))), artifacts: {} };
+  let state = buildInitialState({ root, change, fingerprints });
+  const actions = ['Design', 'Architecture Review', 'Tasks', 'Tasks Review', 'Workload Guard', 'Apply 7.1 Foundation', 'Apply 7.2 Core Engine'];
+  for (const action of actions) {
+    const after = { ...state, sequence: state.sequence + 1, checkpoint: { phase: action, artifact: null, verdict: 'PASS', next: action === actions.at(-1) ? 'Apply 7.3 Feature Implementation' : ({ Design: 'Architecture Review', 'Architecture Review': 'Tasks', Tasks: 'Tasks Review', 'Tasks Review': 'Workload Guard', 'Workload Guard': 'Apply 7.1 Foundation', 'Apply 7.1 Foundation': 'Apply 7.2 Core Engine' }[action]) }, traceCursor: { sequence: state.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { inputHash: 'd'.repeat(64), outcomeHash: 'e'.repeat(64), afterStateHash: hashObject({ action }) } };
+    const event = createTraceEvent({ change, sequence: after.sequence, action, role: action === 'Design' || action === 'Architecture Review' ? 'HIGH' : 'MID', inputHash: 'd'.repeat(64), outcomeHash: 'e'.repeat(64), beforeState: state, afterState: after });
+    await persistTransition({ changePath, event, state: after }); state = { ...after, traceCursor: { sequence: event.sequence, eventHash: event.eventHash, chainHash: event.chainHash } };
+  }
+  const after = { ...state, status: 'HUMAN_HANDOFF', sequence: state.sequence + 1, checkpoint: { phase: 'Apply 7.3 Feature Implementation', artifact: null, verdict: 'BLOCKED', next: null }, traceCursor: { sequence: state.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { inputHash: 'f'.repeat(64), outcomeHash: 'a'.repeat(64), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF' }) } };
+  const event = createTraceEvent({ change, sequence: after.sequence, action: 'Apply 7.3 Feature Implementation', role: 'MID', inputHash: after.lastTransition.inputHash, outcomeHash: after.lastTransition.outcomeHash, beforeState: state, afterState: after });
+  await persistTransition({ changePath, event, state: after }); return { root, change, changePath, state: { ...after, traceCursor: { sequence: event.sequence, eventHash: event.eventHash, chainHash: event.chainHash } }, fingerprints, refs };
+}
 
 test('live dispatch context is reused without bootstrap bodies or repeated reads', () => {
   const packet = createContextPacket({
@@ -93,6 +165,18 @@ test('canonical runtime command enumerates every runtime suite exactly once', as
   assert.equal(new Set(namedSuites).size, expected.length);
 });
 
+test('every local Direct command and agent references the canonical outcome contract', async () => {
+  const { readdir } = await import('node:fs/promises');
+  const root = process.cwd();
+  assert.match(await readFile(join(root, 'docs/architecture/sdd-direct.md'), 'utf8'), /executor-outcome-contract:start/);
+  const files = [join(root, '.opencode', 'commands', 'sdd-direct.md')];
+  const agents = await readdir(join(root, '.opencode', 'agents'));
+  files.push(...agents.filter((name) => /^sdd-direct-.*\.md$/.test(name)).map((name) => join(root, '.opencode', 'agents', name)));
+  for (const file of files) {
+    assert.match(await readFile(file, 'utf8'), /canonical Executor Outcome Contract[\s\S]*docs\/architecture\/sdd-direct\.md/);
+  }
+});
+
 test('integration dispatch converts exhausted Architecture refinement to FATAL/HUMAN', async () => {
   const { dispatchUntilTerminal } = await import('./sdd-runtime.mjs');
   const state = {
@@ -131,4 +215,95 @@ test('bootstrap publishes one state on a fresh path and preserves collision evid
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test('stranded recovery rejects stale, duplicate, foreign, corrupt, ambiguous, and fingerprint-mismatched requests', async () => {
+  const f = await fixture();
+  const request = (overrides = {}) => recoverStrandedCheckpoint({ root: f.root, change: f.change, canonicalPath: f.changePath, expectedSequence: f.state.sequence, target: STRANDED_RECOVERY_TARGET, authorityRefs: f.refs, fingerprints: f.fingerprints, authorization: { actor: 'HUMAN / MAINTAINER', approval: 'approval' }, ...overrides });
+  try {
+    await assert.rejects(() => request({ expectedSequence: f.state.sequence - 1 }), /stale/i);
+    await assert.rejects(() => request({ fingerprints: { ...f.fingerprints, workflow: '0'.repeat(64) } }), /fingerprint/i);
+    await assert.rejects(() => request({ authorityRefs: { ...f.refs, extra: 'x' } }), /ambiguous/i);
+    await assert.rejects(() => request({ authorization: { actor: 'not-a-maintainer', approval: 'approval' } }), /authorization/i);
+    await assert.rejects(() => request({ unexpected: true }), /unknown|recovery request/i);
+    await assert.rejects(() => request({ target: 'Apply 7.4 Integration' }), /target/i);
+    const first = await request();
+    await assert.rejects(() => request(), /stale/i);
+    await assert.rejects(() => request({ change: 'foreign' }), /identity|canonical|ENOENT|trace/i);
+    const corrupt = await fixture();
+    await writeFile(join(corrupt.changePath, '.sdd-runtime', 'trace', 'bad.json'), '{}');
+    await assert.rejects(() => recoverStrandedCheckpoint({ root: corrupt.root, change: corrupt.change, canonicalPath: corrupt.changePath, expectedSequence: corrupt.state.sequence, target: STRANDED_RECOVERY_TARGET, authorityRefs: corrupt.refs, fingerprints: corrupt.fingerprints, authorization: { actor: 'HUMAN / MAINTAINER', approval: 'approval' } }), /ambiguous|trace/i);
+    await rm(corrupt.root, { recursive: true, force: true });
+    assert.equal(first.state.status, 'READY');
+  } finally { await rm(f.root, { recursive: true, force: true }); }
+});
+
+test('authorized dispatch-materialization recovery is append-only, preserves budgets, and requires a fresh Apply 7.5 result', async () => {
+  const f = await fixture();
+  try {
+    let state = f.state;
+    for (let sequence = 9; sequence < 20; sequence += 1) {
+      const after = { ...state, status: 'READY', sequence, checkpoint: { phase: 'Apply 7.3 Feature Implementation', artifact: 'tasks.md', verdict: 'PASS', next: 'Apply 7.4 Integration' }, traceCursor: { sequence, eventHash: null, chainHash: null } };
+      const event = createTraceEvent({ change: f.change, sequence, action: 'Apply 7.3 Feature Implementation', role: 'MID', inputHash: String(sequence).repeat(64).slice(0, 64), outcomeHash: String(sequence + 1).repeat(64).slice(0, 64), beforeState: state, afterState: after });
+      await persistTransition({ changePath: f.changePath, event, state: after });
+      state = { ...after, traceCursor: { sequence, eventHash: event.eventHash, chainHash: event.chainHash } };
+    }
+    const predecessor = { ...state, sequence: 20, checkpoint: { phase: 'Apply 7.4 Integration', artifact: 'tasks.md', verdict: 'PASS', next: 'Apply 7.5 Testing' }, traceCursor: { sequence: 20, eventHash: null, chainHash: null } };
+    const event20 = createTraceEvent({ change: f.change, sequence: 20, action: 'Apply 7.4 Integration', role: 'MID', inputHash: '1'.repeat(64), outcomeHash: '2'.repeat(64), beforeState: { ...state, sequence: 19, traceCursor: state.traceCursor }, afterState: predecessor });
+    await persistTransition({ changePath: f.changePath, event: event20, state: predecessor });
+    state = { ...predecessor, traceCursor: { sequence: 20, eventHash: event20.eventHash, chainHash: event20.chainHash } };
+    const blockedOutcome = { change: f.change, action: 'Apply 7.5 Testing', role: 'MID', status: 'BLOCKED', artifacts: ['tasks.md'], evidence: ['recoverable regression evidence'], next: 'Apply 7.5 Testing', blocker: { class: 'HUMAN_SCOPE', human_required: true, reason: 'bounded regression decision', resume_phase: 'Apply 7.5 Testing' } };
+    const normalizedBlockedOutcome = { ...blockedOutcome, status: 'HUMAN_HANDOFF', next: null };
+    const handoffState = { ...state, status: 'HUMAN_HANDOFF', sequence: 21, checkpoint: { phase: 'Apply 7.4 Integration', artifact: 'tasks.md', verdict: 'BLOCKED', next: null }, traceCursor: { sequence: 21, eventHash: null, chainHash: null }, lastTransition: { action: 'Apply 7.5 Testing', inputHash: hashObject(blockedOutcome), outcomeHash: hashObject(normalizedBlockedOutcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF' }) } };
+    const event21 = createTraceEvent({ change: f.change, sequence: 21, action: 'Apply 7.5 Testing', role: 'MID', inputHash: hashObject(blockedOutcome), outcomeHash: hashObject(normalizedBlockedOutcome), beforeState: state, afterState: handoffState });
+    await persistTransition({ changePath: f.changePath, event: event21, state: handoffState });
+    state = { ...handoffState, traceCursor: { sequence: 21, eventHash: event21.eventHash, chainHash: event21.chainHash } };
+    const request = { root: f.root, change: f.change, canonicalPath: f.changePath, expectedSequence: 21, target: 'Apply 7.5 Testing', authorityRefs: f.refs, fingerprints: f.fingerprints, authorization: { actor: 'HUMAN / MAINTAINER', approval: 'explicit hotfix authorization' }, blockedOutcome };
+    await assert.rejects(() => recoverDispatchMaterialization({ ...request, target: 'Apply 7.4 Integration' }), /target/i);
+    await assert.rejects(() => recoverDispatchMaterialization({ ...request, blockedOutcome: { ...blockedOutcome, next: 'Apply 7.6 Apply Summary' } }), /recoverable|evidence/i);
+    await assert.rejects(() => recoverDispatchMaterialization({ ...request, blockedOutcome: { ...blockedOutcome, blocker: { ...blockedOutcome.blocker, class: 'HUMAN_SECURITY' } } }), /recoverable|evidence/i);
+    await assert.rejects(() => recoverDispatchMaterialization({ ...request, blockedOutcome: { ...blockedOutcome, evidence: ['altered evidence'] } }), /originating|provenance/i);
+    await assert.rejects(() => recoverDispatchMaterialization({ ...request, blockedOutcome: { ...blockedOutcome, artifacts: ['other.md'] } }), /artifact|provenance/i);
+    await assert.rejects(() => recoverDispatchMaterialization({ ...request, authorization: { actor: 'not-human', approval: 'approval' } }), /authorization/i);
+    await assert.rejects(() => recoverDispatchMaterialization({ ...request, expectedSequence: 20 }), /sequence/i);
+    await assert.rejects(() => recoverDispatchMaterialization({ ...request, fingerprints: { ...f.fingerprints, workflow: '0'.repeat(64) } }), /fingerprint/i);
+    await assert.rejects(() => recoverDispatchMaterialization({ ...request, authorityRefs: { ...f.refs, extra: 'foreign' } }), /ambiguous/i);
+    const statePath = join(f.changePath, '.sdd-runtime', 'state.json');
+    const originalStateText = await readFile(statePath, 'utf8');
+    await writeFile(statePath, JSON.stringify({ ...state, checkpoint: { ...state.checkpoint, phase: 'Apply 7.3 Feature Implementation' } }));
+    await assert.rejects(() => recoverDispatchMaterialization(request), /checkpoint|mismatch/i);
+    await writeFile(statePath, originalStateText);
+    const corruptTracePath = join(f.changePath, '.sdd-runtime', 'trace', 'bad.json');
+    await writeFile(corruptTracePath, '{}');
+    await assert.rejects(() => recoverDispatchMaterialization(request), /ambiguous|trace/i);
+    await rm(corruptTracePath);
+    await writeFile(join(f.changePath, '.sdd-runtime', 'dispatch-materialization-recovery.lock'), 'locked');
+    await assert.rejects(() => recoverDispatchMaterialization(request), /concurrent/i);
+    await rm(join(f.changePath, '.sdd-runtime', 'dispatch-materialization-recovery.lock'));
+    const traceDirectory = join(f.changePath, '.sdd-runtime', 'trace');
+    const beforeTraceNames = (await readdir(traceDirectory)).sort();
+    const beforeTraceBytes = new Map(await Promise.all(beforeTraceNames.map(async (name) => [name, await readFile(join(traceDirectory, name), 'utf8')])));
+    const beforeState = JSON.stringify(JSON.parse(await readFile(join(f.changePath, '.sdd-runtime', 'state.json'))));
+    const result = await recoverDispatchMaterialization(request);
+    assert.equal(result.state.status, 'READY');
+    assert.deepEqual(result.state.checkpoint, { phase: 'Apply 7.5 Testing', artifact: 'tasks.md', verdict: 'BLOCKED', next: 'Apply 7.5 Testing' });
+    assert.deepEqual(result.state.attempts, state.attempts);
+    assert.deepEqual(result.state.fingerprints, state.fingerprints);
+    assert.equal(result.event.operation, 'RECOVER_DISPATCH_MATERIALIZATION');
+    assert.equal(result.event.sequence, 22);
+    assert.equal(JSON.stringify(JSON.parse(await readFile(join(f.changePath, '.sdd-runtime', 'state.json')))) === beforeState, false);
+    const trace = await readFile(result.tracePath, 'utf8');
+    assert.equal(JSON.parse(trace).previousEventHash, event21.eventHash);
+    const afterTraceNames = (await readdir(traceDirectory)).sort();
+    assert.equal(afterTraceNames.length, beforeTraceNames.length + 1);
+    for (const [name, bytes] of beforeTraceBytes) assert.equal(await readFile(join(traceDirectory, name), 'utf8'), bytes);
+    const replay = dispatchUntilTerminal({ state: result.state, outcomes: [blockedOutcome] });
+    assert.equal(replay.status, 'READY');
+    assert.equal(replay.duplicate, true);
+    assert.equal(replay.state.checkpoint.next, 'Apply 7.5 Testing');
+    const { blocker: _blocked, ...freshBase } = blockedOutcome;
+    const fresh = { ...freshBase, status: 'PASS', evidence: ['fresh executor result'], next: 'Apply 7.6 Apply Summary' };
+    assert.equal(dispatchUntilTerminal({ state: result.state, outcomes: [fresh] }).state.checkpoint.next, 'Apply 7.6 Apply Summary');
+    await assert.rejects(() => recoverDispatchMaterialization(request), /stale/i);
+  } finally { await rm(f.root, { recursive: true, force: true }); }
 });

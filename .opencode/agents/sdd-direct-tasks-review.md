@@ -14,9 +14,13 @@ Tasks Review artifact in the active change directory. Do not implement tasks,
 modify the Design, or invent a second review lifecycle. Use only project-local
 Direct adapters and `.opencode/sdd-model-map.json`.
 
-Return a structured result with status, findings, evidence, and the next action
-prescribed by the canonical workflow.
+Return findings through the packet's string arrays and use its canonical next
+action; do not add review-specific top-level fields.
 
 Return one validated, idempotent outcome packet with the review verdict,
 artifacts, evidence, legal next action, and structured blocker when applicable.
 Do not infer a transition from explanatory prose.
+
+Use exactly the canonical Executor Outcome Contract in
+`docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
+its schema.

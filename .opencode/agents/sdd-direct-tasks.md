@@ -15,9 +15,13 @@ forecast. Use `scripts/validate-enterprise-design.mjs` as the Design shape
 pre-gate when the Design is available. Use only project-local Direct adapters
 and the mapping in `.opencode/sdd-model-map.json`.
 
-Return a structured result with status, change, artifact, working set, workload
-forecast, evidence, and the next action prescribed by the canonical workflow.
+Return artifact, Working Set, and workload details through the packet's string
+arrays; do not add task-specific top-level fields.
 
 Return one validated, idempotent outcome packet with the task artifact, exact
 evidence, legal next action, and structured blocker when applicable. Do not
 force a stop when the runtime has a legal non-HUMAN transition.
+
+Use exactly the canonical Executor Outcome Contract in
+`docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
+its schema.

@@ -174,6 +174,19 @@ Material contradictions stop the affected action and are classified as
 BLOCKED or NEEDS_EVIDENCE. A new bounded evidence packet may be requested once;
 the correction budget still controls any resulting review retry.
 
+The generic HUMAN_HANDOFF remains terminal. One additional HUMAN / MAINTAINER-
+authorized same-phase recovery exists only for the demonstrated dispatch
+materialization defect: when the latest accepted event is `Apply 7.5 Testing`,
+the persisted checkpoint is the exact predecessor `Apply 7.4 Integration`, and
+identity, sequence, complete trace, authority references, fingerprints,
+provenance, and explicitly recoverable BLOCKED evidence all agree. The bounded
+operation binds that evidence to the originating handoff hashes, appends one
+event, preserves attempts and budgets, materializes READY
+with a BLOCKED checkpoint whose `next` is `Apply 7.5 Testing`, and requires a
+fresh schema-valid executor result; it never infers PASS. All other mismatches
+and HUMAN handoffs remain terminal. This is separate from the existing Apply
+7.3 stranded-checkpoint recovery contract, which remains unchanged.
+
 ## Baseline Debt
 
 A failing check blocks only when it is caused by the active change, violates an

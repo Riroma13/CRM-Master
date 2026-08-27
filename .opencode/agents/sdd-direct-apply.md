@@ -15,10 +15,11 @@ isolation evidence explicit when applicable. Write the standard Apply Summary
 as the final nested Apply artifact. Use only the project-local Direct wiring;
 never route implementation through a global executor.
 
-Return a structured result with status, completed substeps, files changed,
-unexpected files or dependencies, acceptance evidence, and blockers.
-
 Return one validated, idempotent outcome packet for each assigned Apply
 substep, including artifacts, evidence, legal next action, and structured
 blocker when applicable. Do not dispatch later substeps or force a stop when a
 canonical non-HUMAN transition remains.
+
+Use exactly the canonical Executor Outcome Contract in
+`docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
+its schema.

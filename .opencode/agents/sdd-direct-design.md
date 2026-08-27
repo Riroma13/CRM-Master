@@ -20,5 +20,9 @@ role, status, artifacts, evidence, legal next action, and structured blocker
 when blocked. Do not select unrelated phases or force a stop when the canonical
 next action is non-HUMAN.
 
-Return a structured result with status, artifact, design confidence, Working
-Set, evidence, and the next action prescribed by the canonical workflow.
+Return design confidence and Working Set details through the packet's string
+arrays; do not add those as top-level fields.
+
+Use exactly the canonical Executor Outcome Contract in
+`docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
+its schema.

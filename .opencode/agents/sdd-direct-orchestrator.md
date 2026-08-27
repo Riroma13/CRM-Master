@@ -48,15 +48,37 @@ LOW may gather bounded evidence and mechanical summaries only; it must stop and
 escalate when reasoning or scope expansion is needed. Preserve unrelated user
 changes and never overwrite an artifact whose provenance is unclear.
 
-## Structured Result
+## Executor Result
 
-```yaml
-status: READY | BLOCKED | STOP | FAILED
-change: <change-name>
-action: <current action>
-artifacts: []
-role: HIGH | MID | LOW | HUMAN
-evidence: []
-blocked_by: []
-next: <canonical next action or maintainer handoff>
-```
+Return exactly the canonical Executor Outcome Contract in
+`docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
+its schema.
+
+## Explicit HUMAN stranded-checkpoint recovery
+
+The sole bounded recovery operation is the exported
+`recoverStrandedCheckpoint` operation. Invoke it only with explicit HUMAN /
+MAINTAINER authorization and the exact input
+`{ root, change, canonicalPath, expectedSequence, target,
+authorityRefs: { workflow: "docs/SDD-WORKFLOW.md",
+modelMap: ".opencode/sdd-model-map.json", config: "openspec/config.yaml" },
+fingerprints, authorization: { actor: "HUMAN / MAINTAINER", approval } }`. It verifies the accepted trace rather
+than any malformed executor payload, appends exactly one event, and
+materializes READY/BLOCKED with `next: Apply 7.3 Feature Implementation`.
+Recovery does not consume an Apply 7.3 attempt and never dispatches Apply 7.3;
+the next executor result must be fresh before Apply 7.4 can be selected. Do not
+invoke it against a real product change while implementing or testing this
+hotfix. Without this exact authorization, preserve normal HUMAN_HANDOFF
+terminal behavior.
+
+The only additional recovery route is the explicitly authorized
+`recoverDispatchMaterialization` operation. Route it only when the exact
+demonstrated compatibility predicate holds: latest accepted action
+`Apply 7.5 Testing`, persisted phase `Apply 7.4 Integration`, exact predecessor
+edge, and valid identity/sequence/trace/authority/fingerprint/provenance plus
+recoverable BLOCKED evidence bound to the originating handoff hashes. The
+operation is append-only, preserves attempts
+and budgets, returns READY with a BLOCKED `Apply 7.5 Testing` checkpoint, and
+requires a fresh schema-valid result. All other mismatches stay terminal; the
+existing Apply 7.3 `recoverStrandedCheckpoint` contract is separate and
+unchanged.
