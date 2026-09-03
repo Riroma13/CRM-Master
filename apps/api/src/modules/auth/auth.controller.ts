@@ -1,6 +1,6 @@
 import {
   Controller, Post, Get, Body, UseGuards,
-  HttpCode, HttpStatus, ConflictException, Req,
+  HttpCode, HttpStatus, ConflictException, Req, Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -8,6 +8,13 @@ import { AuthService } from './auth.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { randomBytes } from 'crypto';
+import { AUTH_SESSION_TOKEN } from './auth.service';
+
+const SESSION_COOKIE = '__Secure-better-auth.session_token';
+
+function readSessionToken(cookie: string | undefined): string | null {
+  return cookie?.split(';').map(value => value.trim()).find(value => value.startsWith(`${SESSION_COOKIE}=`))?.slice(SESSION_COOKIE.length + 1) || null;
+}
 
 @ApiTags('Auth')
 @Controller('api/v1/auth')
@@ -21,17 +28,19 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Iniciar sesión por email + password' })
-  async login(@Body() body: any) {
-    return this.authService.login(body);
-  }
-
-  @Public()
-  @Post('check-user')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verificar si un email existe en el sistema' })
-  async checkUser(@Body() body: any) {
-    const user = await this.authService.checkUserExists(body.email);
-    return { exists: !!user, email: body.email };
+  async login(@Body() body: any, @Res({ passthrough: true }) response: any, @Req() request: Request) {
+    const result = await this.authService.login(body, (request as any)?.hostTenantId);
+    const token = (result as any)[AUTH_SESSION_TOKEN];
+    if (response?.cookie) {
+      response.cookie(SESSION_COOKIE, token || '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        ...(process.env.NODE_ENV === 'production' ? { domain: '.crmmaster.com' } : {}),
+      });
+    }
+    return result;
   }
 
   @Public()
@@ -68,9 +77,16 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Cerrar sesión' })
-  async logout() {
+  async logout(@Req() request: Request, @Res({ passthrough: true }) response: any) {
+    await this.authService.logout(readSessionToken(request.headers.cookie));
+    response.clearCookie(SESSION_COOKIE, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      ...(process.env.NODE_ENV === 'production' ? { domain: '.crmmaster.com' } : {}),
+    });
     return;
   }
 }

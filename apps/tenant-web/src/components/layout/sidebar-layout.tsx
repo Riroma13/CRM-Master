@@ -9,6 +9,7 @@ import { Breadcrumbs } from './breadcrumbs';
 import { CommandPalette } from '@/components/search/command-palette';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import { ToastProvider } from '@/components/ui/toast';
+import { api } from '@/lib/api';
 
 interface SearchResult {
   type: string;
@@ -40,15 +41,9 @@ function GlobalSearch() {
     if (q.length < 2) { setResults([]); setOpen(false); return; }
     debounceRef.current = setTimeout(async () => {
       try {
-        const token = sessionStorage.getItem('crm_session_token') || localStorage.getItem('crm_session_token');
-        const res = await fetch(`/api/v1/search?q=${encodeURIComponent(q)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setResults(data.results || []);
-          setOpen(true);
-        }
+        const data = await api.get<{ results?: SearchResult[] }>('/api/v1/search', { q }, { auth: true });
+        setResults(data.results || []);
+        setOpen(true);
       } catch {}
     }, 300);
   };

@@ -58,7 +58,7 @@ export class TenantScopeGuard implements CanActivate {
       throw new UnauthorizedException('Se requiere autenticación');
     }
 
-    if (request.user.tenantId && request.user.tenantId !== tenantId) {
+    if (request.user.tenantId !== tenantId) {
       throw new ForbiddenException(
         'Acceso denegado: discrepancia entre el token y el tenant',
       );

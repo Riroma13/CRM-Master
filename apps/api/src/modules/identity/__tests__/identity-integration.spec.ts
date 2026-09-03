@@ -180,6 +180,26 @@ describe('Better Auth session transport', () => {
     expect(forwarded.get('x-tenant-id')).toBeNull();
   });
 
+  it('falls back to an active opaque Better Auth session cookie', async () => {
+    const getSession = jest.fn().mockResolvedValue(null);
+    const findFirst = jest.fn().mockResolvedValue({
+      userId: 'ba-user-1',
+      activeOrganizationId: null,
+    });
+    const adapter = new BetterAuthProviderSessionAdapter(
+      { api: { getSession } } as any,
+      { admin: { session: { findFirst } } } as any,
+    );
+
+    await expect(
+      adapter.getSession(new Headers({ cookie: '__Secure-better-auth.session_token=opaque-token' })),
+    ).resolves.toEqual({ userId: 'ba-user-1', activeOrganizationId: null });
+
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { token: 'opaque-token', expiresAt: { gt: expect.any(Date) } },
+    });
+  });
+
   it('rejects invalid Better Auth cookies with the same generic unauthorized response', async () => {
     const provider = { getSession: jest.fn().mockResolvedValue(null) };
     const prisma = { admin: { legacyUser: { findFirst: jest.fn() } } };

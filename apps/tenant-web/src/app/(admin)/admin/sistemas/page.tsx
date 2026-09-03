@@ -1,113 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Plus } from 'lucide-react';
 import { useSistemas } from '@/hooks/use-sistemas';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
 import { SistemaForm } from '@/components/forms/sistema-form';
-import { HardDrive, Activity, Plus } from 'lucide-react';
-
-const ESTADO_COLORS: Record<string, string> = {
-  '🟢': 'bg-[#D1FAE5] text-[#10B981]',
-  '🟡': 'bg-[#FEF3C7] text-[#F59E0B]',
-  '🔴': 'bg-[#FEE2E2] text-[#EF4444]',
-  '⚪': 'bg-[#F0EDEF] text-[#45464D]',
-};
+import { PageHeader } from '@/components/foundation/page-header';
+import { StatePanel } from '@/components/foundation/state-panel';
+import { StatusBadge } from '@/components/foundation/status-badge';
+import { DataRow } from '@/components/foundation/data-row';
 
 export default function SistemasPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
-  const { sistemas, isLoading, isError, error, refetch } = useSistemas();
+  const { sistemas, isLoading, isError, refetch } = useSistemas();
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Sistemas</h1>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-28 animate-pulse rounded-[0.5rem] border border-[#E2E8F0] bg-white p-4" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <StatePanel state="loading" label="systems" title="Loading systems" />;
+  if (isError) return <StatePanel state="error" title="Unable to load systems" description="Try again to refresh systems." onRetry={refetch} />;
 
-  if (isError) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Sistemas</h1>
-        </div>
-        <div className="rounded-[0.5rem] border border-[#EF4444]/30 bg-[#FEF2F2] p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-[#EF4444]">Error al cargar sistemas</p>
-              <p className="text-xs text-[#45464D]">{error?.message || 'Error desconocido'}</p>
-            </div>
-            <Button variant="outline" size="sm" onClick={refetch}>Reintentar</Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Sistemas</h1>
-        <Button size="sm" className="gap-1.5 bg-[#131B2E] text-xs text-white" onClick={() => setShowForm(true)}>
-          <Plus className="h-3.5 w-3.5" />
-          Nuevo sistema
-        </Button>
-      </div>
-
-      {sistemas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-[0.5rem] border-2 border-dashed border-[#C6C6CD] bg-white p-12">
-          <HardDrive className="h-10 w-10 text-[#45464D] mb-3" />
-          <p className="text-sm font-semibold text-[#45464D]">No hay sistemas registrados</p>
-          <p className="mt-1 text-xs text-[#45464D]">Los sistemas aparecerán aquí cuando asocies clientes con sistemas</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sistemas.map((s) => (
-            <Card
-              key={s.id}
-              className="bg-white transition-shadow hover:shadow-md cursor-pointer"
-              onClick={() => router.push(`/admin/sistemas/${s.id}`)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-[16px] font-semibold text-[#1B1B1D]">{s.nombreSistema}</h3>
-                  <Badge variant="outline" className={ESTADO_COLORS[s.estadoTecnico] ?? ''}>
-                    {s.estadoTecnico}
-                  </Badge>
-                </div>
-                <p className="text-[13px] text-[#45464D]">{s.tipo}</p>
-                {s.cliente && (
-                  <p className="text-[11px] text-[#45464D] mt-1">{s.cliente.nombre}</p>
-                )}
-                <div className="flex items-center gap-3 text-[11px] text-[#45464D] mt-2 border-t border-[#E2E8F0] pt-2">
-                  <span className="flex items-center gap-1"><Activity className="h-3 w-3" /> {s._count?.items ?? 0} items</span>
-                  {s.entorno && <span>{s.entorno}</span>}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Create dialog */}
-      <Dialog open={showForm} onClose={() => setShowForm(false)} title="Nuevo sistema">
-        <SistemaForm
-          onSuccess={() => { setShowForm(false); refetch(); toast('success', 'Sistema creado correctamente'); }}
-          onCancel={() => setShowForm(false)}
-        />
-      </Dialog>
-    </div>
-  );
+  return <div className="space-y-6">
+    <PageHeader title="Systems" description="Review connected systems and their current technical state." action={<Button size="sm" onClick={() => setShowForm(true)}><Plus className="mr-2 h-4 w-4" />New system</Button>} />
+    {sistemas.length === 0 ? <StatePanel state="empty" title="No systems yet" description="Systems will appear here when they are connected." /> : <div className="overflow-hidden rounded-lg border border-[#E2E8F0]" role="table" aria-label="Systems"><div className="hidden border-b bg-[#F8FAFC] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#45464D] md:grid md:grid-cols-[minmax(12rem,2fr)_repeat(3,minmax(8rem,1fr))]"><span>System</span><span>Status</span><span>Client</span><span>Inventory</span></div>{sistemas.map((system) => <DataRow key={system.id} label={system.nombreSistema} href={`/admin/sistemas/${system.id}`} cells={[{ label: 'Status', value: <StatusBadge status="active" label={system.estadoTecnico} /> }, { label: 'Client', value: system.cliente?.nombre ?? '—' }, { label: 'Inventory', value: system._count?.items ?? 0 }]} />)}</div>}
+    <Dialog open={showForm} onClose={() => setShowForm(false)} title="New system"><SistemaForm onSuccess={() => { setShowForm(false); refetch(); toast('success', 'System created successfully'); }} onCancel={() => setShowForm(false)} /></Dialog>
+  </div>;
 }

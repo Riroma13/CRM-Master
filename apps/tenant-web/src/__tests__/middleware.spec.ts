@@ -93,4 +93,14 @@ describe('resolveAdvisoryRole', () => {
   it('does not grant an admin role from an absent session cookie', async () => {
     await expect(resolveAdvisoryRole({})).resolves.toBeNull();
   });
+
+  it('does not decode a client cookie into tenant-admin authority', async () => {
+    const payload = btoa(JSON.stringify({ role: 'admin' }));
+    const fakeClientJwt = `header.${payload}.signature`;
+
+    await expect(resolveAdvisoryRole({
+      clientCookie: fakeClientJwt,
+      clientPortalEnabled: true,
+    })).resolves.toBe('client');
+  });
 });

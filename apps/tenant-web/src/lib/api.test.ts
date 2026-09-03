@@ -76,12 +76,23 @@ describe('api.get()', () => {
     expect(callInit.headers?.['Authorization']).toBeUndefined();
   });
 
-  it('skips credentials by default', async () => {
+  it('always includes cookies for the central API seam', async () => {
     mockFetch({});
 
     await api.get('/test');
     const callInit = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1];
-    expect(callInit.credentials).toBeUndefined();
+    expect(callInit.credentials).toBe('include');
+  });
+
+  it('never promotes browser storage into an Authorization bearer header', async () => {
+    mockFetch({});
+    sessionStorage.setItem('crm_session_token', 'legacy-token');
+    localStorage.setItem('crm_session_token', 'legacy-token');
+
+    await api.get('/test', undefined, { auth: true });
+    const callInit = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1];
+    expect(callInit.credentials).toBe('include');
+    expect(callInit.headers?.['Authorization']).toBeUndefined();
   });
 });
 

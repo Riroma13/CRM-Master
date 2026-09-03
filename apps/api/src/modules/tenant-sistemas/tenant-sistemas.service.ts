@@ -37,6 +37,7 @@ export class TenantSistemasService {
   }
 
   async create(tenantId: string, data: { nombreSistema: string; tipo: string; clienteId: string; entorno?: string; version?: string }) {
+    await this.requireClient(tenantId, data.clienteId);
     const sistema = await this.prisma.admin.sistema.create({
       data: { ...data, tenantId },
     });
@@ -62,6 +63,7 @@ export class TenantSistemasService {
   async update(tenantId: string, id: string, data: any) {
     const sistema = await this.prisma.admin.sistema.findFirst({ where: { id, tenantId } });
     if (!sistema) throw new NotFoundException('Sistema no encontrado');
+    if (data.clienteId !== undefined) await this.requireClient(tenantId, data.clienteId);
     const updated = await this.prisma.admin.sistema.update({ where: { id }, data });
     try {
       await this.activityTimeline.publish({
@@ -97,6 +99,7 @@ export class TenantSistemasService {
   }
 
   async createItem(tenantId: string, sistemaId: string, data: { nombre: string; categoria: string; descripcion?: string; estado?: string }) {
+    await this.requireSistema(tenantId, sistemaId);
     return this.prisma.admin.itemInventario.create({
       data: { ...data, tenantId, sistemaId },
     });
@@ -105,6 +108,7 @@ export class TenantSistemasService {
   async updateItem(tenantId: string, itemId: string, data: any) {
     const item = await this.prisma.admin.itemInventario.findFirst({ where: { id: itemId, tenantId } });
     if (!item) throw new NotFoundException('Item no encontrado');
+    if (data.sistemaId !== undefined) await this.requireSistema(tenantId, data.sistemaId);
     return this.prisma.admin.itemInventario.update({ where: { id: itemId }, data });
   }
 
@@ -112,5 +116,15 @@ export class TenantSistemasService {
     const item = await this.prisma.admin.itemInventario.findFirst({ where: { id: itemId, tenantId } });
     if (!item) throw new NotFoundException('Item no encontrado');
     return this.prisma.admin.itemInventario.delete({ where: { id: itemId } });
+  }
+
+  private async requireClient(tenantId: string, clienteId: string) {
+    const cliente = await this.prisma.admin.cliente.findFirst({ where: { id: clienteId, tenantId } });
+    if (!cliente) throw new NotFoundException('Cliente no encontrado');
+  }
+
+  private async requireSistema(tenantId: string, sistemaId: string) {
+    const sistema = await this.prisma.admin.sistema.findFirst({ where: { id: sistemaId, tenantId } });
+    if (!sistema) throw new NotFoundException('Sistema no encontrado');
   }
 }

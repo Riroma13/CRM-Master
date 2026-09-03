@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
+import type { TareaDetail } from '@/lib/api-types';
+
+export function fetchTareaDetail(id: string): Promise<TareaDetail> {
+  return api.get<TareaDetail>(`/api/v1/tenant/tareas/${id}`, undefined, { auth: true });
+}
 
 export interface TareaItem {
   id: string;

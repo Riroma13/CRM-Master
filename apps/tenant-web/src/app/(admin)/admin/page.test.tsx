@@ -48,7 +48,7 @@ describe('AdminDashboardPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders 5 KPI cards with correct values from data', () => {
+  it('renders attention-first live summary values with accessible page composition', () => {
     vi.mocked(useDashboard).mockReturnValue({
       data: mockDashboardData,
       isLoading: false,
@@ -60,15 +60,17 @@ describe('AdminDashboardPage', () => {
 
     render(<AdminDashboardPage />);
 
+    expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Attention' })).toBeInTheDocument();
     expect(screen.getByText('12')).toBeDefined();
-    expect(screen.getByText('de 15 totales')).toBeDefined();
+    expect(screen.getByText('of 15 total')).toBeDefined();
     expect(screen.getByText('3')).toBeDefined();
     expect(screen.getByText('8')).toBeDefined();
     expect(screen.getByText('7')).toBeDefined();
     expect(screen.getByText('5')).toBeDefined();
   });
 
-  it('renders max 5 recent events', () => {
+  it('renders only supported recent activity values', () => {
     vi.mocked(useDashboard).mockReturnValue({
       data: {
         ...mockDashboardData,
@@ -92,9 +94,10 @@ describe('AdminDashboardPage', () => {
 
     expect(screen.getByText('Evento 1')).toBeDefined();
     expect(screen.getByText('Evento 2')).toBeDefined();
+    expect(screen.queryByText('undefined')).not.toBeInTheDocument();
   });
 
-  it('shows loading skeleton when loading', () => {
+  it('shows a labelled loading state when loading', () => {
     vi.mocked(useDashboard).mockReturnValue({
       data: null,
       isLoading: true,
@@ -104,12 +107,11 @@ describe('AdminDashboardPage', () => {
       refetch: vi.fn(),
     });
 
-    const { container } = render(<AdminDashboardPage />);
-    const skeletons = container.querySelectorAll('.animate-pulse');
-    expect(skeletons.length).toBeGreaterThanOrEqual(5);
+    render(<AdminDashboardPage />);
+    expect(screen.getByRole('status', { name: 'Loading overview' })).toBeInTheDocument();
   });
 
-  it('shows error banner when isError', () => {
+  it('shows a retryable semantic error state without raw server errors', () => {
     vi.mocked(useDashboard).mockReturnValue({
       data: null,
       isLoading: false,
@@ -121,7 +123,8 @@ describe('AdminDashboardPage', () => {
 
     render(<AdminDashboardPage />);
 
-    expect(screen.getByText('Error al cargar el dashboard')).toBeDefined();
-    expect(screen.getByText('Reintentar')).toBeDefined();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeDefined();
+    expect(screen.queryByText('Failed to fetch')).not.toBeInTheDocument();
   });
 });

@@ -8,6 +8,8 @@ import { PrismaService } from '../../common/prisma.service';
 import { ActivityTimelineService } from '../activity-timeline/activity-timeline.service';
 import { LoginDto, AuthResponseDto, MeDto } from './dto';
 
+export const AUTH_SESSION_TOKEN = Symbol('auth-session-token');
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -17,33 +19,31 @@ export class AuthService {
     private readonly activityTimeline: ActivityTimelineService,
   ) {}
 
-  async login(dto: LoginDto): Promise<AuthResponseDto> {
+  async login(
+    dto: LoginDto,
+    hostTenantId?: string,
+  ): Promise<Omit<AuthResponseDto, 'session'> & { session?: never }> {
     // Buscar usuario por email
     const user = await this.prisma.admin.legacyUser.findUnique({
       where: { email: dto.email },
       include: { tenant: true },
     });
+    const invalidCredentials = () => new UnauthorizedException('Credenciales inválidas');
     if (!user) {
-      throw new UnauthorizedException('Credenciales inválidas');
+      await bcrypt.compare(dto.password, '$2b$10$7EqJtq98hPqEX7fNZaFWoOe8h9YqY7J2QY1m7N8o3fG9x6aP0lC2K');
+      throw invalidCredentials();
     }
 
     const tenant = user.tenant;
-    if (!tenant || !tenant.isActive) {
-      throw new UnauthorizedException('Tenant desactivado o no encontrado');
+    if (!hostTenantId || !tenant || !tenant.isActive || !user.isActive || user.tenantId !== hostTenantId) {
+      await bcrypt.compare(dto.password, user.passwordHash || '$2b$10$7EqJtq98hPqEX7fNZaFWoOe8h9YqY7J2QY1m7N8o3fG9x6aP0lC2K');
+      throw invalidCredentials();
     }
 
     // Check password hash (bcrypt)
-    const hashRows = await (this.prisma.admin as any).$queryRawUnsafe(
-      'SELECT password_hash FROM users WHERE id = $1', user.id,
-    );
-    const storedHash: string | null = hashRows?.[0]?.password_hash;
-    if (!storedHash) {
-      // Legacy user without password hash — accept default password
-      if (dto.password !== 'password') {
-        throw new UnauthorizedException('Credenciales inválidas');
-      }
-    } else if (!bcrypt.compareSync(dto.password, storedHash)) {
-      throw new UnauthorizedException('Credenciales inválidas');
+    const storedHash: string | null = user.passwordHash;
+    if (!storedHash || !(await bcrypt.compare(dto.password, storedHash))) {
+      throw invalidCredentials();
     }
 
     // Crear sesión en ba_sessions (Better-Auth sessions table)
@@ -97,7 +97,7 @@ export class AuthService {
       this.logger.warn(`Failed to publish login.realizado: ${(e as Error).message}`);
     }
 
-    return {
+    const response: Omit<AuthResponseDto, 'session'> & { session?: never; [AUTH_SESSION_TOKEN]?: string } = {
       user: {
         id: user.id,
         email: user.email,
@@ -109,11 +109,21 @@ export class AuthService {
         slug: tenant.slug,
         name: tenant.name,
       },
-      session: {
-        token,
-        expiresAt: expiresAt.toISOString(),
-      },
     };
+    Object.defineProperty(response, AUTH_SESSION_TOKEN, {
+      value: token,
+      enumerable: false,
+      configurable: false,
+    });
+    return response;
+  }
+
+  async logout(token: string | null): Promise<void> {
+    if (!token) return;
+    await this.prisma.admin.$executeRawUnsafe(
+      'DELETE FROM ba_sessions WHERE token = $1',
+      token,
+    );
   }
 
   async checkUserExists(email: string) {

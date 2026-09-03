@@ -142,4 +142,69 @@ describe('tenant auth boundary core contracts', () => {
 
     expect(() => guard.canActivate(context)).toThrow(/discrepancia/i);
   });
+
+  it('rejects bearer credentials on tenant routes even when the provider accepts them', async () => {
+    const reflector = new Reflector();
+    const provider = { getSession: jest.fn().mockResolvedValue({ userId: 'user-a' }) };
+    const prisma = {
+      admin: { legacyUser: { findFirst: jest.fn().mockResolvedValue({
+        id: 'legacy-a', email: 'a@example.test', name: 'A', role: 'user', tenantId: 'tenant-a', isActive: true,
+      }) } },
+    };
+    const guard = new BetterAuthGuard(reflector, prisma as any, provider as any);
+    const request = {
+      path: '/api/v1/tenant/clientes',
+      headers: { authorization: 'Bearer reusable-token' },
+      hostTenantId: 'tenant-a',
+    };
+    const context = {
+      getHandler: () => ({}), getClass: () => ({}),
+      switchToHttp: () => ({ getRequest: () => request }),
+    } as any;
+
+    await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+    expect(provider.getSession).not.toHaveBeenCalled();
+  });
+
+  it('requires authenticated identity tenant equality with the immutable Host tenant', () => {
+    const reflector = new Reflector();
+    const guard = new TenantScopeGuard(reflector);
+    const context = {
+      getHandler: () => ({}), getClass: () => ({}),
+      switchToHttp: () => ({ getRequest: () => ({
+        hostTenantId: 'tenant-a', user: { id: 'user-b', tenantId: 'tenant-b' },
+      }) }),
+    } as any;
+
+    expect(() => guard.canActivate(context)).toThrow(/discrepancia/i);
+  });
+
+  it('denies an expired provider session before resolving an identity', async () => {
+    const provider = { getSession: jest.fn().mockResolvedValue(null) };
+    const guard = new BetterAuthGuard(new Reflector(), {} as any, provider as any);
+    const context = {
+      getHandler: () => ({}), getClass: () => ({}),
+      switchToHttp: () => ({ getRequest: () => ({
+        path: '/api/v1/tenant/clientes',
+        headers: { cookie: '__Secure-better-auth.session_token=expired' },
+      }) }),
+    } as any;
+
+    await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('denies a session whose identity is not mapped to a tenant-admin user', async () => {
+    const provider = { getSession: jest.fn().mockResolvedValue({ userId: 'unknown' }) };
+    const prisma = { admin: { legacyUser: { findFirst: jest.fn().mockResolvedValue(null) } } };
+    const guard = new BetterAuthGuard(new Reflector(), prisma as any, provider as any);
+    const context = {
+      getHandler: () => ({}), getClass: () => ({}),
+      switchToHttp: () => ({ getRequest: () => ({
+        path: '/api/v1/tenant/clientes',
+        headers: { cookie: '__Secure-better-auth.session_token=opaque' },
+      }) }),
+    } as any;
+
+    await expect(guard.canActivate(context)).rejects.toThrow(/no encontrado/i);
+  });
 });

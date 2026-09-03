@@ -13,6 +13,7 @@ import { AUTH_CLIENT } from '../auth-client.provider';
 import { IdentityProvider } from '../../modules/identity/identity.contracts';
 
 const ADMIN_ROUTE_PREFIX = '/api/v1/admin';
+const TENANT_ROUTE_PREFIX = '/api/v1/tenant';
 
 @Injectable()
 export class BetterAuthGuard implements CanActivate {
@@ -38,12 +39,16 @@ export class BetterAuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const path: string = request.path ?? request.originalUrl ?? '';
+    const isTenantRoute = path.startsWith(TENANT_ROUTE_PREFIX);
 
     // Extract Bearer token if present
     const authHeader = request.headers?.authorization;
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
     const cookie = typeof request.headers?.cookie === 'string' ? request.headers.cookie : null;
-    const hasSessionCredential = Boolean(token || cookie);
+    if (isTenantRoute && token) {
+      throw new UnauthorizedException('Se requiere sesión de cookie');
+    }
+    const hasSessionCredential = Boolean(isTenantRoute ? cookie : token || cookie);
 
     // For admin routes, a Better Auth cookie or bearer token is required.
     if (path.startsWith(ADMIN_ROUTE_PREFIX)) {
@@ -60,7 +65,7 @@ export class BetterAuthGuard implements CanActivate {
 
     // Resolve the session through the canonical Better Auth provider boundary.
     const sessionHeaders = new Headers();
-    if (token) sessionHeaders.set('authorization', `Bearer ${token}`);
+    if (!isTenantRoute && token) sessionHeaders.set('authorization', `Bearer ${token}`);
     if (cookie) sessionHeaders.set('cookie', cookie);
     const session = await this.provider.getSession(sessionHeaders);
 
