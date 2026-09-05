@@ -1,6 +1,5 @@
 import {
   Settings,
-  Lock,
   CreditCard,
   CreditCard as PlanIcon,
   FileText,
@@ -20,15 +19,6 @@ export const adminNavItems: NavItem[] = [
     order: 400,
     category: 'admin',
     module: 'perfil',
-  },
-  {
-    id: 'cambiarPassword',
-    label: 'Seguridad',
-    href: '/admin/cambiar-password',
-    icon: Lock,
-    order: 410,
-    category: 'admin',
-    module: 'cambiarPassword',
   },
   {
     id: 'pagos',

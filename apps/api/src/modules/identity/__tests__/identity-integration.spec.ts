@@ -1,11 +1,19 @@
 import 'reflect-metadata';
-jest.mock('../../../common/auth', () => ({ createAuth: jest.fn() }));
+jest.mock('../../../common/auth', () => ({
+  getSessionCookieConfig: () => process.env.AUTH_COOKIE_TRANSPORT === 'http'
+    ? { name: 'better-auth.session_token', attributes: { path: '/', httpOnly: true, sameSite: 'lax', secure: false } }
+    : { name: '__Secure-better-auth.session_token', attributes: { domain: '.crmmaster.com', path: '/', httpOnly: true, sameSite: 'lax', secure: true } },
+  createAuth: jest.fn(),
+}));
 import { RequestMethod } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { IdentityController } from '../identity.controller';
 import { IdentityOrganizationGuard } from '../identity-organization.guard';
 import { BetterAuthProviderSessionAdapter, providerHeaders } from '../../../common/auth-client.provider';
 import { BetterAuthGuard } from '../../../common/guards/better-auth.guard';
+const sessionCookieName = () => process.env.AUTH_COOKIE_TRANSPORT !== 'http'
+  ? '__Secure-better-auth.session_token'
+  : 'better-auth.session_token';
 
 describe('Identity integration route contract', () => {
   const routes = [
@@ -155,6 +163,15 @@ describe('Identity organization guard', () => {
 });
 
 describe('Better Auth session transport', () => {
+  const originalEnv = { NODE_ENV: process.env.NODE_ENV, AUTH_COOKIE_TRANSPORT: process.env.AUTH_COOKIE_TRANSPORT };
+
+  afterEach(() => {
+    if (originalEnv.NODE_ENV === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = originalEnv.NODE_ENV;
+    if (originalEnv.AUTH_COOKIE_TRANSPORT === undefined) delete process.env.AUTH_COOKIE_TRANSPORT;
+    else process.env.AUTH_COOKIE_TRANSPORT = originalEnv.AUTH_COOKIE_TRANSPORT;
+  });
+
   it('forwards opaque cookies and bearer credentials to Better Auth getSession', async () => {
     const getSession = jest.fn().mockResolvedValue({
       user: { id: 'ba-user-1' },
@@ -166,7 +183,7 @@ describe('Better Auth session transport', () => {
       adapter.getSession(
         providerHeaders(
           new Headers({
-            cookie: '__Secure-better-auth.session_token=opaque.signed.value',
+            cookie: `${sessionCookieName()}=opaque.signed.value`,
             authorization: 'Bearer legacy-bearer-token',
             'x-tenant-id': 'tenant-b',
           }),
@@ -175,7 +192,7 @@ describe('Better Auth session transport', () => {
     ).resolves.toEqual({ userId: 'ba-user-1', activeOrganizationId: 'org-a' });
 
     const forwarded = getSession.mock.calls[0][0].headers as Headers;
-    expect(forwarded.get('cookie')).toBe('__Secure-better-auth.session_token=opaque.signed.value');
+    expect(forwarded.get('cookie')).toBe(`${sessionCookieName()}=opaque.signed.value`);
     expect(forwarded.get('authorization')).toBe('Bearer legacy-bearer-token');
     expect(forwarded.get('x-tenant-id')).toBeNull();
   });
@@ -192,12 +209,27 @@ describe('Better Auth session transport', () => {
     );
 
     await expect(
-      adapter.getSession(new Headers({ cookie: '__Secure-better-auth.session_token=opaque-token' })),
+      adapter.getSession(new Headers({ cookie: `${sessionCookieName()}=opaque-token` })),
     ).resolves.toEqual({ userId: 'ba-user-1', activeOrganizationId: null });
 
     expect(findFirst).toHaveBeenCalledWith({
       where: { token: 'opaque-token', expiresAt: { gt: expect.any(Date) } },
     });
+  });
+
+  it('falls back to the non-production opaque session cookie over HTTP', async () => {
+    process.env.AUTH_COOKIE_TRANSPORT = 'http';
+    process.env.NODE_ENV = 'production';
+    const getSession = jest.fn().mockResolvedValue(null);
+    const findFirst = jest.fn().mockResolvedValue({ userId: 'ba-user-1', activeOrganizationId: null });
+    const adapter = new BetterAuthProviderSessionAdapter(
+      { api: { getSession } } as any,
+      { admin: { session: { findFirst } } } as any,
+    );
+
+    await expect(adapter.getSession(new Headers({ cookie: 'better-auth.session_token=opaque-token' })))
+      .resolves.toEqual({ userId: 'ba-user-1', activeOrganizationId: null });
+    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ token: 'opaque-token' }) }));
   });
 
   it('rejects invalid Better Auth cookies with the same generic unauthorized response', async () => {
@@ -212,7 +244,7 @@ describe('Better Auth session transport', () => {
       switchToHttp: () => ({
         getRequest: () => ({
           path: '/api/v1/admin/teams',
-          headers: { cookie: '__Secure-better-auth.session_token=invalid.opaque.cookie' },
+          headers: { cookie: `${sessionCookieName()}=invalid.opaque.cookie` },
         }),
       }),
       getHandler: () => function handler() {},
@@ -257,7 +289,7 @@ describe('Better Auth session transport', () => {
       switchToHttp: () => ({
         getRequest: () => ({
           path: '/api/v1/admin/teams',
-          headers: { cookie: '__Secure-better-auth.session_token=opaque.not-a-jwt' },
+          headers: { cookie: `${sessionCookieName()}=opaque.not-a-jwt` },
         }),
       }),
       getHandler: () => function handler() {},
@@ -276,7 +308,7 @@ describe('Better Auth session transport', () => {
     } as any);
 
     await expect(
-      adapter.getSession(new Headers({ cookie: '__Secure-better-auth.session_token=invalid' })),
+      adapter.getSession(new Headers({ cookie: `${sessionCookieName()}=invalid` })),
     ).resolves.toBeNull();
   });
 
@@ -304,7 +336,7 @@ describe('Better Auth session transport', () => {
       path: '/api/v1/admin/teams',
       headers: {
         authorization: 'Bearer legacy-bearer-token',
-        cookie: '__Secure-better-auth.session_token=opaque.signed.value',
+        cookie: `${sessionCookieName()}=opaque.signed.value`,
       },
     };
     const context = {
@@ -316,6 +348,6 @@ describe('Better Auth session transport', () => {
     await expect(guard.canActivate(context)).resolves.toBe(true);
     const forwarded = provider.getSession.mock.calls[0][0] as Headers;
     expect(forwarded.get('authorization')).toBe('Bearer legacy-bearer-token');
-    expect(forwarded.get('cookie')).toBe('__Secure-better-auth.session_token=opaque.signed.value');
+    expect(forwarded.get('cookie')).toBe(`${sessionCookieName()}=opaque.signed.value`);
   });
 });

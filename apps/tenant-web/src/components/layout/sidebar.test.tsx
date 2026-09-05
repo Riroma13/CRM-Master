@@ -47,6 +47,7 @@ vi.mock('lucide-react', () => ({
   BookOpen: () => <span data-testid="icon-bookopen">Bo</span>,
   Lock: () => <span data-testid="icon-lock">Lk</span>,
   History: () => <span data-testid="icon-history">Hy</span>,
+  LogOut: () => <span data-testid="icon-logout">Lo</span>,
 }));
 
 describe('Sidebar', () => {
@@ -76,5 +77,10 @@ describe('Sidebar', () => {
     render(<Sidebar />);
     const calendarioLink = screen.getByText('Calendario').closest('a');
     expect(calendarioLink).toHaveClass('bg-[#DAE2FD]');
+  });
+
+  it('does not render the sidebar Logout control', () => {
+    render(<Sidebar />);
+    expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).not.toBeInTheDocument();
   });
 });

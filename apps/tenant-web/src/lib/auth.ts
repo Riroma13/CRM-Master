@@ -23,6 +23,17 @@ export interface AuthUser {
   tenant: { id: string; slug: string; name: string };
 }
 
+export interface AuthIdentity {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+}
+
+export async function getCurrentUser(): Promise<AuthIdentity> {
+  return api.get<AuthIdentity>('/api/v1/auth/me');
+}
+
 export async function login(email: string, password: string): Promise<AuthUser> {
   const data = await api.post<AuthUser>('/api/v1/auth/login', { email, password });
   return data;

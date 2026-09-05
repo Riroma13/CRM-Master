@@ -8,6 +8,8 @@ import { Save } from 'lucide-react';
 
 interface ClienteFormData {
   nombre: string;
+  email?: string;
+  telefono?: string;
   tipoNegocio: string;
   estadoRelacion: string;
   saludGeneral: string;
@@ -28,6 +30,8 @@ const SALUDES = ['🟢', '🟡', '🔴'];
 export function ClienteForm({ initial, onSuccess, onCancel }: ClienteFormProps) {
   const isEdit = !!initial?.id;
   const [nombre, setNombre] = useState(initial?.nombre ?? '');
+  const [email, setEmail] = useState(initial?.email ?? '');
+  const [telefono, setTelefono] = useState(initial?.telefono ?? '');
   const [tipoNegocio, setTipoNegocio] = useState(initial?.tipoNegocio ?? '');
   const [estadoRelacion, setEstadoRelacion] = useState(initial?.estadoRelacion ?? 'Activo');
   const [saludGeneral, setSaludGeneral] = useState(initial?.saludGeneral ?? '🟢');
@@ -44,6 +48,8 @@ export function ClienteForm({ initial, onSuccess, onCancel }: ClienteFormProps) 
 
     const body = {
       nombre: nombre.trim(),
+      email: isEdit ? (email.trim() || null) : (email.trim() || undefined),
+      telefono: isEdit ? (telefono.trim() || null) : (telefono.trim() || undefined),
       tipoNegocio: tipoNegocio.trim() || undefined,
       estadoRelacion,
       saludGeneral,
@@ -86,6 +92,31 @@ export function ClienteForm({ initial, onSuccess, onCancel }: ClienteFormProps) 
           placeholder="Nombre del cliente"
           className="mt-1"
           required
+        />
+      </div>
+
+      <div>
+        <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">
+          Email
+        </label>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="contacto@empresa.com"
+          className="mt-1"
+        />
+      </div>
+
+      <div>
+        <label className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">
+          Teléfono
+        </label>
+        <Input
+          value={telefono}
+          onChange={(e) => setTelefono(e.target.value)}
+          placeholder="+34 600 000 000"
+          className="mt-1"
         />
       </div>
 

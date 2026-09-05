@@ -1,6 +1,6 @@
 import { Provider, FactoryProvider } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { createAuth, Auth } from './auth';
+import { createAuth, Auth, getSessionCookieConfig } from './auth';
 import { IdentityProvider, ProviderSession } from '../modules/identity/identity.contracts';
 
 export const AUTH_CLIENT = 'AUTH_CLIENT';
@@ -48,13 +48,14 @@ export class BetterAuthProviderSessionAdapter implements IdentityProvider {
   }
 
   private opaqueSessionToken(cookieHeader: string | null): string | null {
+    const cookieName = getSessionCookieConfig().name;
     const cookie = cookieHeader
       ?.split(';')
       .map((part) => part.trim())
-      .find((part) => part.startsWith('__Secure-better-auth.session_token='));
+      .find((part) => part.startsWith(`${cookieName}=`));
     if (!cookie) return null;
 
-    const token = cookie.slice('__Secure-better-auth.session_token='.length);
+    const token = cookie.slice(cookieName.length + 1);
     return token || null;
   }
 }

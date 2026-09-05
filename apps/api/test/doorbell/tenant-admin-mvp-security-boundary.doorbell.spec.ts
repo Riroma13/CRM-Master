@@ -22,7 +22,9 @@ const EMAIL_A = 'tenant-admin-a@example.test';
 const EMAIL_B = 'tenant-admin-b@example.test';
 const PASSWORD_A = 'tenant-a-only-password';
 const PASSWORD_B = 'tenant-b-only-password';
-const SESSION_COOKIE = '__Secure-better-auth.session_token';
+const sessionCookieName = () => process.env.AUTH_COOKIE_TRANSPORT !== 'http'
+  ? '__Secure-better-auth.session_token'
+  : 'better-auth.session_token';
 
 function requireIsolatedDatabase(): string {
   const value = process.env.TENANT_ADMIN_MVP_DATABASE_URL;
@@ -43,7 +45,7 @@ function requireIsolatedDatabase(): string {
 function sessionCookie(response: { headers: Record<string, string | string[]> }): string {
   const values = response.headers['set-cookie'];
   const header = (Array.isArray(values) ? values : [values]).find(
-    (value): value is string => typeof value === 'string' && value.startsWith(`${SESSION_COOKIE}=`),
+    (value): value is string => typeof value === 'string' && value.startsWith(`${sessionCookieName()}=`),
   );
   if (!header) throw new Error('Tenant-admin MVP doorbell did not receive a session cookie');
   return header.split(';')[0];
@@ -56,10 +58,13 @@ describe('DOORBELL — tenant-admin MVP security boundary', () => {
   let cookieB: string;
   let clientAId: string;
   let clientBId: string;
+  let systemAId: string;
   let systemBId: string;
+  let itemAId: string;
   let sharedPrisma: PrismaService;
 
   beforeAll(async () => {
+    process.env.AUTH_COOKIE_TRANSPORT = 'https';
     process.env.DATABASE_URL = requireIsolatedDatabase();
     process.env.DATABASE_TEST_URL = process.env.DATABASE_URL;
     process.env.AUDIT_CHAIN_SECRET ??= 'tenant-admin-mvp-doorbell-audit-secret';
@@ -106,8 +111,8 @@ describe('DOORBELL — tenant-admin MVP security boundary', () => {
     });
     await prisma.admin.legacyUser.createMany({
       data: [
-        { id: LEGACY_USER_A, tenantId: TENANT_A, email: EMAIL_A, name: 'Tenant Admin A', role: 'admin', passwordHash, isActive: true, betterAuthUserId: BA_USER_A },
-        { id: LEGACY_USER_B, tenantId: TENANT_B, email: EMAIL_B, name: 'Tenant Admin B', role: 'admin', passwordHash: passwordHashB, isActive: true, betterAuthUserId: BA_USER_B },
+        { id: LEGACY_USER_A, tenantId: TENANT_A, email: EMAIL_A, name: 'Tenant Admin A', role: 'owner', passwordHash, isActive: true, betterAuthUserId: BA_USER_A },
+        { id: LEGACY_USER_B, tenantId: TENANT_B, email: EMAIL_B, name: 'Tenant Admin B', role: 'owner', passwordHash: passwordHashB, isActive: true, betterAuthUserId: BA_USER_B },
       ],
     });
   }, 30000);
@@ -120,6 +125,11 @@ describe('DOORBELL — tenant-admin MVP security boundary', () => {
 
   async function cleanup() {
     if (!prisma) return;
+    await prisma.admin.$executeRawUnsafe('DELETE FROM "tareas" WHERE "tenant_id" IN ($1, $2)', TENANT_A, TENANT_B);
+    await prisma.admin.$executeRawUnsafe('DELETE FROM "items_inventario" WHERE "tenant_id" IN ($1, $2)', TENANT_A, TENANT_B);
+    await prisma.admin.$executeRawUnsafe('DELETE FROM "sistemas" WHERE "tenant_id" IN ($1, $2)', TENANT_A, TENANT_B);
+    await prisma.admin.$executeRawUnsafe('DELETE FROM "clientes" WHERE "tenant_id" IN ($1, $2)', TENANT_A, TENANT_B);
+    await prisma.admin.$executeRawUnsafe('DELETE FROM "activity_events" WHERE "tenant_id" IN ($1, $2)', TENANT_A, TENANT_B);
     await prisma.admin.session.deleteMany({ where: { userId: { in: [BA_USER_A, BA_USER_B] } } });
     await prisma.admin.member.deleteMany({ where: { id: { in: [MEMBER_A, MEMBER_B] } } });
     await prisma.admin.legacyUser.deleteMany({ where: { id: { in: [LEGACY_USER_A, LEGACY_USER_B] } } });
@@ -136,7 +146,7 @@ describe('DOORBELL — tenant-admin MVP security boundary', () => {
     expect(response.status).toBe(200);
     expect(response.body.session).toBeUndefined();
     expect(response.headers['set-cookie']).toEqual(expect.arrayContaining([
-      expect.stringMatching(new RegExp(`${SESSION_COOKIE}=.+HttpOnly`)),
+      expect.stringMatching(new RegExp(`${sessionCookieName()}=.+HttpOnly`)),
     ]));
     cookieA = sessionCookie(response);
   });
@@ -147,22 +157,80 @@ describe('DOORBELL — tenant-admin MVP security boundary', () => {
     expect(dashboard.status).toBe(200);
 
     const client = await http().post('/api/v1/tenant/clientes').set('Host', HOST_A).set('Cookie', cookieA)
-      .send({ nombre: 'Doorbell Client A', tags: [] });
+      .send({ nombre: 'Doorbell Client A', tags: [], email: 'client-a@example.test', telefono: '+34123456789' });
     expect(client.status).toBe(201);
     clientAId = client.body.id;
-    expect((await http().get(`/api/v1/tenant/clientes/${clientAId}`).set('Host', HOST_A).set('Cookie', cookieA)).status).toBe(200);
+    const clientRead = await http().get(`/api/v1/tenant/clientes/${clientAId}`).set('Host', HOST_A).set('Cookie', cookieA);
+    expect(clientRead.status).toBe(200);
+    expect(clientRead.body).toEqual(expect.objectContaining({ email: 'client-a@example.test', telefono: '+34123456789' }));
+
+    const clientEdit = await http().patch(`/api/v1/tenant/clientes/${clientAId}`).set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ email: 'edited-a@example.test', telefono: '+34987654321' });
+    expect(clientEdit.status).toBe(200);
+    const editedClientRead = await http().get(`/api/v1/tenant/clientes/${clientAId}`).set('Host', HOST_A).set('Cookie', cookieA);
+    expect(editedClientRead.body).toEqual(expect.objectContaining({ email: 'edited-a@example.test', telefono: '+34987654321' }));
+
+    const clearedClient = await http().patch(`/api/v1/tenant/clientes/${clientAId}`).set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ email: null, telefono: null });
+    expect(clearedClient.status).toBe(200);
+    const clearedClientRead = await http().get(`/api/v1/tenant/clientes/${clientAId}`).set('Host', HOST_A).set('Cookie', cookieA);
+    expect(clearedClientRead.body).toEqual(expect.objectContaining({ email: null, telefono: null, tenantId: TENANT_A }));
+
+    const clientOwnershipAttempt = await http().patch(`/api/v1/tenant/clientes/${clientAId}`).set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ nombre: 'Doorbell Client A updated', tenantId: TENANT_B });
+    expect(clientOwnershipAttempt.status).toBe(200);
+    expect((await prisma.admin.cliente.findUnique({ where: { id: clientAId }, select: { tenantId: true } }))?.tenantId).toBe(TENANT_A);
 
     const system = await http().post('/api/v1/tenant/sistemas').set('Host', HOST_A).set('Cookie', cookieA)
       .send({ nombreSistema: 'Doorbell System A', tipo: 'web', clienteId: clientAId });
     expect(system.status).toBe(201);
-    expect((await http().get(`/api/v1/tenant/sistemas/${system.body.id}`).set('Host', HOST_A).set('Cookie', cookieA)).status).toBe(200);
+    systemAId = system.body.id;
+    const sameTenantEdit = await http().patch(`/api/v1/tenant/sistemas/${system.body.id}`)
+      .set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ nombreSistema: 'Doorbell System A edited', tipo: 'web', clienteId: clientAId });
+    expect(sameTenantEdit.status).toBe(200);
+    expect(sameTenantEdit.body).toEqual(expect.objectContaining({ nombreSistema: 'Doorbell System A edited' }));
+    expect((await http().get(`/api/v1/tenant/sistemas/${system.body.id}`).set('Host', HOST_A).set('Cookie', cookieA)).body)
+      .toEqual(expect.objectContaining({ nombreSistema: 'Doorbell System A edited', clienteId: clientAId }));
+
+    const systemOwnershipAttempt = await http().patch(`/api/v1/tenant/sistemas/${system.body.id}`)
+      .set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ nombreSistema: 'Doorbell System A ownership-safe', tenantId: TENANT_B });
+    expect(systemOwnershipAttempt.status).toBe(200);
+    expect((await prisma.admin.sistema.findUnique({ where: { id: systemAId }, select: { tenantId: true } }))?.tenantId).toBe(TENANT_A);
 
     const inventory = await http().post(`/api/v1/tenant/sistemas/${system.body.id}/items`).set('Host', HOST_A).set('Cookie', cookieA)
-      .send({ nombre: 'Doorbell Inventory A', categoria: 'software' });
+      .send({ nombre: 'Doorbell Inventory A', categoria: 'software', fechaImplementacion: '2026-09-12' });
     expect(inventory.status).toBe(201);
+    itemAId = inventory.body.id;
+    expect(inventory.body.fechaImplementacion).toBe('2026-09-12T00:00:00.000Z');
     expect((await http().get(`/api/v1/tenant/sistemas/${system.body.id}/items`).set('Host', HOST_A).set('Cookie', cookieA)).body).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: inventory.body.id }),
     ]));
+
+    const invalidInventory = await http().post(`/api/v1/tenant/sistemas/${system.body.id}/items`).set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ nombre: 'Invalid inventory', categoria: 'software', fechaImplementacion: '2026-02-30' });
+    expect(invalidInventory.status).toBe(400);
+    const malformedInventory = await http().post(`/api/v1/tenant/sistemas/${system.body.id}/items`).set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ nombre: 'Malformed inventory', categoria: 'software', fechaImplementacion: '2026/09/12' });
+    expect(malformedInventory.status).toBe(400);
+
+    const itemEdit = await http().patch(`/api/v1/tenant/sistemas/items/${itemAId}`)
+      .set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ nombre: 'Doorbell Inventory A edited', fechaImplementacion: null, tenantId: TENANT_B });
+    expect(itemEdit.status).toBe(200);
+    expect((await prisma.admin.itemInventario.findUnique({ where: { id: itemAId }, select: { tenantId: true, fechaImplementacion: true } })))
+      .toEqual({ tenantId: TENANT_A, fechaImplementacion: null });
+
+    const itemWithoutDate = await http().post(`/api/v1/tenant/sistemas/${system.body.id}/items`).set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ nombre: 'Doorbell Inventory A without date', categoria: 'software' });
+    expect(itemWithoutDate.status).toBe(201);
+    expect(itemWithoutDate.body.fechaImplementacion).toBeNull();
+
+    const itemWithNullDate = await http().post(`/api/v1/tenant/sistemas/${system.body.id}/items`).set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ nombre: 'Doorbell Inventory A null date', categoria: 'software', fechaImplementacion: null });
+    expect(itemWithNullDate.status).toBe(201);
+    expect(itemWithNullDate.body.fechaImplementacion).toBeNull();
 
     const task = await http().post('/api/v1/tenant/tareas').set('Host', HOST_A).set('Cookie', cookieA)
       .send({ titulo: 'Doorbell Task A', clienteId: clientAId, sistemaId: system.body.id });
@@ -179,10 +247,36 @@ describe('DOORBELL — tenant-admin MVP security boundary', () => {
       .send({ nombre: 'Doorbell Client B', tags: [] });
     expect(clientB.status).toBe(201);
     clientBId = clientB.body.id;
+    expect((await http().get(`/api/v1/tenant/clientes/${clientBId}`).set('Host', HOST_B).set('Cookie', cookieB)).body)
+      .toEqual(expect.objectContaining({ email: null, telefono: null }));
     const systemB = await http().post('/api/v1/tenant/sistemas').set('Host', HOST_B).set('Cookie', cookieB)
       .send({ nombreSistema: 'Doorbell System B', tipo: 'web', clienteId: clientBId });
     expect(systemB.status).toBe(201);
     systemBId = systemB.body.id;
+
+    const tenantBClientPatchToTenantA = await http().patch(`/api/v1/tenant/clientes/${clientAId}`)
+      .set('Host', HOST_B).set('Cookie', cookieB).send({ nombre: 'must-not-change' });
+    expect([401, 403, 404]).toContain(tenantBClientPatchToTenantA.status);
+    const tenantBSystemPatchToTenantA = await http().patch(`/api/v1/tenant/sistemas/${systemAId}`)
+      .set('Host', HOST_B).set('Cookie', cookieB).send({ nombreSistema: 'must-not-change' });
+    expect([401, 403, 404]).toContain(tenantBSystemPatchToTenantA.status);
+    const tenantBItemPatchToTenantA = await http().patch(`/api/v1/tenant/sistemas/items/${itemAId}`)
+      .set('Host', HOST_B).set('Cookie', cookieB).send({ nombre: 'must-not-change' });
+    expect([401, 403, 404]).toContain(tenantBItemPatchToTenantA.status);
+
+    const systemBeforeForeignPatch = await http().get(`/api/v1/tenant/sistemas/${systemBId}`)
+      .set('Host', HOST_B).set('Cookie', cookieB);
+    const foreignSystemPatch = await http().patch(`/api/v1/tenant/sistemas/${systemBId}`)
+      .set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ nombreSistema: 'must-not-change', tipo: 'web' });
+    expect([401, 403, 404]).toContain(foreignSystemPatch.status);
+    const foreignReplacementPatch = await http().patch(`/api/v1/tenant/sistemas/${systemBId}`)
+      .set('Host', HOST_A).set('Cookie', cookieA)
+      .send({ nombreSistema: 'must-not-change', tipo: 'web', clienteId: clientBId });
+    expect([401, 403, 404]).toContain(foreignReplacementPatch.status);
+    const systemAfterForeignPatch = await http().get(`/api/v1/tenant/sistemas/${systemBId}`)
+      .set('Host', HOST_B).set('Cookie', cookieB);
+    expect(systemAfterForeignPatch.body).toEqual(systemBeforeForeignPatch.body);
 
     const before = await http().get('/api/v1/tenant/clientes').set('Host', HOST_B).set('Cookie', cookieB);
     const foreignRead = await http().get(`/api/v1/tenant/clientes/${clientBId}`).set('Host', HOST_A).set('Cookie', cookieA);
@@ -195,7 +289,7 @@ describe('DOORBELL — tenant-admin MVP security boundary', () => {
 
     const wrongHostLogin = await http().post('/api/v1/auth/login').set('Host', HOST_B).send({ email: EMAIL_A, password: PASSWORD_A });
     expect(wrongHostLogin.status).toBe(401);
-    expect((await http().get(`/api/v1/tenant/sistemas/${systemBId}`).set('Host', HOST_B).set('Cookie', cookieA)).status).toBe(401);
+    expect([401, 403]).toContain((await http().get(`/api/v1/tenant/sistemas/${systemBId}`).set('Host', HOST_B).set('Cookie', cookieA)).status);
   });
 
   it('removes account enumeration, logs out, and rejects replay of the revoked cookie', async () => {

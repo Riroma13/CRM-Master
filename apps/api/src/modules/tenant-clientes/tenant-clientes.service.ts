@@ -3,6 +3,40 @@ import { PrismaService } from '../../common/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { EventConnectorService } from '../tenant-automations/event-connector.service';
 
+type ClienteUpdateData = {
+  nombre?: string;
+  email?: string | null;
+  telefono?: string | null;
+  tipoNegocio?: string | null;
+  contactoPrincipal?: string | null;
+  estadoRelacion?: string;
+  saludGeneral?: string;
+  fechaInicio?: string | Date | null;
+  notasGenerales?: string | null;
+  tags?: string[];
+};
+
+function hasOwnField(data: Record<string, unknown>, field: string): boolean {
+  return Object.prototype.hasOwnProperty.call(data, field);
+}
+
+function buildClienteUpdateData(data: Record<string, unknown>): ClienteUpdateData {
+  const updateData: ClienteUpdateData = {};
+
+  if (hasOwnField(data, 'nombre')) updateData.nombre = data.nombre as string;
+  if (hasOwnField(data, 'email')) updateData.email = data.email as string | null;
+  if (hasOwnField(data, 'telefono')) updateData.telefono = data.telefono as string | null;
+  if (hasOwnField(data, 'tipoNegocio')) updateData.tipoNegocio = data.tipoNegocio as string | null;
+  if (hasOwnField(data, 'contactoPrincipal')) updateData.contactoPrincipal = data.contactoPrincipal as string | null;
+  if (hasOwnField(data, 'estadoRelacion')) updateData.estadoRelacion = data.estadoRelacion as string;
+  if (hasOwnField(data, 'saludGeneral')) updateData.saludGeneral = data.saludGeneral as string;
+  if (hasOwnField(data, 'fechaInicio')) updateData.fechaInicio = data.fechaInicio as string | Date | null;
+  if (hasOwnField(data, 'notasGenerales')) updateData.notasGenerales = data.notasGenerales as string | null;
+  if (hasOwnField(data, 'tags')) updateData.tags = data.tags as string[];
+
+  return updateData;
+}
+
 @Injectable()
 export class TenantClientesService {
   constructor(
@@ -68,10 +102,13 @@ export class TenantClientesService {
     return cliente;
   }
 
-  async update(tenantId: string, id: string, data: any) {
+  async update(tenantId: string, id: string, data: Record<string, unknown>) {
     const cliente = await this.prisma.admin.cliente.findFirst({ where: { id, tenantId } });
     if (!cliente) throw new NotFoundException('Cliente no encontrado');
-    const updated = await this.prisma.admin.cliente.update({ where: { id }, data });
+    const updated = await this.prisma.admin.cliente.update({
+      where: { id },
+      data: buildClienteUpdateData(data),
+    });
     this.audit.log({ tenantId, action: 'update', resource: 'cliente', resourceId: id, details: `Cliente actualizado: ${cliente.nombre}` });
     return updated;
   }

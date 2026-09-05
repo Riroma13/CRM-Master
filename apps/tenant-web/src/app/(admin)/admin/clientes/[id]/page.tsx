@@ -29,6 +29,8 @@ const ESTADO_COLORS: Record<string, string> = {
 interface ClienteDetail {
   id: string;
   nombre: string;
+  email?: string;
+  telefono?: string;
   tipoNegocio?: string;
   estadoRelacion: string;
   saludGeneral: string;
@@ -183,6 +185,13 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
           <p className="text-[11px] text-[#45464D]">
             Cliente desde {new Date(cliente.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
           </p>
+
+          {(cliente.email || cliente.telefono) && (
+            <div className="mt-4 flex flex-wrap gap-4 border-t border-[#E2E8F0] pt-4 text-[13px] text-[#45464D]">
+              {cliente.email && <span>{cliente.email}</span>}
+              {cliente.telefono && <span>{cliente.telefono}</span>}
+            </div>
+          )}
 
           {(cliente as any).notasGenerales && (
             <div className="mt-4 border-t border-[#E2E8F0] pt-4">
@@ -366,6 +375,8 @@ export default function ClienteDetailPage({ params }: { params: Promise<{ id: st
           initial={{
             id: cliente.id,
             nombre: cliente.nombre,
+            email: cliente.email ?? '',
+            telefono: cliente.telefono ?? '',
             tipoNegocio: cliente.tipoNegocio ?? '',
             estadoRelacion: cliente.estadoRelacion,
             saludGeneral: cliente.saludGeneral,

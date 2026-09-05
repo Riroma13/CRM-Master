@@ -1,5 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import { loginAsAdmin } from './helpers';
+import { getAdminSessionCookieName } from '../src/middleware';
+
+const ADMIN_SESSION_COOKIE = getAdminSessionCookieName('https');
 
 // Test harness stubs replace only unavailable existing read/auth responses; the app never uses them.
 async function installTestHarnessStubs(page: Page) {
@@ -7,7 +10,7 @@ async function installTestHarnessStubs(page: Page) {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      headers: { 'set-cookie': '__Secure-session=test-session; Path=/; Secure' },
+      headers: { 'set-cookie': `${ADMIN_SESSION_COOKIE}=test-session; Path=/; Secure` },
       body: JSON.stringify({
         id: 'admin-1',
         email: 'admin@demo.local',
@@ -25,7 +28,7 @@ async function installTestHarnessStubs(page: Page) {
       return;
     }
     await route.continue({
-      headers: { ...route.request().headers(), cookie: '__Secure-session=test-session' },
+        headers: { ...route.request().headers(), cookie: `${ADMIN_SESSION_COOKIE}=test-session` },
     });
   });
 

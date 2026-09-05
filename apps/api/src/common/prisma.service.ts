@@ -5,20 +5,20 @@ import { createReportingReadOnlyExtension } from '../modules/reporting/reporting
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
-  private client: ScopedPrismaClient;
+  private readonly baseClient: ScopedPrismaClient;
 
   constructor() {
-    this.client = createPrismaClient();
+    this.baseClient = createPrismaClient();
     // createPrismaClient() emits a warning when called without tenantId
     // in non-test environments (see packages/database/src/index.ts)
   }
 
   async onModuleInit() {
-    await this.client.$connect();
+    await this.baseClient.$connect();
   }
 
   async onModuleDestroy() {
-    await this.client.$disconnect();
+    await this.baseClient.$disconnect();
   }
 
   /**
@@ -32,20 +32,20 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
   /** Creates a tenant-scoped client restricted to reporting models. */
   forReporting(tenantId: string) {
-    return createPrismaClient(tenantId).$extends(createReportingReadOnlyExtension()) as any;
+    return this.forTenant(tenantId).$extends(createReportingReadOnlyExtension()) as any;
   }
 
   /** Cliente sin scope (superadmin) */
   get admin() {
-    return this.client;
+    return this.baseClient;
   }
 
   /** Unscoped reporting client for trusted reporting operations. */
   get reportingAdmin() {
-    return this.client.$extends(createReportingReadOnlyExtension()) as any;
+    return this.baseClient.$extends(createReportingReadOnlyExtension()) as any;
   }
 
   get $client() {
-    return this.client;
+    return this.baseClient;
   }
 }

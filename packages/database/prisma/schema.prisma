@@ -202,6 +202,8 @@ model Cliente {
   id               String   @id @default(uuid())
   tenantId         String   @map("tenant_id")
   nombre           String
+  email            String?
+  telefono         String?
   tipoNegocio      String?  @map("tipo_negocio")
   contactoPrincipal String? @map("contacto_principal")
   estadoRelacion   String   @default("Activo") @map("estado_relacion")

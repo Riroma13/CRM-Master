@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { getAdminSessionCookieName } from '../src/middleware';
+
+const ADMIN_SESSION_COOKIE = getAdminSessionCookieName('https');
 
 test.describe('Login — Admin & Client dispatch', () => {
   test('login page shows admin and client tabs', async ({ page }) => {
@@ -13,7 +16,7 @@ test.describe('Login — Admin & Client dispatch', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        headers: { 'set-cookie': '__Secure-session=test-session; Path=/; Secure' },
+        headers: { 'set-cookie': `${ADMIN_SESSION_COOKIE}=test-session; Path=/; Secure` },
         body: JSON.stringify({
           id: 'admin-1',
           email: 'admin@demo.local',
@@ -37,7 +40,7 @@ test.describe('Login — Admin & Client dispatch', () => {
         status: 200,
         contentType: 'application/json',
         headers: {
-          'set-cookie': 'client-session=eyJhbGciOiJub25lIn0.eyJyb2xlIjoiY2xpZW50In0.; Path=/',
+          'set-cookie': '__Secure-client-session=eyJhbGciOiJub25lIn0.eyJyb2xlIjoiY2xpZW50In0.; Path=/; Secure',
         },
         body: JSON.stringify({ cliente: { nombre: 'Client' } }),
       });
@@ -119,7 +122,7 @@ test.describe('Google OAuth integration', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        headers: { 'set-cookie': '__Secure-session=test-session; Path=/; Secure' },
+        headers: { 'set-cookie': `${ADMIN_SESSION_COOKIE}=test-session; Path=/; Secure` },
         body: JSON.stringify({
           id: 'admin-1',
           email: 'admin@example.com',

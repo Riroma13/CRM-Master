@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
-import express from 'express';
+import * as express from 'express';
 import { AppModule } from './app.module';
 import { PinoLoggerService } from './modules/observability/logging/pino-logger.service';
 import { toNodeHandler } from 'better-auth/node';

@@ -14,6 +14,9 @@ import { ClientAuthController } from '../../modules/client-auth/client-auth.cont
 import { ExportController } from '../../modules/export/export.controller';
 import { V1WorkflowsController } from '../../modules/public-api/v1/v1-workflows.controller';
 import { V1DocumentsController } from '../../modules/public-api/v1/v1-documents.controller';
+const SESSION_COOKIE = process.env.AUTH_COOKIE_TRANSPORT !== 'http'
+  ? '__Secure-better-auth.session_token'
+  : 'better-auth.session_token';
 
 describe('tenant auth boundary metadata', () => {
   it('classifies only the existing client me route as a client-session hand-off', () => {
@@ -186,7 +189,7 @@ describe('tenant auth boundary core contracts', () => {
       getHandler: () => ({}), getClass: () => ({}),
       switchToHttp: () => ({ getRequest: () => ({
         path: '/api/v1/tenant/clientes',
-        headers: { cookie: '__Secure-better-auth.session_token=expired' },
+        headers: { cookie: `${SESSION_COOKIE}=expired` },
       }) }),
     } as any;
 
@@ -201,7 +204,7 @@ describe('tenant auth boundary core contracts', () => {
       getHandler: () => ({}), getClass: () => ({}),
       switchToHttp: () => ({ getRequest: () => ({
         path: '/api/v1/tenant/clientes',
-        headers: { cookie: '__Secure-better-auth.session_token=opaque' },
+        headers: { cookie: `${SESSION_COOKIE}=opaque` },
       }) }),
     } as any;
 

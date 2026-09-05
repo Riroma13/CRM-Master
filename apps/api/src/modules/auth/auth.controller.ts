@@ -9,11 +9,10 @@ import { TenantsService } from '../tenants/tenants.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { randomBytes } from 'crypto';
 import { AUTH_SESSION_TOKEN } from './auth.service';
+import { getSessionCookieConfig } from '../../common/auth';
 
-const SESSION_COOKIE = '__Secure-better-auth.session_token';
-
-function readSessionToken(cookie: string | undefined): string | null {
-  return cookie?.split(';').map(value => value.trim()).find(value => value.startsWith(`${SESSION_COOKIE}=`))?.slice(SESSION_COOKIE.length + 1) || null;
+function readSessionToken(cookie: string | undefined, cookieName: string): string | null {
+  return cookie?.split(';').map(value => value.trim()).find(value => value.startsWith(`${cookieName}=`))?.slice(cookieName.length + 1) || null;
 }
 
 @ApiTags('Auth')
@@ -29,16 +28,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Iniciar sesión por email + password' })
   async login(@Body() body: any, @Res({ passthrough: true }) response: any, @Req() request: Request) {
+    const sessionCookie = getSessionCookieConfig();
     const result = await this.authService.login(body, (request as any)?.hostTenantId);
     const token = (result as any)[AUTH_SESSION_TOKEN];
     if (response?.cookie) {
-      response.cookie(SESSION_COOKIE, token || '', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        ...(process.env.NODE_ENV === 'production' ? { domain: '.crmmaster.com' } : {}),
-      });
+      response.cookie(sessionCookie.name, token || '', sessionCookie.attributes);
     }
     return result;
   }
@@ -75,18 +69,26 @@ export class AuthController {
     return result;
   }
 
+  @Get('me')
+  @ApiOperation({ summary: 'Obtener identidad del usuario autenticado' })
+  me(@Req() request: Request) {
+    const user = (request as any).user;
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
+  }
+
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Cerrar sesión' })
   async logout(@Req() request: Request, @Res({ passthrough: true }) response: any) {
-    await this.authService.logout(readSessionToken(request.headers.cookie));
-    response.clearCookie(SESSION_COOKIE, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      ...(process.env.NODE_ENV === 'production' ? { domain: '.crmmaster.com' } : {}),
-    });
+    const sessionCookie = getSessionCookieConfig();
+    await this.authService.logout(readSessionToken(request.headers.cookie, sessionCookie.name));
+    response.clearCookie(sessionCookie.name, sessionCookie.attributes);
     return;
   }
 }

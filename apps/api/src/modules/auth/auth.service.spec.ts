@@ -1,8 +1,27 @@
 import { UnauthorizedException } from '@nestjs/common';
-import { AuthService } from './auth.service';
+jest.mock('../../common/auth', () => ({
+  getSessionCookieConfig: () => process.env.AUTH_COOKIE_TRANSPORT === 'http'
+    ? { name: 'better-auth.session_token', attributes: { path: '/', httpOnly: true, sameSite: 'lax', secure: false } }
+    : { name: '__Secure-better-auth.session_token', attributes: { domain: '.crmmaster.com', path: '/', httpOnly: true, sameSite: 'lax', secure: true } },
+}));
+import { AUTH_SESSION_TOKEN, AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 
+const SESSION_CONTRACTS = {
+  http: { name: 'better-auth.session_token', secure: false, domain: undefined },
+  https: { name: '__Secure-better-auth.session_token', secure: true, domain: '.crmmaster.com' },
+} as const;
+
 describe('AuthService tenant-admin foundation contract', () => {
+  const originalEnv = { NODE_ENV: process.env.NODE_ENV, AUTH_COOKIE_TRANSPORT: process.env.AUTH_COOKIE_TRANSPORT };
+
+  afterEach(() => {
+    if (originalEnv.NODE_ENV === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = originalEnv.NODE_ENV;
+    if (originalEnv.AUTH_COOKIE_TRANSPORT === undefined) delete process.env.AUTH_COOKIE_TRANSPORT;
+    else process.env.AUTH_COOKIE_TRANSPORT = originalEnv.AUTH_COOKIE_TRANSPORT;
+  });
+
   function service(passwordHash: string | null) {
     const prisma = {
       admin: {
@@ -64,15 +83,42 @@ describe('AuthService tenant-admin foundation contract', () => {
   });
 
   it('sets an HttpOnly cookie on login and revokes the exact cookie on logout', async () => {
+    process.env.AUTH_COOKIE_TRANSPORT = 'http';
+    process.env.NODE_ENV = 'production';
     const authService = { login: jest.fn().mockResolvedValue({ user: { id: 'u' }, tenant: { id: 't' } }), logout: jest.fn() };
     const controller = new AuthController(authService as any, {} as any);
     const response = { cookie: jest.fn(), clearCookie: jest.fn() };
 
     await (controller.login as any)({}, response);
-    await (controller.logout as any)({ headers: { cookie: '__Secure-better-auth.session_token=opaque' } }, response);
+    await (controller.logout as any)({ headers: { cookie: 'better-auth.session_token=opaque' } }, response);
 
     expect(response.cookie).toHaveBeenCalledWith(expect.any(String), expect.any(String), expect.objectContaining({ httpOnly: true }));
     expect(authService.logout).toHaveBeenCalledWith('opaque');
     expect(response.clearCookie).toHaveBeenCalled();
   });
+
+  it.each(Object.entries(SESSION_CONTRACTS))(
+    'uses the same %s cookie name and attributes for login and logout',
+    async (transport, contract) => {
+      process.env.AUTH_COOKIE_TRANSPORT = transport;
+      process.env.NODE_ENV = transport === 'https' ? 'development' : 'production';
+      const authService = {
+        login: jest.fn().mockResolvedValue({ [AUTH_SESSION_TOKEN]: 'opaque-token' }),
+        logout: jest.fn(),
+      };
+      const controller = new AuthController(authService as any, {} as any);
+      const response = { cookie: jest.fn(), clearCookie: jest.fn() };
+
+      await (controller.login as any)({}, response, { hostTenantId: 'tenant-a' });
+      await (controller.logout as any)({ headers: { cookie: `${contract.name}=opaque-token` } }, response);
+
+      expect(response.cookie).toHaveBeenCalledWith(contract.name, 'opaque-token', expect.objectContaining({
+        httpOnly: true, secure: contract.secure, ...(contract.domain ? { domain: contract.domain } : {}),
+      }));
+      expect(authService.logout).toHaveBeenCalledWith('opaque-token');
+      expect(response.clearCookie).toHaveBeenCalledWith(contract.name, expect.objectContaining({
+        httpOnly: true, secure: contract.secure, ...(contract.domain ? { domain: contract.domain } : {}),
+      }));
+    },
+  );
 });

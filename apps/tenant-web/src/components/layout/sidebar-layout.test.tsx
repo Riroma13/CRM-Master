@@ -119,6 +119,22 @@ describe('SidebarLayout', () => {
     expect(screen.getByTestId('drawer-overlay')).toBeInTheDocument();
   });
 
+  it('orders Search, Notifications, and AccountMenu in the desktop header flow', () => {
+    render(
+      <SidebarLayout>
+        <div>Content</div>
+      </SidebarLayout>,
+    );
+
+    const search = screen.getByPlaceholderText('Buscar...');
+    const notification = screen.getAllByRole('button', { name: 'Notificaciones' })[0];
+    const account = screen.getByRole('button', { name: 'Cuenta de usuario' });
+
+    expect(search.compareDocumentPosition(notification) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(notification.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(account.closest('div[class*="absolute"]')).toBeNull();
+  });
+
   it('closes drawer when overlay is clicked', () => {
     render(
       <SidebarLayout>

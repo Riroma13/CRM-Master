@@ -2,10 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const RESERVED_SLUGS = new Set(['www', 'api', 'admin', 'app', 'mail', 'dev']);
-const BETTER_AUTH_SESSION_COOKIE = '__Secure-better-auth.session_token';
-const LEGACY_ADMIN_SESSION_COOKIE = '__Secure-session';
 const CLIENT_SESSION_COOKIE = '__Secure-client-session';
 const LOCAL_CLIENT_SESSION_COOKIE = 'client-session';
+
+export function getAdminSessionCookieName(transport?: string): string {
+  const configuredTransport = arguments.length === 0 ? process.env.AUTH_COOKIE_TRANSPORT : transport;
+  return configuredTransport === 'http' ? 'better-auth.session_token' : '__Secure-better-auth.session_token';
+}
 
 export interface RouteDecision {
   destination: string;
@@ -71,12 +74,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const adminCookie =
-    request.cookies.get(BETTER_AUTH_SESSION_COOKIE)?.value ??
-    request.cookies.get(LEGACY_ADMIN_SESSION_COOKIE)?.value;
+  const adminCookie = request.cookies.get(getAdminSessionCookieName())?.value;
   const clientCookie =
     request.cookies.get(CLIENT_SESSION_COOKIE)?.value ??
-    (process.env.NODE_ENV === 'production'
+    (process.env.AUTH_COOKIE_TRANSPORT !== 'http'
       ? undefined
       : request.cookies.get(LOCAL_CLIENT_SESSION_COOKIE)?.value);
 

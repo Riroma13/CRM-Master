@@ -171,6 +171,12 @@ importers:
       class-validator:
         specifier: ^0.14.4
         version: 0.14.4
+      expr-eval:
+        specifier: 2.0.2
+        version: 2.0.2
+      express:
+        specifier: 5.2.1
+        version: 5.2.1
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
