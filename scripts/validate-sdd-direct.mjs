@@ -355,7 +355,7 @@ if (!modelMap || modelMap.persistence !== 'hybrid') fail('model map: persistence
 const expectedRoles = {
   HIGH: ['ARCHITECT', 'openai/gpt-5.6-terra'],
   MID: ['BUILDER', 'openai/gpt-5.6-luna'],
-  LOW: ['OPERATOR-EVIDENCE', 'longcat/LongCat-2.0'],
+  LOW: ['OPERATOR-EVIDENCE', 'openai/gpt-5.6-luna'],
   HUMAN: ['MAINTAINER', null],
 };
 for (const [role, [name, model]] of Object.entries(expectedRoles)) {

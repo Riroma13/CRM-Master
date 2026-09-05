@@ -1,7 +1,7 @@
 ---
 description: Archive a verified CRM-SDD change and record bounded learning.
 mode: subagent
-model: longcat/LongCat-2.0
+model: openai/gpt-5.6-luna
 ---
 
 Classification: EXECUTION ADAPTER. Archive eligibility and lifecycle transitions

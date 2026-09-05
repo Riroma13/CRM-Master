@@ -17,31 +17,20 @@
       "LOW": [
         {
           "id": "low-evidence-primary",
-          "model": "longcat/LongCat-2.0",
+          "model": "openai/gpt-5.6-luna",
           "local_executor": "sdd-direct-archive",
           "role": "LOW",
           "capabilities": ["evidence"],
           "quality": 0.95,
           "cost": 1,
           "available": true
-        },
-        {
-          "id": "low-evidence-fallback",
-          "model": "longcat/LongCat-2.0",
-          "local_executor": "sdd-direct-archive",
-          "role": "LOW",
-          "capabilities": ["evidence"],
-          "quality": 0.9,
-          "cost": 2,
-          "available": true,
-          "fallback_for": "low-evidence-primary"
         }
       ]
     },
     "fallbacks": {
       "HIGH": [],
       "MID": [],
-      "LOW": ["low-evidence-fallback"],
+      "LOW": [],
       "HUMAN": []
     }
   },
@@ -58,7 +47,7 @@
     },
     "LOW": {
       "name": "OPERATOR-EVIDENCE",
-      "model": "longcat/LongCat-2.0",
+      "model": "openai/gpt-5.6-luna",
       "purpose": "Bounded evidence and mechanical operations"
     },
     "HUMAN": {

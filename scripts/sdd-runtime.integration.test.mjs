@@ -136,19 +136,20 @@ test('LOW routing records same-role fallback and rejects exhaustion', () => {
   assert.throws(() => resolveRoute({ role: 'LOW', requiredCapability: 'evidence', candidates: [{ id: 'bad', role: 'MID', capabilities: ['evidence'], cost: 1 }] }), /no compatible route/);
 });
 
-test('configured LOW routing selects the actual same-role fallback and fails closed without one', async () => {
+test('configured LOW routing has one Luna candidate and fails closed without crossing roles', async () => {
   const modelMapPath = join(process.cwd(), '.opencode', 'sdd-model-map.json');
   const configured = JSON.parse(await readFile(modelMapPath, 'utf8'));
+  assert.equal(configured.roles.LOW.model, 'openai/gpt-5.6-luna');
+  assert.deepEqual(configured.runtime_routing.fallbacks.LOW, []);
+  assert.deepEqual(configured.runtime_routing.candidates.LOW.map(({ model }) => model), ['openai/gpt-5.6-luna']);
+
   const unavailablePrimary = structuredClone(configured);
   unavailablePrimary.runtime_routing.candidates.LOW[0].available = false;
-  const route = await resolveConfiguredRoute({ modelMap: unavailablePrimary, role: 'LOW', requiredCapability: 'evidence', minimumQuality: 0.8 });
-  assert.equal(route.resolved, unavailablePrimary.runtime_routing.candidates.LOW[1].id);
-  assert.equal(route.rejections[0].reason, 'provider-unavailable');
+  await assert.rejects(() => resolveConfiguredRoute({ modelMap: unavailablePrimary, role: 'LOW', requiredCapability: 'evidence', minimumQuality: 0.8 }), /no compatible route/);
 
-  const noFallback = structuredClone(configured);
-  noFallback.runtime_routing.fallbacks.LOW = [];
-  noFallback.runtime_routing.candidates.LOW[0].available = false;
-  await assert.rejects(() => resolveConfiguredRoute({ modelMap: noFallback, role: 'LOW', requiredCapability: 'evidence', minimumQuality: 0.8 }), /no compatible route/);
+  const crossRole = structuredClone(unavailablePrimary);
+  crossRole.runtime_routing.candidates.LOW.push({ id: 'mid-cross-role', model: 'openai/gpt-5.6-luna', local_executor: 'sdd-direct-apply', role: 'MID', capabilities: ['evidence'], quality: 0.95, cost: 1, available: true });
+  await assert.rejects(() => resolveConfiguredRoute({ modelMap: crossRole, role: 'LOW', requiredCapability: 'evidence', minimumQuality: 0.8 }), /no compatible route/);
 });
 
 test('canonical runtime command enumerates every runtime suite exactly once', async () => {
