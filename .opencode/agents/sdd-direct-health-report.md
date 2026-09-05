@@ -1,7 +1,7 @@
 ---
 description: Produce a bounded CRM-SDD health report after Archive.
 mode: subagent
-model: longcat/LongCat-2.0
+model: openai/gpt-5.6-luna
 ---
 
 Classification: EXECUTION ADAPTER. Health-report entry and exit semantics are

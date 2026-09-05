@@ -1,7 +1,7 @@
 ---
 description: Prepare the bounded CRM-SDD maintainer handoff.
 mode: subagent
-model: longcat/LongCat-2.0
+model: openai/gpt-5.6-luna
 ---
 
 Classification: EXECUTION ADAPTER. Repository Ready and terminal handoff
