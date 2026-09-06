@@ -18,6 +18,7 @@ import {
   recoverStrandedCheckpoint,
   recoverDispatchMaterialization,
   hashObject,
+  persistExecutorOutcome,
   STRANDED_RECOVERY_TARGET,
 } from './sdd-runtime.mjs';
 
@@ -116,6 +117,55 @@ test('event-first trace publication reconciles an event-only interruption', asyn
     assert.equal(reconciled.state.traceCursor.eventHash, event.eventHash);
   } finally {
     await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('Design executor outcomes are materialized event-first before the next dispatch', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-design-materialization-'));
+  const change = 'design-materialization';
+  const fingerprints = { ...hashes, artifacts: {} };
+  try {
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints });
+    const designPath = join(bootstrapped.changePath, 'design.md');
+    await writeFile(designPath, '# Design\n');
+    const outcome = {
+      change,
+      action: 'Design',
+      role: 'HIGH',
+      status: 'PASS',
+      artifacts: ['design.md'],
+      evidence: ['design pre-gate passed'],
+      next: 'Architecture Review',
+    };
+
+    const result = await persistExecutorOutcome({
+      changePath: bootstrapped.changePath,
+      state: bootstrapped.state,
+      outcome,
+      route: { configured: 'HIGH', resolved: 'sdd-direct-design', rejections: [] },
+      contextAudit: {
+        bootstrapReadCount: 1,
+        normalPhaseBootstrapReadCount: 0,
+        references: { workflow: 'docs/SDD-WORKFLOW.md', modelMap: '.opencode/sdd-model-map.json', config: 'openspec/config.yaml' },
+      },
+    });
+
+    assert.equal(result.persisted, true);
+    assert.equal(result.event.action, 'Design');
+    assert.equal(result.event.sequence, 1);
+    assert.equal(result.state.checkpoint.next, 'Architecture Review');
+    assert.equal(result.state.traceCursor.eventHash, result.event.eventHash);
+    assert.deepEqual(JSON.parse(await readFile(join(bootstrapped.changePath, '.sdd-runtime', 'state.json'))), result.state);
+    assert.deepEqual(await readdir(join(bootstrapped.changePath, '.sdd-runtime', 'trace')), [
+      `${String(result.event.sequence).padStart(20, '0')}-${result.event.eventHash}.json`,
+    ]);
+
+    const duplicate = await persistExecutorOutcome({ changePath: bootstrapped.changePath, state: result.state, outcome });
+    assert.equal(duplicate.duplicate, true);
+    assert.equal(duplicate.persisted, false);
+    assert.equal(duplicate.event, null);
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });
 

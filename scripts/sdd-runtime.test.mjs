@@ -350,8 +350,17 @@ test('event-first persistence does not overwrite an existing trace event', async
     const event = createTraceEvent({ change: 'demo-change', sequence: 1, action: 'Design', role: 'HIGH', inputHash: 'd'.repeat(64), outcomeHash: 'e'.repeat(64), beforeState: state, afterState: { ...state, sequence: 1, traceCursor: { sequence: 1, eventHash: null, chainHash: null } } });
     const persistedState = { ...state, sequence: 1, traceCursor: { sequence: 1, eventHash: null, chainHash: null } };
     await persistTransition({ changePath: join(directory, 'openspec', 'changes', 'demo-change'), event, state: persistedState });
+    await writeFile(join(directory, 'openspec', 'changes', 'demo-change', '.sdd-runtime', 'state.json'), `${JSON.stringify(state)}\n`);
     const repeat = await persistTransition({ changePath: join(directory, 'openspec', 'changes', 'demo-change'), event, state: persistedState });
     assert.equal(repeat.duplicate, true);
+    assert.deepEqual(
+      JSON.parse(await readFile(join(directory, 'openspec', 'changes', 'demo-change', '.sdd-runtime', 'state.json'))),
+      { ...persistedState, traceCursor: { sequence: 1, eventHash: event.eventHash, chainHash: event.chainHash } },
+    );
+    assert.deepEqual(
+      await readdir(join(directory, 'openspec', 'changes', 'demo-change', '.sdd-runtime', 'trace')),
+      [`00000000000000000001-${event.eventHash}.json`],
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

@@ -82,6 +82,13 @@ context, decisions, status summaries, and recovery metadata. The `hybrid`
 contract separates storage from authority: neither store, the local model map,
 nor this adapter can redefine lifecycle semantics.
 
+Each executor result crosses the runtime through the exported
+`persistExecutorOutcome` operation in `scripts/sdd-runtime.mjs`. It validates
+and projects exactly one result, creates its trace event, and invokes
+`persistTransition`, which publishes the trace before materializing state.
+`dispatchUntilTerminal` is a projection helper only; using it without
+`persistExecutorOutcome` is incomplete and must stop before the next dispatch.
+
 ## Maintainer Handoff
 
 The adapter can prepare health and readiness evidence, but it never executes

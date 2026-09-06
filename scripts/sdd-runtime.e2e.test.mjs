@@ -96,8 +96,12 @@ test('local agents and legacy commands remain project-local and STOP-only', asyn
   assert.equal(map.phase_roles.Push, 'HUMAN');
   assert.equal(map.phase_roles.Merge, 'HUMAN');
   const orchestrator = await readFile(new URL('../.opencode/agents/sdd-direct-orchestrator.md', import.meta.url), 'utf8');
+  const direct = await readFile(new URL('../.opencode/commands/sdd-direct.md', import.meta.url), 'utf8');
   const legacy = await readFile(new URL('../opencode.json', import.meta.url), 'utf8');
   assert.match(orchestrator, /sdd-runtime\.mjs/);
+  assert.match(orchestrator, /persistExecutorOutcome/);
+  assert.match(orchestrator, /persistTransition/);
+  assert.match(direct, /persistExecutorOutcome/);
   assert.match(legacy, /CRM_SDD_LEGACY_BOUNDARY/);
   assert.deepEqual(Object.keys(BLOCKER_POLICIES).length, 12);
 });

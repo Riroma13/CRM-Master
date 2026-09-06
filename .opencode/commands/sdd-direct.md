@@ -17,8 +17,13 @@ and at handoff. Bootstrap `scripts/sdd-runtime.mjs` with the validated change
 identity, fingerprints, Working Set, and current checkpoint before dispatch.
 Continue only through legal non-HUMAN actions, persist event-first state/trace
 evidence under the change-local `.sdd-runtime/` path when execution output is
-required, and stop at Repository Ready for the maintainer Git handoff. Do not
-commit, push, merge, release, or tag.
+required, and stop at Repository Ready for the maintainer Git handoff. After
+each executor result, invoke the exported `persistExecutorOutcome` operation
+from `scripts/sdd-runtime.mjs`; it must project exactly one transition, create
+the trace event, call `persistTransition` (trace first, state second), and
+return the accepted checkpoint before any next executor dispatch. Never use
+`dispatchUntilTerminal` alone for persistence. Do not commit, push, merge,
+release, or tag.
 
 Return exactly the canonical Executor Outcome Contract in
 `docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate

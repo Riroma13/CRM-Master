@@ -505,14 +505,97 @@ export function dispatchUntilTerminal({ state, outcomes = [], execute = null, pr
   fail('dispatch transition limit exceeded');
 }
 
+/**
+ * Materialize exactly one executor result before another result can be dispatched.
+ * `dispatchUntilTerminal` is intentionally a pure state projection; this is the
+ * canonical adapter boundary that turns that projection into an event-first
+ * repository transition.
+ */
+export async function persistExecutorOutcome({ changePath, state, outcome, route = undefined, contextAudit = undefined, projection = projectCanonicalWorkflow() } = {}) {
+  if (typeof changePath !== 'string' || !isAbsolute(changePath)) fail('change path must be absolute');
+  validateRuntimeState(state);
+  if (resolve(changePath) !== resolve(state.canonicalPath)) fail('change path mismatch');
+
+  const result = dispatchUntilTerminal({ state, outcomes: [outcome], projection });
+  if (result.state.sequence === state.sequence) {
+    if (result.duplicate && state.traceCursor.eventHash !== null) {
+      return { ...result, persisted: false, event: null, tracePath: null };
+    }
+    fail('executor outcome did not produce one transition');
+  }
+  if (result.state.sequence !== state.sequence + 1) fail('executor outcome produced more than one transition');
+
+  const normalizedOutcome = safeValidateOutcome(outcome);
+  const afterState = result.state;
+  const eventAction = CANONICAL_ACTIONS.has(afterState.lastTransition.action)
+    ? afterState.lastTransition.action
+    : 'Repository Ready';
+  const eventRole = LOGICAL_ROLES.has(normalizedOutcome.role) ? normalizedOutcome.role : 'HUMAN';
+  const eventRoute = route ?? { configured: eventRole, resolved: eventRole, rejections: [] };
+  const eventContextAudit = contextAudit ?? { bootstrapReadCount: 1, normalPhaseBootstrapReadCount: 0, references: {} };
+  validateRoute(eventRoute);
+  assertObject(eventContextAudit, 'contextAudit');
+
+  const event = createTraceEvent({
+    change: state.change,
+    sequence: afterState.sequence,
+    action: eventAction,
+    role: eventRole,
+    inputHash: afterState.lastTransition.inputHash,
+    outcomeHash: afterState.lastTransition.outcomeHash,
+    beforeState: state,
+    afterState,
+    route: eventRoute,
+    contextAudit: eventContextAudit,
+  });
+  const persisted = await persistTransition({ changePath, event, state: afterState });
+  const materializedState = validateRuntimeState({
+    ...afterState,
+    traceCursor: { sequence: event.sequence, eventHash: event.eventHash, chainHash: event.chainHash },
+  });
+  return { ...result, ...persisted, persisted: !persisted.duplicate, state: materializedState, event };
+}
+
 export async function persistTransition({ changePath, event, state } = {}) {
   validateTraceEvent(event);
   validateRuntimeState(state);
   if (state.change !== event.change) fail('transition scope mismatch');
+  if (resolve(changePath) !== resolve(state.canonicalPath)) fail('transition path mismatch');
   const tracePath = join(changePath, '.sdd-runtime', 'trace', `${String(event.sequence).padStart(20, '0')}-${event.eventHash}.json`);
   try {
     const existing = JSON.parse(await readFile(tracePath, 'utf8'));
-    if (canonicalJson(existing) === canonicalJson(event)) return { duplicate: true, tracePath };
+    if (canonicalJson(existing) === canonicalJson(event)) {
+      const eventState = validateRuntimeState({
+        ...event.stateMaterialization,
+        schemaVersion: RUNTIME_SCHEMA_VERSION,
+        change: event.change,
+        canonicalPath: resolve(changePath),
+      });
+      const suppliedState = validateRuntimeState({ ...state, traceCursor: eventState.traceCursor });
+      if (canonicalJson(materialization(suppliedState)) !== canonicalJson(event.stateMaterialization)) fail('duplicate trace state mismatch');
+      const expectedMaterialized = validateRuntimeState({
+        ...eventState,
+        traceCursor: { sequence: event.sequence, eventHash: event.eventHash, chainHash: event.chainHash },
+      });
+      const statePath = join(changePath, '.sdd-runtime', 'state.json');
+      let persistedState;
+      try {
+        persistedState = validateRuntimeState(JSON.parse(await readFile(statePath, 'utf8')));
+      } catch (stateError) {
+        if (stateError.code === 'ENOENT') fail('duplicate trace state is missing');
+        throw stateError;
+      }
+      if (canonicalJson(persistedState) === canonicalJson(expectedMaterialized)) return { duplicate: true, tracePath };
+      const isPreviousCheckpoint = event.sequence === persistedState.sequence + 1
+        && event.previousEventHash === persistedState.traceCursor.eventHash
+        && event.beforeStateHash === hashObject(materialization(persistedState));
+      if (!isPreviousCheckpoint) {
+        if (persistedState.sequence > event.sequence) fail('state is ahead of duplicate trace event');
+        fail('duplicate trace state conflict');
+      }
+      await atomicWriteJson(statePath, expectedMaterialized);
+      return { duplicate: true, tracePath };
+    }
     fail('conflicting duplicate trace event');
   } catch (error) {
     if (error instanceof TypeError) throw error;
