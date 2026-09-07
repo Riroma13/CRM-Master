@@ -25,3 +25,7 @@ Use exactly the canonical Executor Outcome Contract in
 its schema.
 Set `checkpointArtifact` explicitly for the current Apply action; auxiliary
 `artifacts` entries are unordered and never determine the checkpoint.
+Use the exact canonical checkpoint basename for both `checkpointArtifact` and its
+matching `artifacts` entry; never emit a full/path-qualified checkpoint reference.
+Preserve auxiliary `artifacts` entries as unordered strings; they remain evidence
+and never replace the canonical checkpoint entry.

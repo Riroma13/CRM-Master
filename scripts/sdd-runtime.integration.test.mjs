@@ -238,6 +238,54 @@ test('Design evidence blockers use canonical retry or HUMAN handoff policies and
   }
 });
 
+test('Apply 7.1 producers use the canonical checkpoint basename and reject path-qualified entries', async () => {
+  const applyAgent = await readFile(new URL('../.opencode/agents/sdd-direct-apply.md', import.meta.url), 'utf8');
+  assert.match(applyAgent, /exact canonical checkpoint basename for both `checkpointArtifact` and its\s+matching `artifacts` entry/i);
+  assert.match(applyAgent, /never emit a full\/path-qualified checkpoint reference/i);
+
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-apply-checkpoint-contract-'));
+  const change = 'apply-checkpoint-contract';
+  try {
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: hashes });
+    const checkpoint = 'apply-7.1-foundation.md';
+    await writeFile(join(bootstrapped.changePath, checkpoint), '# Apply 7.1 Foundation\n');
+    const foundationState = {
+      ...bootstrapped.state,
+      sequence: 1,
+      checkpoint: { phase: 'Workload Guard', artifact: 'workload-guard.md', verdict: 'PASS', next: 'Apply 7.1 Foundation' },
+      traceCursor: { sequence: 1, eventHash: 'a'.repeat(64), chainHash: 'b'.repeat(64) },
+      lastTransition: { inputHash: 'c'.repeat(64), outcomeHash: 'd'.repeat(64), afterStateHash: 'e'.repeat(64) },
+    };
+    const canonical = outcomeFor(change, 'Apply 7.1 Foundation', {
+      checkpointArtifact: checkpoint,
+      artifacts: [checkpoint],
+      evidence: ['canonical checkpoint basename'],
+      next: 'Apply 7.2 Core Engine',
+    });
+    const pathQualified = {
+      ...canonical,
+      artifacts: [join(bootstrapped.changePath, checkpoint)],
+    };
+
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath: bootstrapped.changePath, state: foundationState, outcome: pathQualified }),
+      /invalid checkpoint artifact or outcome shape/i,
+    );
+
+    const persisted = await persistExecutorOutcome({
+      changePath: bootstrapped.changePath,
+      state: foundationState,
+      outcome: canonical,
+    });
+    assert.equal(persisted.persisted, true);
+    assert.equal(persisted.state.sequence, 2);
+    assert.equal(persisted.state.checkpoint.artifact, checkpoint);
+    assert.equal(persisted.state.checkpoint.next, 'Apply 7.2 Core Engine');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('executor persistence rejects missing or non-file canonical checkpoint artifacts', async () => {
   const root = await mkdtemp(join(tmpdir(), 'crm-runtime-checkpoint-provenance-'));
   const change = 'checkpoint-provenance';
