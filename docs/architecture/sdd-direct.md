@@ -39,7 +39,8 @@ change: <named change string>
 action: <canonical action from docs/SDD-WORKFLOW.md>
 role: HIGH | MID | LOW
 status: PASS | BLOCKED | FAILED
-artifacts: [<string>, ...]
+checkpointArtifact: <canonical artifact basename for the action>
+artifacts: [<checkpointArtifact and auxiliary artifact strings>, ...]
 evidence: [<string>, ...]
 next: <canonical next action string>
 # blocker is required only when status is BLOCKED or FAILED:
@@ -51,13 +52,16 @@ blocker:
 ```
 <!-- executor-outcome-contract:end -->
 
-`blocker` MUST be absent for `PASS`, and MUST be present for `BLOCKED` or
-`FAILED`. `artifacts` and `evidence` are string arrays (never objects),
-`action`, `role`, and `next` must use canonical workflow values, and unknown or
-phase-specific top-level fields are forbidden. The runtime validator is the
-mechanical enforcement point for this contract; this section is its sole
-documentation source. See this section from every local Direct command and
-agent; do not maintain a second executor schema elsewhere.
+`checkpointArtifact` is required, must equal the action's canonical artifact
+basename, and must also appear in `artifacts`; `artifacts` and `evidence` are
+unordered string arrays (never objects), and auxiliary entries never select the
+checkpoint artifact. `blocker` MUST be absent for `PASS`, and MUST be present
+for `BLOCKED` or `FAILED`. `action`, `role`, and `next` must use canonical
+workflow values, and unknown or phase-specific top-level fields are forbidden.
+The runtime validator is the mechanical enforcement point for this contract;
+this section is its sole documentation source. See this section from every
+local Direct command and agent; do not maintain a second executor schema
+elsewhere.
 
 The adapter never creates a second artifact store, rewrites a Design or Tasks
 to conceal drift, or silently broadens the Working Set. A missing file,
@@ -99,6 +103,33 @@ destructive operation, material production/infrastructure risk, material
 external cost, or Git/release decision uses the applicable semantic HUMAN
 blocker; line count never supplies the reason for a HUMAN_HANDOFF. A passed
 Architecture Review already authorizes ordinary technical Apply decisions.
+
+## Canonical checkpoint artifact mapping
+
+The runtime validates this action-to-artifact mapping before persistence:
+
+| Action | Canonical checkpoint artifact |
+|---|---|
+| Design | `design.md` |
+| Architecture Review | `architecture-review.md` |
+| Design Refinement | `design.md` |
+| Tasks | `tasks.md` |
+| Tasks Review | `tasks-review.md` |
+| Tasks Refinement | `tasks.md` |
+| Workload Guard | `workload-guard.md` |
+| Apply 7.1 Foundation | `apply-7.1-foundation.md` |
+| Apply 7.2 Core Engine | `apply-7.2-core-engine.md` |
+| Apply 7.3 Feature Implementation | `apply-7.3-feature-implementation.md` |
+| Apply 7.4 Integration | `apply-7.4-integration.md` |
+| Apply 7.5 Testing | `apply-7.5-testing.md` |
+| Apply 7.6 Apply Summary | `apply-7.6-apply-summary.md` |
+| Verify | `verify-report.md` |
+| Archive | `archive-report.md` |
+| Health Report | `health-report.md` |
+| Repository Ready | `repository-ready.md` |
+
+The mapping follows the current lifecycle names and the established change
+artifact evidence; legacy aliases are not accepted as checkpoint artifacts.
 
 ## Maintainer Handoff
 

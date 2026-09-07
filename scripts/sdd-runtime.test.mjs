@@ -13,6 +13,7 @@ import {
   fingerprintFiles,
   hashObject,
   buildInitialState,
+  canonicalCheckpointArtifact,
   dispatchUntilTerminal,
   createContextPacket,
   evaluateWorkloadGuard,
@@ -36,6 +37,24 @@ import {
   recoverStrandedCheckpoint,
   STRANDED_RECOVERY_TARGET,
 } from './sdd-runtime.mjs';
+
+const roleFor = (action) => ['Design', 'Architecture Review', 'Design Refinement', 'Verify'].includes(action)
+  ? 'HIGH'
+  : ['Archive', 'Health Report', 'Repository Ready'].includes(action) ? 'LOW' : 'MID';
+const outcomeFor = (change, action, overrides = {}) => {
+  const checkpointArtifact = canonicalCheckpointArtifact(action);
+  return {
+    change,
+    action,
+    role: roleFor(action),
+    status: 'PASS',
+    checkpointArtifact,
+    artifacts: [checkpointArtifact],
+    evidence: [],
+    next: projectCanonicalWorkflow().edges[action] ?? 'HUMAN_HANDOFF',
+    ...overrides,
+  };
+};
 
 async function strandedFixture() {
   const root = await mkdtemp(join(tmpdir(), 'crm-stranded-unit-'));
@@ -113,23 +132,31 @@ test('trace event hashes and state contracts validate', () => {
 });
 
 test('outcomes require exactly one validated blocker when not passing', () => {
-  assert.throws(() => validateOutcomePacket({ change: 'demo-change', action: 'Design', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: [], next: 'Design' }), /requires blocker/i);
-  const outcome = validateOutcomePacket({ change: 'demo-change', action: 'Design', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: ['invalid blocker'], next: 'Design', blocker: { class: 'FATAL_INVARIANT', human_required: true, reason: 'corrupt state', resume_phase: null } });
+  assert.throws(() => validateOutcomePacket(outcomeFor('demo-change', 'Design', { status: 'BLOCKED', next: 'Design' })), /requires blocker/i);
+  const outcome = validateOutcomePacket(outcomeFor('demo-change', 'Design', { status: 'BLOCKED', evidence: ['invalid blocker'], next: 'Design', blocker: { class: 'FATAL_INVARIANT', human_required: true, reason: 'corrupt state', resume_phase: null } }));
   assert.equal(outcome.blocker.class, 'FATAL_INVARIANT');
 });
 
 test('outcome contract rejects missing next, object evidence, missing blocker class, and extra phase fields', () => {
-  const pass = { change: 'demo-change', action: 'Design', role: 'HIGH', status: 'PASS', artifacts: [], evidence: [], next: 'Architecture Review' };
+  const pass = outcomeFor('demo-change', 'Design');
   assert.throws(() => validateOutcomePacket({ ...pass, next: undefined }), /next/i);
   assert.throws(() => validateOutcomePacket({ ...pass, evidence: { result: 'ok' } }), /shape|evidence/i);
   assert.throws(() => validateOutcomePacket({ ...pass, phase: 'Design' }), /unknown outcome field/i);
   assert.throws(() => validateOutcomePacket({ ...pass, status: 'BLOCKED', next: 'Design', blocker: { human_required: true, reason: 'blocked', resume_phase: null } }), /class/i);
 });
 
+test('checkpoint provenance is explicit, canonical, and independent of auxiliary artifact ordering', () => {
+  const valid = outcomeFor('demo-change', 'Design', { artifacts: ['design.md', 'Working Set evidence'] });
+  assert.equal(validateOutcomePacket(valid).checkpointArtifact, 'design.md');
+  assert.throws(() => validateOutcomePacket({ ...valid, checkpointArtifact: 'tasks.md', artifacts: ['tasks.md'] }), /checkpoint artifact/i);
+  assert.throws(() => validateOutcomePacket({ ...valid, artifacts: ['Working Set evidence'] }), /checkpoint artifact/i);
+  assert.throws(() => validateOutcomePacket({ ...valid, checkpointArtifact: undefined }), /checkpoint artifact/i);
+});
+
 test('valid PASS and BLOCKED packets are accepted and malformed packets fail closed', () => {
-  const pass = { change: 'demo-change', action: 'Design', role: 'HIGH', status: 'PASS', artifacts: [], evidence: ['complete'], next: 'Architecture Review' };
+  const pass = outcomeFor('demo-change', 'Design', { evidence: ['complete'] });
   assert.doesNotThrow(() => validateOutcomePacket(pass));
-  const blocked = { change: 'demo-change', action: 'Design', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: ['needs review'], next: 'Design', blocker: { class: 'AUTO_RETRY', human_required: false, reason: 'bounded retry', resume_phase: 'Design' } };
+  const blocked = outcomeFor('demo-change', 'Design', { status: 'BLOCKED', evidence: ['needs review'], next: 'Design', blocker: { class: 'AUTO_RETRY', human_required: false, reason: 'bounded retry', resume_phase: 'Design' } });
   assert.doesNotThrow(() => validateOutcomePacket(blocked));
   const malformed = safeValidateOutcome({ ...blocked, evidence: { object: true } });
   assert.equal(malformed.status, 'HUMAN_HANDOFF');
@@ -144,11 +171,10 @@ test('two environment-recoverable Apply blocks can be followed by PASS without c
     checkpoint: { phase: action, artifact: 'apply-progress.md', verdict: 'BLOCKED', next: action },
   };
   const blocked = (run) => ({
-    change: 'demo-change', action, role: 'MID', status: 'BLOCKED', artifacts: ['apply-progress.md'],
-    evidence: [`environment unavailable: run ${run}`], next: action,
+    ...outcomeFor('demo-change', action, { status: 'BLOCKED', evidence: [`environment unavailable: run ${run}`], next: action }),
     blocker: { class: 'ENVIRONMENT_RECOVERABLE', human_required: false, reason: `Redis unavailable on run ${run}`, resume_phase: action },
   });
-  const pass = { change: 'demo-change', action, role: 'MID', status: 'PASS', artifacts: ['apply-progress.md'], evidence: ['environment recovered'], next: 'Apply 7.4 Integration' };
+  const pass = outcomeFor('demo-change', action, { evidence: ['environment recovered'], next: 'Apply 7.4 Integration' });
 
   const first = dispatchUntilTerminal({ state, outcomes: [blocked(1)] });
   const second = dispatchUntilTerminal({ state: first.state, outcomes: [blocked(2)] });
@@ -170,8 +196,7 @@ test('non-PASS Apply retry accounting remains fail-closed after its budget is ex
     checkpoint: { phase: action, artifact: 'apply-progress.md', verdict: 'BLOCKED', next: action },
   };
   const blocked = (run) => ({
-    change: 'demo-change', action, role: 'MID', status: 'BLOCKED', artifacts: ['apply-progress.md'],
-    evidence: [`environment unavailable: run ${run}`], next: action,
+    ...outcomeFor('demo-change', action, { status: 'BLOCKED', evidence: [`environment unavailable: run ${run}`], next: action }),
     blocker: { class: 'ENVIRONMENT_RECOVERABLE', human_required: false, reason: `Redis unavailable on run ${run}`, resume_phase: action },
   });
 
@@ -189,17 +214,16 @@ test('non-PASS Apply retry accounting remains fail-closed after its budget is ex
 test('human-required BLOCKED handoff materializes its actual action and artifact', () => {
   const action = 'Apply 7.5 Testing';
   const blocked = {
-    change: 'demo-change', action, role: 'MID', status: 'BLOCKED', artifacts: ['tasks.md'],
-    evidence: ['bounded recoverable evidence'], next: action,
+    ...outcomeFor('demo-change', action, { status: 'BLOCKED', evidence: ['bounded recoverable evidence'], next: action }),
     blocker: { class: 'HUMAN_SCOPE', human_required: true, reason: 'bounded scope decision', resume_phase: action },
   };
   const state = {
     ...buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } }),
-    checkpoint: { phase: 'Apply 7.4 Integration', artifact: 'tasks.md', verdict: 'PASS', next: action },
+    checkpoint: { phase: 'Apply 7.4 Integration', artifact: 'apply-7.4-integration.md', verdict: 'PASS', next: action },
   };
   const result = dispatchUntilTerminal({ state, outcomes: [blocked] });
   assert.equal(result.status, 'HUMAN_HANDOFF');
-  assert.deepEqual(result.state.checkpoint, { phase: action, artifact: 'tasks.md', verdict: 'BLOCKED', next: null });
+  assert.deepEqual(result.state.checkpoint, { phase: action, artifact: 'apply-7.5-testing.md', verdict: 'BLOCKED', next: null });
 });
 
 test('atomic JSON writes replace the target without partial output', async () => {
@@ -228,15 +252,15 @@ test('file fingerprints include path and content hashes', async () => {
 test('canonical projection selects only the legal next action', () => {
   const projection = projectCanonicalWorkflow();
   const state = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
-  const transition = selectNextTransition(state, { change: 'demo-change', action: 'Design', role: 'HIGH', status: 'PASS', artifacts: [], evidence: [], next: 'Architecture Review' }, projection);
+  const transition = selectNextTransition(state, outcomeFor('demo-change', 'Design'), projection);
   assert.deepEqual(transition, { action: 'Architecture Review', role: 'HIGH', kind: 'canonical' });
-  assert.throws(() => selectNextTransition(state, { change: 'demo-change', action: 'Design', role: 'HIGH', status: 'PASS', artifacts: [], evidence: [], next: 'Commit' }, projection), /illegal|next/i);
+  assert.throws(() => selectNextTransition(state, outcomeFor('demo-change', 'Design', { next: 'Commit' }), projection), /illegal|next/i);
 });
 
 test('blocked Architecture Review selects only Design Refinement when its budget is available', () => {
   const state = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
   const blocked = {
-    change: 'demo-change', action: 'Architecture Review', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: ['design contradiction'], next: 'Design Refinement',
+    ...outcomeFor('demo-change', 'Architecture Review', { status: 'BLOCKED', evidence: ['design contradiction'], next: 'Design Refinement' }),
     blocker: { class: 'AUTO_REFINE', human_required: false, reason: 'bounded design correction', resume_phase: 'Architecture Review' },
   };
   const transition = selectNextTransition({ ...state, checkpoint: { ...state.checkpoint, next: 'Architecture Review' } }, blocked);
@@ -246,7 +270,7 @@ test('blocked Architecture Review selects only Design Refinement when its budget
 test('blocked Tasks Review remains on the distinct Tasks Refinement path', () => {
   const state = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
   const blocked = {
-    change: 'demo-change', action: 'Tasks Review', role: 'MID', status: 'BLOCKED', artifacts: [], evidence: ['task contradiction'], next: 'Tasks Refinement',
+    ...outcomeFor('demo-change', 'Tasks Review', { status: 'BLOCKED', evidence: ['task contradiction'], next: 'Tasks Refinement' }),
     blocker: { class: 'AUTO_REFINE', human_required: false, reason: 'bounded task correction', resume_phase: 'Tasks Review' },
   };
   const transition = selectNextTransition({ ...state, checkpoint: { ...state.checkpoint, next: 'Tasks Review' } }, blocked);
@@ -260,14 +284,14 @@ test('Design Refinement PASS returns to a fresh Architecture Review', () => {
     ...state,
     checkpoint: { phase: 'Architecture Review', artifact: 'architecture-review.md', verdict: 'BLOCKED', next: 'Design Refinement' },
   };
-  const outcome = { change: 'demo-change', action: 'Design Refinement', role: 'HIGH', status: 'PASS', artifacts: ['design.md'], evidence: ['refinement complete'], next: 'Architecture Review' };
+  const outcome = outcomeFor('demo-change', 'Design Refinement', { evidence: ['refinement complete'] });
   assert.deepEqual(selectNextTransition(refinementState, outcome), { action: 'Architecture Review', role: 'HIGH', kind: 'canonical' });
 });
 
 test('exhausted refinement and cross-layer refinement stop with FATAL/HUMAN', () => {
   const base = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
   const architectureBlocked = {
-    change: 'demo-change', action: 'Architecture Review', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: ['repeat'], next: 'Design Refinement',
+    ...outcomeFor('demo-change', 'Architecture Review', { status: 'BLOCKED', evidence: ['repeat'], next: 'Design Refinement' }),
     blocker: { class: 'AUTO_REFINE', human_required: false, reason: 'repeat', resume_phase: 'Architecture Review' },
   };
   const exhausted = selectNextTransition({
@@ -288,7 +312,7 @@ test('PASS checkpoint mismatches stop with the selector-owned FATAL/HUMAN handof
   const state = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
   const transition = selectNextTransition(
     { ...state, checkpoint: { ...state.checkpoint, next: 'Tasks Review' } },
-    { change: 'demo-change', action: 'Architecture Review', role: 'HIGH', status: 'PASS', artifacts: [], evidence: [], next: 'Tasks' },
+    outcomeFor('demo-change', 'Architecture Review'),
   );
   assert.equal(transition.action, 'HUMAN_HANDOFF');
   assert.equal(transition.blocker.class, 'FATAL_INVARIANT');
@@ -304,7 +328,7 @@ test('outcome roles must match canonical ownership for HIGH, MID, and LOW action
     ['Archive', 'Health Report', 'LOW', 'MID'],
   ];
   for (const [action, next, canonicalRole, wrongRole] of cases) {
-    const outcome = { change: 'demo-change', action, role: wrongRole, status: 'PASS', artifacts: [], evidence: [], next };
+    const outcome = outcomeFor('demo-change', action, { role: wrongRole, next });
     assert.throws(() => validateOutcomePacket(outcome), /canonical role/i);
     assert.throws(() => selectNextTransition({ ...state, checkpoint: { ...state.checkpoint, next: action } }, outcome, projection), /canonical role/i);
     assert.doesNotThrow(() => validateOutcomePacket({ ...outcome, role: canonicalRole }));
@@ -326,7 +350,7 @@ test('attempt accounting is bounded and idempotency keys are stable', () => {
 });
 
 test('duplicate outcomes are accepted only when their payload is identical', () => {
-  const outcome = { change: 'demo-change', action: 'Design', role: 'HIGH', status: 'PASS', artifacts: [], evidence: [], next: 'Architecture Review' };
+  const outcome = outcomeFor('demo-change', 'Design');
   const first = dispatchUntilTerminal({ state: buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } }), outcomes: [outcome] });
   assert.equal(first.status, 'READY');
   assert.equal(first.duplicate, false);
@@ -378,7 +402,7 @@ test('safe outcome handling converts malformed or fatal packets to a HUMAN stop'
   const malformed = safeValidateOutcome({ change: 'demo-change', action: 'Design', status: 'BLOCKED' });
   assert.equal(malformed.status, 'HUMAN_HANDOFF');
   assert.equal(malformed.blocker.class, 'FATAL_INVARIANT');
-  const human = safeValidateOutcome({ change: 'demo-change', action: 'Design', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: [], next: 'Design', blocker: { class: 'HUMAN_SCOPE', human_required: true, reason: 'foreign Working Set', resume_phase: null } });
+  const human = safeValidateOutcome(outcomeFor('demo-change', 'Design', { status: 'BLOCKED', next: 'Design', blocker: { class: 'HUMAN_SCOPE', human_required: true, reason: 'foreign Working Set', resume_phase: null } }));
   assert.equal(human.status, 'HUMAN_HANDOFF');
   assert.equal(human.blocker.human_required, true);
 });
@@ -436,7 +460,7 @@ test('Workload Guard stops semantic scope, security, risk, and destructive excep
 test('dispatch continues through supplied legal outcomes and stops at Repository Ready', () => {
   const state = buildInitialState({ root: '/repo', change: 'demo-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
   const actions = ['Design', 'Architecture Review', 'Tasks', 'Tasks Review', 'Workload Guard', 'Apply 7.1 Foundation', 'Apply 7.2 Core Engine', 'Apply 7.3 Feature Implementation', 'Apply 7.4 Integration', 'Apply 7.5 Testing', 'Apply 7.6 Apply Summary', 'Verify', 'Archive', 'Health Report', 'Repository Ready'];
-  const outcomes = actions.map((action) => ({ change: 'demo-change', action, role: ['Design', 'Architecture Review', 'Verify'].includes(action) ? 'HIGH' : ['Archive', 'Health Report', 'Repository Ready'].includes(action) ? 'LOW' : 'MID', status: 'PASS', artifacts: [], evidence: [], next: action === 'Repository Ready' ? 'HUMAN_HANDOFF' : ({ Design: 'Architecture Review', 'Architecture Review': 'Tasks', Tasks: 'Tasks Review', 'Tasks Review': 'Workload Guard', 'Workload Guard': 'Apply 7.1 Foundation', 'Apply 7.1 Foundation': 'Apply 7.2 Core Engine', 'Apply 7.2 Core Engine': 'Apply 7.3 Feature Implementation', 'Apply 7.3 Feature Implementation': 'Apply 7.4 Integration', 'Apply 7.4 Integration': 'Apply 7.5 Testing', 'Apply 7.5 Testing': 'Apply 7.6 Apply Summary', 'Apply 7.6 Apply Summary': 'Verify', Verify: 'Archive', Archive: 'Health Report', 'Health Report': 'Repository Ready' }[action]) }));
+  const outcomes = actions.map((action) => outcomeFor('demo-change', action));
   const result = dispatchUntilTerminal({ state, outcomes });
   assert.equal(result.status, 'HUMAN_HANDOFF');
   assert.equal(result.state.checkpoint.phase, 'Repository Ready');
@@ -518,10 +542,10 @@ test('HUMAN stranded recovery appends one event and materializes blocked READY A
     const traceEvents = await Promise.all(traceNames.map(async (name) => JSON.parse(await readFile(join(traceDirectory, name), 'utf8'))));
     assert.equal(validateTraceSequence(traceEvents).length, fixture.events.length + 1);
     await assert.rejects(() => recoverStrandedCheckpoint(request), /stale/i);
-    const malformed = dispatchUntilTerminal({ state: result.state, outcomes: [{ change: fixture.change, action: STRANDED_RECOVERY_TARGET, role: 'MID', status: 'PASS', artifacts: [], evidence: { previous: true }, next: 'Apply 7.4 Integration' }] });
+    const malformed = dispatchUntilTerminal({ state: result.state, outcomes: [outcomeFor(fixture.change, STRANDED_RECOVERY_TARGET, { evidence: { previous: true }, next: 'Apply 7.4 Integration' })] });
     assert.equal(malformed.status, 'HUMAN_HANDOFF');
     assert.equal(malformed.state.checkpoint.next, null);
-    const fresh = dispatchUntilTerminal({ state: result.state, outcomes: [{ change: fixture.change, action: 'Apply 7.3 Feature Implementation', role: 'MID', status: 'PASS', artifacts: [], evidence: ['fresh'], next: 'Apply 7.4 Integration' }] });
+    const fresh = dispatchUntilTerminal({ state: result.state, outcomes: [outcomeFor(fixture.change, STRANDED_RECOVERY_TARGET, { evidence: ['fresh'], next: 'Apply 7.4 Integration' })] });
     assert.equal(fresh.state.checkpoint.next, 'Apply 7.4 Integration');
   } finally { await rm(fixture.root, { recursive: true, force: true }); }
 });

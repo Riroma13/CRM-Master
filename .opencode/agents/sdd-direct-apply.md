@@ -23,3 +23,5 @@ canonical non-HUMAN transition remains.
 Use exactly the canonical Executor Outcome Contract in
 `docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
 its schema.
+Set `checkpointArtifact` explicitly for the current Apply action; auxiliary
+`artifacts` entries are unordered and never determine the checkpoint.

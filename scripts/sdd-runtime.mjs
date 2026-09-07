@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createHash } from 'node:crypto';
-import { mkdir, open, readFile, rename, link, unlink, readdir } from 'node:fs/promises';
+import { lstat, mkdir, open, readFile, rename, link, unlink, readdir } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 export const CHANGE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
@@ -62,6 +62,25 @@ const PHASE_EDGES = Object.freeze({
   'Apply 7.3 Feature Implementation': 'Apply 7.4 Integration', 'Apply 7.4 Integration': 'Apply 7.5 Testing',
   'Apply 7.5 Testing': 'Apply 7.6 Apply Summary', 'Apply 7.6 Apply Summary': 'Verify',
   Verify: 'Archive', Archive: 'Health Report', 'Health Report': 'Repository Ready',
+});
+export const CANONICAL_CHECKPOINT_ARTIFACTS = Object.freeze({
+  Design: 'design.md',
+  'Architecture Review': 'architecture-review.md',
+  'Design Refinement': 'design.md',
+  Tasks: 'tasks.md',
+  'Tasks Review': 'tasks-review.md',
+  'Tasks Refinement': 'tasks.md',
+  'Workload Guard': 'workload-guard.md',
+  'Apply 7.1 Foundation': 'apply-7.1-foundation.md',
+  'Apply 7.2 Core Engine': 'apply-7.2-core-engine.md',
+  'Apply 7.3 Feature Implementation': 'apply-7.3-feature-implementation.md',
+  'Apply 7.4 Integration': 'apply-7.4-integration.md',
+  'Apply 7.5 Testing': 'apply-7.5-testing.md',
+  'Apply 7.6 Apply Summary': 'apply-7.6-apply-summary.md',
+  Verify: 'verify-report.md',
+  Archive: 'archive-report.md',
+  'Health Report': 'health-report.md',
+  'Repository Ready': 'repository-ready.md',
 });
 const REFINEMENT_BY_BLOCKED_REVIEW = Object.freeze({
   'Architecture Review': 'Design Refinement',
@@ -242,6 +261,11 @@ export function selectNextTransition(state, outcome, projection = projectCanonic
   return { action: next, role: projection.roles[next], kind: 'canonical' };
 }
 
+export function canonicalCheckpointArtifact(action) {
+  if (!CANONICAL_ACTIONS.has(action) || typeof CANONICAL_CHECKPOINT_ARTIFACTS[action] !== 'string') fail(`no canonical checkpoint artifact for ${action}`);
+  return CANONICAL_CHECKPOINT_ARTIFACTS[action];
+}
+
 export function recordAttempt(state, action) {
   validateRuntimeState(state);
   if (!CANONICAL_ACTIONS.has(action)) fail('invalid attempt action');
@@ -298,11 +322,12 @@ export function validateBlocker(blocker) {
 
 export function validateOutcomePacket(packet) {
   assertObject(packet, 'outcome');
-  if (!own(packet, new Set(['change', 'action', 'role', 'status', 'artifacts', 'evidence', 'next', 'blocker']))) fail('unknown outcome field');
+  if (!own(packet, new Set(['change', 'action', 'role', 'status', 'checkpointArtifact', 'artifacts', 'evidence', 'next', 'blocker']))) fail('unknown outcome field');
   validateChangeName(packet.change);
   if (!CANONICAL_ACTIONS.has(packet.action) || !LOGICAL_ROLES.has(packet.role)) fail('invalid outcome action or role');
   if (PHASE_ROLES[packet.action] !== packet.role) fail(`outcome role must match canonical role for ${packet.action}`);
-  if (!['PASS', 'BLOCKED', 'FAILED'].includes(packet.status) || !Array.isArray(packet.artifacts) || !packet.artifacts.every((item) => typeof item === 'string') || !Array.isArray(packet.evidence) || !packet.evidence.every((item) => typeof item === 'string')) fail('invalid outcome shape');
+  if (typeof packet.checkpointArtifact !== 'string' || packet.checkpointArtifact !== canonicalCheckpointArtifact(packet.action) || !Array.isArray(packet.artifacts) || !packet.artifacts.every((item) => typeof item === 'string') || !packet.artifacts.includes(packet.checkpointArtifact) || !Array.isArray(packet.evidence) || !packet.evidence.every((item) => typeof item === 'string')) fail('invalid checkpoint artifact or outcome shape');
+  if (!['PASS', 'BLOCKED', 'FAILED'].includes(packet.status)) fail('invalid outcome status');
   if (typeof packet.next !== 'string') fail('invalid outcome next');
   if (packet.status === 'PASS' && packet.blocker !== undefined) fail('PASS outcome cannot contain blocker');
   if (packet.status !== 'PASS' && packet.blocker === undefined) fail('blocked outcome requires blocker');
@@ -318,7 +343,7 @@ export function safeValidateOutcome(packet) {
   } catch (error) {
     return {
       change: typeof packet?.change === 'string' ? packet.change : 'unknown', action: typeof packet?.action === 'string' ? packet.action : 'Repository Ready',
-      role: 'HUMAN', status: 'HUMAN_HANDOFF', artifacts: [], evidence: [error.message], next: null,
+      role: 'HUMAN', status: 'HUMAN_HANDOFF', checkpointArtifact: canonicalCheckpointArtifact(CANONICAL_ACTIONS.has(packet?.action) ? packet.action : 'Repository Ready'), artifacts: [], evidence: [error.message], next: null,
       blocker: { class: 'FATAL_INVARIANT', human_required: true, reason: error.message, resume_phase: null },
     };
   }
@@ -489,19 +514,19 @@ export function dispatchUntilTerminal({ state, outcomes = [], execute = null, pr
     if (!rawOutcome) return { status: current.status, state: current, duplicate };
     const outcome = safeValidateOutcome(rawOutcome);
     if (outcome.status === 'HUMAN_HANDOFF') {
-       const rawInputHash = hashObject(rawOutcome);
-       if (current.lastTransition?.action === outcome.action && current.lastTransition.inputHash === rawInputHash) {
-         duplicate = true;
-         continue;
-       }
-       let validatedRawOutcome = null;
-       try { validatedRawOutcome = validateOutcomePacket(rawOutcome); } catch {}
-       const actualBlockedOutcome = validatedRawOutcome?.status === 'BLOCKED'
-         && validatedRawOutcome.blocker.human_required;
-       const phase = actualBlockedOutcome ? validatedRawOutcome.action : current.checkpoint.phase;
-       const artifact = actualBlockedOutcome ? validatedRawOutcome.artifacts.at(-1) ?? null : current.checkpoint.artifact;
-       const inputHash = rawInputHash;
-       current = validateRuntimeState({ ...current, status: 'HUMAN_HANDOFF', sequence: current.sequence + 1, checkpoint: { phase, artifact, verdict: 'BLOCKED', next: null }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { idempotencyKey: idempotencyKey(current.change, current.sequence + 1, current.checkpoint.next || 'HUMAN_HANDOFF', inputHash), action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF', blocker: outcome.blocker }) } });
+      const rawInputHash = hashObject(rawOutcome);
+      if (current.lastTransition?.action === outcome.action && current.lastTransition.inputHash === rawInputHash) {
+        duplicate = true;
+        continue;
+      }
+      let validatedRawOutcome = null;
+      try { validatedRawOutcome = validateOutcomePacket(rawOutcome); } catch {}
+      const actualBlockedOutcome = validatedRawOutcome?.status === 'BLOCKED'
+        && validatedRawOutcome.blocker.human_required;
+      const phase = actualBlockedOutcome ? validatedRawOutcome.action : current.checkpoint.phase;
+      const artifact = actualBlockedOutcome ? validatedRawOutcome.checkpointArtifact : current.checkpoint.artifact;
+      const inputHash = rawInputHash;
+      current = validateRuntimeState({ ...current, status: 'HUMAN_HANDOFF', sequence: current.sequence + 1, checkpoint: { phase, artifact, verdict: 'BLOCKED', next: null }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { idempotencyKey: idempotencyKey(current.change, current.sequence + 1, current.checkpoint.next || 'HUMAN_HANDOFF', inputHash), action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF', blocker: outcome.blocker }) } });
       return { status: current.status, state: current, duplicate, blocker: outcome.blocker };
     }
     const inputHash = hashObject(outcome);
@@ -512,13 +537,13 @@ export function dispatchUntilTerminal({ state, outcomes = [], execute = null, pr
     }
     const transition = selectNextTransition(current, outcome, projection);
     if (transition.kind === 'human' || transition.kind === 'terminal') {
-      current = validateRuntimeState({ ...current, status: 'HUMAN_HANDOFF', sequence: current.sequence + 1, checkpoint: { phase: outcome.action, artifact: outcome.artifacts.at(-1) ?? null, verdict: outcome.status === 'PASS' ? 'PASS' : 'BLOCKED', next: null }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { idempotencyKey: key, action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF' }) } });
+      current = validateRuntimeState({ ...current, status: 'HUMAN_HANDOFF', sequence: current.sequence + 1, checkpoint: { phase: outcome.action, artifact: outcome.checkpointArtifact, verdict: outcome.status === 'PASS' ? 'PASS' : 'BLOCKED', next: null }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { idempotencyKey: key, action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF' }) } });
       return { status: current.status, state: current, duplicate, blocker: transition.blocker };
     }
     if (outcome.status !== 'PASS' || (current.attempts[outcome.action] || 0) < 2) {
       current = recordAttempt(current, outcome.action);
     }
-    current = validateRuntimeState({ ...current, sequence: current.sequence + 1, checkpoint: { phase: outcome.action, artifact: outcome.artifacts.at(-1) ?? null, verdict: outcome.status, next: transition.action }, lastTransition: { idempotencyKey: key, action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ action: transition.action }) }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null } });
+    current = validateRuntimeState({ ...current, sequence: current.sequence + 1, checkpoint: { phase: outcome.action, artifact: outcome.checkpointArtifact, verdict: outcome.status, next: transition.action }, lastTransition: { idempotencyKey: key, action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ action: transition.action }) }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null } });
   }
   fail('dispatch transition limit exceeded');
 }
@@ -533,8 +558,13 @@ export async function persistExecutorOutcome({ changePath, state, outcome, route
   if (typeof changePath !== 'string' || !isAbsolute(changePath)) fail('change path must be absolute');
   validateRuntimeState(state);
   if (resolve(changePath) !== resolve(state.canonicalPath)) fail('change path mismatch');
+  const validatedOutcome = validateOutcomePacket(outcome);
+  const checkpointPath = join(changePath, validatedOutcome.checkpointArtifact);
+  let checkpointStats;
+  try { checkpointStats = await lstat(checkpointPath); } catch (error) { if (error.code === 'ENOENT') fail(`missing canonical checkpoint artifact ${validatedOutcome.checkpointArtifact}`); throw error; }
+  if (!checkpointStats.isFile() || checkpointStats.isSymbolicLink()) fail(`invalid canonical checkpoint artifact ${validatedOutcome.checkpointArtifact}`);
 
-  const result = dispatchUntilTerminal({ state, outcomes: [outcome], projection });
+  const result = dispatchUntilTerminal({ state, outcomes: [validatedOutcome], projection });
   if (result.state.sequence === state.sequence) {
     if (result.duplicate && state.traceCursor.eventHash !== null) {
       return { ...result, persisted: false, event: null, tracePath: null };
@@ -727,9 +757,9 @@ export async function recoverDispatchMaterialization(input = {}) {
     const normalizedBlockedOutcome = safeValidateOutcome(blockedOutcome);
     if (hashObject(blockedOutcome) !== handoff.inputHash) fail('blocked evidence input provenance mismatch');
     if (hashObject(normalizedBlockedOutcome) !== handoff.outcomeHash) fail('blocked evidence does not match originating outcome');
-    if (blockedOutcome.artifacts.at(-1) !== handoff.stateMaterialization.checkpoint?.artifact) fail('blocked evidence artifact mismatch');
+    if (blockedOutcome.checkpointArtifact !== handoff.stateMaterialization.checkpoint?.artifact) fail('blocked evidence artifact mismatch');
     const after = validateRuntimeState({ ...state, status: 'READY', sequence: expectedSequence + 1,
-      checkpoint: { phase: blockedOutcome.action, artifact: blockedOutcome.artifacts.at(-1), verdict: 'BLOCKED', next: blockedOutcome.action },
+      checkpoint: { phase: blockedOutcome.action, artifact: blockedOutcome.checkpointArtifact, verdict: 'BLOCKED', next: blockedOutcome.action },
       traceCursor: { sequence: expectedSequence + 1, eventHash: null, chainHash: null },
       lastTransition: { action: blockedOutcome.action, inputHash: handoff.inputHash, outcomeHash: handoff.outcomeHash, afterStateHash: hashObject({ operation: DISPATCH_MATERIALIZATION_RECOVERY_OPERATION, sourceEventHash: handoff.eventHash, target: blockedOutcome.action }) } });
     const event = createTraceEvent({ change, sequence: after.sequence, action: blockedOutcome.action, role: 'HUMAN', inputHash: after.lastTransition.inputHash, outcomeHash: after.lastTransition.outcomeHash, beforeState: state, afterState: after, operation: DISPATCH_MATERIALIZATION_RECOVERY_OPERATION, previousSequence: expectedSequence, newSequence: after.sequence, sourceStatus: 'HUMAN_HANDOFF', target: blockedOutcome.action, authorization, authorityFingerprints: state.fingerprints, contextAudit: { bootstrapReadCount: 1, normalPhaseBootstrapReadCount: 0, references: authorityRefs, operation: DISPATCH_MATERIALIZATION_RECOVERY_OPERATION, actor: authorization.actor, approval: authorization.approval } });

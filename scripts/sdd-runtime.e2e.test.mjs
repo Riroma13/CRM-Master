@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import {
   BLOCKER_POLICIES,
   buildInitialState,
+  canonicalCheckpointArtifact,
   dispatchUntilTerminal,
   evaluateWorkloadGuard,
   reconstructState,
@@ -28,7 +29,10 @@ const edges = {
   'Apply 7.6 Apply Summary': 'Verify', Verify: 'Archive', Archive: 'Health Report', 'Health Report': 'Repository Ready',
 };
 const highPhases = new Set(['Design', 'Architecture Review', 'Design Refinement', 'Verify']);
-const outcomeFor = (change, action) => ({ change, action, role: highPhases.has(action) ? 'HIGH' : ['Archive', 'Health Report', 'Repository Ready'].includes(action) ? 'LOW' : 'MID', status: 'PASS', artifacts: [], evidence: [`fixture:${action}`], next: edges[action] || 'HUMAN_HANDOFF' });
+const outcomeFor = (change, action, overrides = {}) => {
+  const checkpointArtifact = canonicalCheckpointArtifact(action);
+  return { change, action, role: highPhases.has(action) ? 'HIGH' : ['Archive', 'Health Report', 'Repository Ready'].includes(action) ? 'LOW' : 'MID', status: 'PASS', checkpointArtifact, artifacts: [checkpointArtifact], evidence: [`fixture:${action}`], next: edges[action] || 'HUMAN_HANDOFF', ...overrides };
+};
 
 function initialState() {
   return buildInitialState({ root: '/repo', change: 'e2e-change', fingerprints: hashes });
@@ -60,7 +64,7 @@ test('one generic recovery invocation continues from an interrupted READY checkp
 test('all AC-06 HUMAN blocker classes stop without executor dispatch', () => {
   for (const blockerClass of ['HUMAN_ARCHITECTURE', 'HUMAN_SECURITY', 'HUMAN_SCOPE', 'HUMAN_GIT']) {
     let calls = 0;
-    const result = dispatchUntilTerminal({ state: initialState(), execute: () => { calls += 1; return outcomeFor('e2e-change', 'Design'); }, outcomes: [{ change: 'e2e-change', action: 'Design', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: [], next: 'Design', blocker: { class: blockerClass, human_required: true, reason: blockerClass, resume_phase: null } }] });
+    const result = dispatchUntilTerminal({ state: initialState(), execute: () => { calls += 1; return outcomeFor('e2e-change', 'Design'); }, outcomes: [outcomeFor('e2e-change', 'Design', { status: 'BLOCKED', evidence: [], next: 'Design', blocker: { class: blockerClass, human_required: true, reason: blockerClass, resume_phase: null } })] });
     assert.equal(result.status, 'HUMAN_HANDOFF');
     assert.equal(result.blocker.class, blockerClass);
     assert.equal(calls, 0);
@@ -69,7 +73,7 @@ test('all AC-06 HUMAN blocker classes stop without executor dispatch', () => {
 
 test('machine-recoverable blocker follows bounded retry policy without HUMAN', () => {
   const outcomes = [
-    { change: 'e2e-change', action: 'Design', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: ['quota'], next: 'Design', blocker: { class: 'AUTO_RETRY', human_required: false, reason: 'transient', resume_phase: 'Design' } },
+    outcomeFor('e2e-change', 'Design', { status: 'BLOCKED', evidence: ['quota'], next: 'Design', blocker: { class: 'AUTO_RETRY', human_required: false, reason: 'transient', resume_phase: 'Design' } }),
     outcomeFor('e2e-change', 'Design'),
   ];
   const result = dispatchUntilTerminal({ state: initialState(), outcomes });

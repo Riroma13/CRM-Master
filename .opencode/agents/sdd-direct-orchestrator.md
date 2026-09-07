@@ -62,6 +62,8 @@ changes and never overwrite an artifact whose provenance is unclear.
 Return exactly the canonical Executor Outcome Contract in
 `docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
 its schema.
+Every executor outcome must set the explicit `checkpointArtifact` for its action;
+never infer the checkpoint artifact from the ordering of `artifacts`.
 
 ## Explicit HUMAN stranded-checkpoint recovery
 

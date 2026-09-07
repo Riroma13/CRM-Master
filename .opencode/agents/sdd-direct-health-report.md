@@ -24,3 +24,5 @@ perform maintainer Git operations or infer acceptance.
 Use exactly the canonical Executor Outcome Contract in
 `docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
 its schema.
+Set `checkpointArtifact` explicitly to the canonical Health Report artifact; do
+not rely on `artifacts` ordering.

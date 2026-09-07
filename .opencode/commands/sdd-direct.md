@@ -28,6 +28,9 @@ release, or tag.
 Return exactly the canonical Executor Outcome Contract in
 `docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
 its schema.
+Every outcome must include the explicit `checkpointArtifact` required by the
+action-to-artifact mapping; auxiliary `artifacts` entries are unordered evidence
+and never select the checkpoint by position.
 
 ## Explicit HUMAN stranded-checkpoint recovery
 

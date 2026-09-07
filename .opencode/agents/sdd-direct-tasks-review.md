@@ -24,3 +24,5 @@ Do not infer a transition from explanatory prose.
 Use exactly the canonical Executor Outcome Contract in
 `docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
 its schema.
+Set `checkpointArtifact` explicitly to the canonical Tasks Review artifact;
+auxiliary `artifacts` entries are unordered.
