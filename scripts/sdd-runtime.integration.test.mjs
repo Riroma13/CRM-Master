@@ -186,6 +186,60 @@ test('Design executor outcomes are materialized event-first before the next disp
   }
 });
 
+test('the forwarding command leaves one owner to materialize an Apply 7.1 outcome exactly once', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-apply-single-owner-'));
+  const change = 'apply-single-owner';
+  try {
+    const command = await readFile(new URL('../.opencode/commands/sdd-direct.md', import.meta.url), 'utf8');
+    const orchestrator = await readFile(new URL('../.opencode/agents/sdd-direct-orchestrator.md', import.meta.url), 'utf8');
+    assert.match(command, /entry adapter only[\s\S]*never dispatches an executor, materializes an\s+executor outcome, or writes change-local runtime state itself/i);
+    assert.doesNotMatch(command, /persistExecutorOutcome/);
+    assert.match(orchestrator, /orchestrator is the sole persistence owner/i);
+    assert.match(orchestrator, /Once it accepts an outcome, discard that outcome[\s\S]*never re-submit it or its action from a stale\s+checkpoint/i);
+
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: { ...hashes, artifacts: {} } });
+    const checkpoint = 'apply-7.1-foundation.md';
+    await writeFile(join(bootstrapped.changePath, checkpoint), '# Apply 7.1 Foundation\n');
+    const before = {
+      ...bootstrapped.state,
+      checkpoint: { phase: 'Workload Guard', artifact: 'workload-guard.md', verdict: 'PASS', next: 'Apply 7.1 Foundation' },
+    };
+    const result = await persistExecutorOutcome({
+      changePath: bootstrapped.changePath,
+      state: before,
+      outcome: outcomeFor(change, 'Apply 7.1 Foundation', { next: 'Apply 7.2 Core Engine' }),
+      route: { configured: 'MID', resolved: 'sdd-direct-apply', rejections: [] },
+    });
+
+    assert.equal(result.persisted, true);
+    assert.equal(result.state.sequence, 1);
+    assert.equal(result.state.checkpoint.next, 'Apply 7.2 Core Engine');
+
+    const nextCheckpoint = 'apply-7.2-core-engine.md';
+    await writeFile(join(bootstrapped.changePath, nextCheckpoint), '# Apply 7.2 Core Engine\n');
+    const next = await persistExecutorOutcome({
+      changePath: bootstrapped.changePath,
+      state: result.state,
+      outcome: outcomeFor(change, 'Apply 7.2 Core Engine', {
+        next: 'Apply 7.3 Feature Implementation',
+        checkpointArtifact: nextCheckpoint,
+        artifacts: [nextCheckpoint],
+      }),
+      route: { configured: 'MID', resolved: 'sdd-direct-apply', rejections: [] },
+    });
+
+    assert.equal(next.persisted, true);
+    assert.equal(next.event.action, 'Apply 7.2 Core Engine');
+    assert.equal(next.state.sequence, 2);
+    assert.deepEqual(await readdir(join(bootstrapped.changePath, '.sdd-runtime', 'trace')), [
+      `${String(1).padStart(20, '0')}-${result.event.eventHash}.json`,
+      `${String(2).padStart(20, '0')}-${next.event.eventHash}.json`,
+    ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('Design evidence blockers use canonical retry or HUMAN handoff policies and reject unknown classes', async () => {
   const root = await mkdtemp(join(tmpdir(), 'crm-runtime-design-needs-evidence-'));
   const change = 'design-needs-evidence';

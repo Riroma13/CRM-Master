@@ -118,7 +118,9 @@ test('local agents and legacy commands remain project-local and STOP-only', asyn
   assert.match(orchestrator, /sdd-runtime\.mjs/);
   assert.match(orchestrator, /persistExecutorOutcome/);
   assert.match(orchestrator, /persistTransition/);
-  assert.match(direct, /persistExecutorOutcome/);
+  assert.match(orchestrator, /sole persistence owner/i);
+  assert.match(direct, /entry adapter only/i);
+  assert.doesNotMatch(direct, /persistExecutorOutcome/);
   assert.match(orchestrator, /technical planning/i);
   assert.match(direct, /technical planning/i);
   assert.match(legacy, /CRM_SDD_LEGACY_BOUNDARY/);

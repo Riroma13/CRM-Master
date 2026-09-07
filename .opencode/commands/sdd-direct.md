@@ -10,20 +10,16 @@ name is required. Load `AGENTS.md`, then the semantic workflow authority at
 `docs/SDD-WORKFLOW.md`, and recover the active state from
 `openspec/changes/<change-name>/` before any additional inspection.
 
-Use only project-local Direct agents and `.opencode/sdd-model-map.json`. Persist
-artifacts under the canonical change directory and mirror bounded status and
-evidence under the `hybrid` contract. Run `pnpm sdd:validate` before execution
-and at handoff. Bootstrap `scripts/sdd-runtime.mjs` with the validated change
-identity, fingerprints, Working Set, and current checkpoint before dispatch.
-Continue only through legal non-HUMAN actions, persist event-first state/trace
-evidence under the change-local `.sdd-runtime/` path when execution output is
-required, and stop at Repository Ready for the maintainer Git handoff. After
-each executor result, invoke the exported `persistExecutorOutcome` operation
-from `scripts/sdd-runtime.mjs`; it must project exactly one transition, create
-the trace event, call `persistTransition` (trace first, state second), and
-return the accepted checkpoint before any next executor dispatch. Never use
-`dispatchUntilTerminal` alone for persistence. Do not commit, push, merge,
-release, or tag.
+Use only project-local Direct agents and `.opencode/sdd-model-map.json`. This
+command is an entry adapter only: it forwards lifecycle control to
+`sdd-direct-orchestrator` and never dispatches an executor, materializes an
+executor outcome, or writes change-local runtime state itself. The orchestrator
+is the sole persistence owner under the `hybrid` contract and owns the
+`sdd-runtime` bootstrap and autonomous dispatch boundary. It runs
+`pnpm sdd:validate`, bootstraps the validated identity, and uses the canonical
+event-first persistence boundary before each next dispatch. Stop at Repository
+Ready for the maintainer Git handoff. Do not commit, push, merge, release, or
+tag.
 
 Return exactly the canonical Executor Outcome Contract in
 `docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate

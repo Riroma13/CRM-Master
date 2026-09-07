@@ -38,10 +38,14 @@ agents listed in `.opencode/sdd-model-map.json`.
    intermediate prompt. For each executor result, invoke the exported
    `persistExecutorOutcome` operation from `scripts/sdd-runtime.mjs` with the
    recovered state, canonical change path, outcome, route, and context audit.
-   This operation must be the only boundary from an executor result to the
+   The orchestrator is the sole persistence owner: commands only forward into
+   this orchestrator, and phase executors only return an outcome packet. This
+   operation must be the only boundary from an executor result to the
    repository: it validates one outcome, projects one transition, creates the
    trace event, and calls `persistTransition` so the trace is written before
-   the state. `dispatchUntilTerminal` is projection-only and must never be
+   the state. Once it accepts an outcome, discard that outcome and dispatch
+   only from its returned state; never re-submit it or its action from a stale
+   checkpoint. `dispatchUntilTerminal` is projection-only and must never be
    used as a substitute for this materialization step. Do not dispatch the
    returned canonical next action until the operation returns the accepted
    trace cursor and state. Structured executor outcomes must be idempotent and
