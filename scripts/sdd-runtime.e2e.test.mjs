@@ -78,9 +78,22 @@ test('machine-recoverable blocker follows bounded retry policy without HUMAN', (
   assert.equal(result.state.attempts.Design, 2);
 });
 
-test('standing chained workload proceeds while true exception stops', () => {
-  assert.equal(evaluateWorkloadGuard({ estimatedLines: 900, delivery: 'force-chained', chainStrategy: 'stacked-to-main' }).status, 'PASS');
-  assert.equal(evaluateWorkloadGuard({ estimatedLines: 900, delivery: 'size-exception', chainStrategy: 'stacked-to-main', exception: true }).status, 'HUMAN_HANDOFF');
+test('small and very large in-scope forecasts pass without execution topology', () => {
+  for (const estimatedLines of [100, 1500, 1000000]) {
+    const result = evaluateWorkloadGuard({ estimatedLines, withinApprovedDesign: true, withinApprovedTasks: true, withinApprovedWorkingSet: true });
+    assert.equal(result.status, 'PASS');
+    assert.equal(result.human_required, false);
+    assert.equal(Object.hasOwn(result, 'partition'), false);
+    assert.equal(Object.hasOwn(result, 'delivery'), false);
+    assert.equal(Object.hasOwn(result, 'chainStrategy'), false);
+  }
+});
+
+test('material scope expansion remains a semantic HUMAN stop', () => {
+  const result = evaluateWorkloadGuard({ estimatedLines: 1500, withinApprovedWorkingSet: false });
+  assert.equal(result.status, 'HUMAN_HANDOFF');
+  assert.equal(result.blocker.class, 'HUMAN_SCOPE');
+  assert.equal(result.blocker.resume_phase, 'Design Refinement');
 });
 
 test('scope and unsafe state remain fail-closed', () => {
@@ -102,6 +115,8 @@ test('local agents and legacy commands remain project-local and STOP-only', asyn
   assert.match(orchestrator, /persistExecutorOutcome/);
   assert.match(orchestrator, /persistTransition/);
   assert.match(direct, /persistExecutorOutcome/);
+  assert.match(orchestrator, /technical planning/i);
+  assert.match(direct, /technical planning/i);
   assert.match(legacy, /CRM_SDD_LEGACY_BOUNDARY/);
   assert.deepEqual(Object.keys(BLOCKER_POLICIES).length, 12);
 });

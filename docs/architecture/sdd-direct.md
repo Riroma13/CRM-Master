@@ -89,6 +89,17 @@ and projects exactly one result, creates its trace event, and invokes
 `dispatchUntilTerminal` is a projection helper only; using it without
 `persistExecutorOutcome` is incomplete and must stop before the next dispatch.
 
+Workload Guard has no size-based approval transition. The runtime records the
+forecast as informational evidence and materializes the normal `READY` result
+whose next action is `Apply 7.1 Foundation`; it does not derive partitioning,
+delivery, verification boundaries, or Git/PR topology from line count. Those
+technical planning decisions belong to the approved Design, Tasks, and Apply
+work. A material Design or Working Set departure, security/risk acceptance,
+destructive operation, material production/infrastructure risk, material
+external cost, or Git/release decision uses the applicable semantic HUMAN
+blocker; line count never supplies the reason for a HUMAN_HANDOFF. A passed
+Architecture Review already authorizes ordinary technical Apply decisions.
+
 ## Maintainer Handoff
 
 The adapter can prepare health and readiness evidence, but it never executes

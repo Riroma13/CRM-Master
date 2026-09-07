@@ -449,11 +449,29 @@ export function createContextPacket({ authorityRefs = {}, fingerprints = {}, wor
   } });
 }
 
-export function evaluateWorkloadGuard({ estimatedLines, delivery, chainStrategy, exception = false } = {}) {
+export function evaluateWorkloadGuard({ estimatedLines, semanticException = null, withinApprovedDesign = true, withinApprovedTasks = true, withinApprovedWorkingSet = true } = {}) {
   if (!Number.isSafeInteger(estimatedLines) || estimatedLines < 0) fail('invalid workload forecast');
-  const standing = delivery === 'force-chained' && chainStrategy === 'stacked-to-main' && !exception;
-  if (estimatedLines <= 400 || standing) return { status: 'PASS', policy: estimatedLines <= 400 ? 'within-budget' : 'standing-chained-policy', human_required: false };
-  return { status: 'HUMAN_HANDOFF', policy: 'true-exception', human_required: true, blocker: { class: 'HUMAN_RISK_ACCEPTANCE', human_required: true, reason: 'workload exception requires maintainer acceptance', resume_phase: 'Workload Guard' } };
+  if ([withinApprovedDesign, withinApprovedTasks, withinApprovedWorkingSet].some((value) => typeof value !== 'boolean')) fail('invalid approved scope status');
+
+  const forecast = { estimatedLines, treatment: 'informational-only' };
+
+  let blockerInput = semanticException;
+  if ((!withinApprovedDesign || !withinApprovedTasks || !withinApprovedWorkingSet) && blockerInput === null) {
+    blockerInput = {
+      class: 'HUMAN_SCOPE',
+      reason: 'material Design/Tasks/Working Set expansion requires the Design/Review path',
+      resume_phase: 'Design Refinement',
+    };
+  }
+  if (blockerInput !== null) {
+    assertObject(blockerInput, 'semantic workload exception');
+    if (!own(blockerInput, new Set(['class', 'reason', 'resume_phase']))) fail('unknown semantic workload exception field');
+    const blocker = validateBlocker({ ...blockerInput, human_required: true, resume_phase: blockerInput.resume_phase ?? null });
+    if (!blocker.policy.startsWith('STOP/')) fail('semantic workload exception must be HUMAN-owned');
+    return { status: 'HUMAN_HANDOFF', policy: 'semantic-exception', human_required: true, forecast, blocker: { ...blockerInput, human_required: true, resume_phase: blockerInput.resume_phase ?? null } };
+  }
+
+  return { status: 'PASS', policy: 'size-neutral', human_required: false, forecast };
 }
 
 export function gitMutationBarrier({ operation, target = '' } = {}) {

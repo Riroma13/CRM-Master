@@ -402,11 +402,35 @@ test('context packets count bootstrap once and retain references without bodies'
   assert.equal(Object.hasOwn(next, 'bodies'), false);
 });
 
-test('workload policy proceeds only for the approved standing chain and stops on exceptions', () => {
-  assert.equal(evaluateWorkloadGuard({ estimatedLines: 900, delivery: 'force-chained', chainStrategy: 'stacked-to-main', exception: false }).status, 'PASS');
-  const exception = evaluateWorkloadGuard({ estimatedLines: 900, delivery: 'size-exception', chainStrategy: 'stacked-to-main', exception: true });
-  assert.equal(exception.status, 'HUMAN_HANDOFF');
-  assert.equal(exception.blocker.class, 'HUMAN_RISK_ACCEPTANCE');
+test('Workload Guard treats forecast size as informational and derives no execution policy', () => {
+  for (const estimatedLines of [100, 1500, 1000000]) {
+    const result = evaluateWorkloadGuard({ estimatedLines, withinApprovedDesign: true, withinApprovedTasks: true, withinApprovedWorkingSet: true });
+    assert.equal(result.status, 'PASS');
+    assert.equal(result.human_required, false);
+    assert.deepEqual(result.forecast, { estimatedLines, treatment: 'informational-only' });
+    assert.equal(Object.hasOwn(result, 'partition'), false);
+    assert.equal(Object.hasOwn(result, 'delivery'), false);
+    assert.equal(Object.hasOwn(result, 'chainStrategy'), false);
+  }
+});
+
+test('Workload Guard stops semantic scope, security, risk, and destructive exceptions', () => {
+  for (const scopeKey of ['withinApprovedDesign', 'withinApprovedTasks', 'withinApprovedWorkingSet']) {
+    const scope = evaluateWorkloadGuard({ estimatedLines: 1500, [scopeKey]: false });
+    assert.equal(scope.status, 'HUMAN_HANDOFF');
+    assert.equal(scope.blocker.class, 'HUMAN_SCOPE');
+    assert.equal(scope.blocker.resume_phase, 'Design Refinement');
+  }
+
+  for (const blockerClass of ['HUMAN_SECURITY', 'HUMAN_RISK_ACCEPTANCE', 'HUMAN_GIT']) {
+    const result = evaluateWorkloadGuard({
+      estimatedLines: 1500,
+      semanticException: { class: blockerClass, reason: `${blockerClass} requires maintainer decision`, resume_phase: null },
+    });
+    assert.equal(result.status, 'HUMAN_HANDOFF');
+    assert.equal(result.blocker.class, blockerClass);
+    assert.equal(result.blocker.human_required, true);
+  }
 });
 
 test('dispatch continues through supplied legal outcomes and stops at Repository Ready', () => {

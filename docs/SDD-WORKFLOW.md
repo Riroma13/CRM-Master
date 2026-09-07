@@ -147,15 +147,27 @@ inventing a second automatic retry or broadening scope.
 Workload Guard executes only after a PASS Tasks Review and before Apply. It is a
 gate, not a lifecycle phase and not a substitute for review.
 
-- Forecast at or below 400 changed lines passes the gate with the forecast
-  recorded.
-- Forecast above 400 lines requires bounded context analysis after Tasks Review.
-  The analysis records whether the change is cohesive enough for a Size
-  Exception or requires Chained PRs.
-- A HUMAN / MAINTAINER decision is required before Apply when the forecast is
-  above 400 lines. Apply cannot start while that decision is absent.
+- Forecast size is recorded after Tasks Review as informational evidence only.
+- Forecast size does not derive a partition count, delivery strategy, or
+  Git/PR topology.
 
 The guard never runs before Tasks Review and never bypasses a blocked review.
+
+- Forecast size never requires HUMAN approval. It is informational evidence for
+  planning and reporting only.
+- When the approved Design, Tasks, and Working Set remain sufficient, the guard
+  automatically passes any forecast and selects `Apply 7.1 Foundation`.
+- Partitioning, delivery, and verification boundaries are ordinary technical
+  planning decisions owned by Design, Tasks, and Apply using semantic cohesion,
+  dependencies, Working Set, context, and implementation risk; line count is
+  never the reason for a stop.
+- A material Working Set or Design departure fails closed as `HUMAN_SCOPE` and
+  returns through the appropriate Design/Review path. Security, destructive or
+  irreversible operations, material production/infrastructure risk, material
+  external cost, and Git/release decisions use their applicable HUMAN blocker.
+- Ordinary technical/code decisions remain model-owned. A Design decision that
+  passed Architecture Review is already authorized for Apply and is not asked
+  of HUMAN again.
 
 ## Evidence and Recovery
 

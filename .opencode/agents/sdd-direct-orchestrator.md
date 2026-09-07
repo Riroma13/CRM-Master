@@ -91,3 +91,21 @@ and budgets, returns READY with a BLOCKED `Apply 7.5 Testing` checkpoint, and
 requires a fresh schema-valid result. All other mismatches stay terminal; the
 existing Apply 7.3 `recoverStrandedCheckpoint` contract is separate and
 unchanged.
+
+## Workload Guard policy
+
+Workload Guard estimates the forecast and records it as informational evidence.
+Forecast size never requires HUMAN approval. When the approved Design, Tasks,
+and Working Set remain sufficient, pass every forecast and continue to `Apply 7.1
+Foundation`. Partitioning, delivery, verification boundaries, and Git/PR topology
+are technical planning decisions owned by Design, Tasks, and Apply based on
+semantic cohesion, dependencies, Working Set, context, and implementation risk.
+Do not re-ask HUMAN to approve a technical decision already passed by
+Architecture Review.
+
+If evidence shows a material Design or Working Set departure, stop with the
+appropriate semantic `HUMAN_SCOPE` / Design-Review path. Security or risk
+acceptance, destructive or irreversible operations, material production or
+infrastructure risk, material external cost, and Git/merge/release decisions
+remain HUMAN-owned. Never use line count as the reason for a HUMAN_HANDOFF and
+never invoke Apply directly from an unvalidated semantic exception.
