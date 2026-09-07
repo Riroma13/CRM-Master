@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "sequence": 2,
+  "idempotencyKey": "407ce55ca46e4fdc18aa90d7b7c1394bb6ef46164c21ad05713796bcdf73df56",
+  "previousEventHash": "634be00dac03cd9c091d078046e06ad193447420bdfb4d382f2d84cb10e73801",
+  "chainHash": "fd4455173ef06f587395b360bd1bac1e80ad13e1125df50657c57f3ad61bbf7d",
+  "change": "fresh-db-bootstrap-production-path",
+  "action": "Architecture Review",
+  "role": "HIGH",
+  "inputHash": "5fde00fce4e02fb692396e4195e6893eda37025c36dafbe18258faf868a8726a",
+  "outcomeHash": "5fde00fce4e02fb692396e4195e6893eda37025c36dafbe18258faf868a8726a",
+  "route": {
+    "configured": "HIGH",
+    "resolved": "HIGH",
+    "rejections": []
+  },
+  "beforeStateHash": "50c15c52a456c66f462be9519f4340d53ab44e455b6e373e50e75a0f56af7b95",
+  "afterStateHash": "5053204e0034d115f07ebb92d45cc57e9148b10f8c29de1b2544224f85265c17",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 2,
+    "checkpoint": {
+      "phase": "Architecture Review",
+      "artifact": "architecture-review.md",
+      "verdict": "BLOCKED",
+      "next": "Design Refinement"
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "9f9b72c7823b7ea42f80e0692662a8521b1e3f51ae2f5a017f51fc1b296c1c2a",
+      "modelMap": "68cadbd5c0fe6793cb84c20b2164508e46c4955f373b61e88eda1c8bef071eb7",
+      "config": "09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 1
+    },
+    "traceCursor": {
+      "sequence": 2,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "407ce55ca46e4fdc18aa90d7b7c1394bb6ef46164c21ad05713796bcdf73df56",
+      "action": "Architecture Review",
+      "inputHash": "5fde00fce4e02fb692396e4195e6893eda37025c36dafbe18258faf868a8726a",
+      "outcomeHash": "5fde00fce4e02fb692396e4195e6893eda37025c36dafbe18258faf868a8726a",
+      "afterStateHash": "9d6e969fb50cd22e2537229bf4549ab1bc881f9bfc6882e9bcbc52813bd35332"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "config": "openspec/config.yaml"
+    }
+  },
+  "timestamp": "2026-09-07T16:46:28.468Z",
+  "eventHash": "9f72bdf2b2e9e5dc5af090fac55bc346cbecace4861daa2fa59ddbd28b151330"
+}

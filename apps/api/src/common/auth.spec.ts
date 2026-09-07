@@ -12,7 +12,9 @@ jest.mock('better-auth/plugins', () => ({
   organization: jest.fn(() => ({ id: 'organization' })),
 }));
 
-import { createAuth, createCorsOptions, createOAuthConfig } from './auth';
+import { createAuth, createCorsOptions, createOAuthConfig, getSessionCookieConfig } from './auth';
+
+const selectSessionCookieConfig = getSessionCookieConfig as unknown as (transport?: string) => ReturnType<typeof getSessionCookieConfig>;
 
 describe('OAuth social login foundation', () => {
   const originalEnv = { ...process.env };
@@ -168,18 +170,61 @@ describe('OAuth social login foundation', () => {
     expect(auth.options.socialProviders).toEqual({});
   });
 
-  it('configures the documented opaque Better Auth session cookie for cross-subdomain transport', () => {
-    delete process.env.NODE_ENV;
-    const auth = createAuth({} as never) as any;
+  it('selects an unprefixed non-secure session cookie for explicit HTTP transport', () => {
+    process.env.AUTH_COOKIE_TRANSPORT = 'http';
+    process.env.NODE_ENV = 'production';
 
-    expect(auth.options.advanced.cookies.session_token).toEqual({
+    expect(selectSessionCookieConfig('http')).toEqual({
+      name: 'better-auth.session_token',
+      attributes: {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: false,
+      },
+    });
+  });
+
+  it('selects the secure prefixed session cookie for explicit HTTPS transport', () => {
+    process.env.AUTH_COOKIE_TRANSPORT = 'https';
+    process.env.NODE_ENV = 'development';
+
+    expect(selectSessionCookieConfig('https')).toEqual({
       name: '__Secure-better-auth.session_token',
       attributes: {
         domain: '.crmmaster.com',
         path: '/',
         httpOnly: true,
         sameSite: 'lax',
-        secure: false,
+        secure: true,
+      },
+    });
+  });
+
+  it.each([
+    ['http', 'http', 'production'],
+    ['https', 'https', 'development'],
+  ] as const)('configures Better Auth from the explicit %s transport contract', (transport, expectedTransport, nodeEnv) => {
+    process.env.AUTH_COOKIE_TRANSPORT = transport;
+    process.env.NODE_ENV = nodeEnv;
+    const auth = createAuth({} as never) as any;
+
+    expect(auth.options.advanced.cookies.session_token).toEqual(selectSessionCookieConfig(expectedTransport));
+  });
+
+  it.each([undefined, '', 'ftp', 'HTTPS'])('defaults missing or invalid transport %p to secure HTTPS', (transport) => {
+    if (transport === undefined) delete process.env.AUTH_COOKIE_TRANSPORT;
+    else process.env.AUTH_COOKIE_TRANSPORT = transport;
+    process.env.NODE_ENV = 'development';
+
+    expect(selectSessionCookieConfig()).toEqual({
+      name: '__Secure-better-auth.session_token',
+      attributes: {
+        domain: '.crmmaster.com',
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
       },
     });
   });

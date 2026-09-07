@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
 
 const RESERVED_SLUGS = new Set(['www', 'api', 'admin', 'app', 'mail', 'dev']);
-const BETTER_AUTH_SESSION_COOKIE = '__Secure-better-auth.session_token';
-const LEGACY_ADMIN_SESSION_COOKIE = '__Secure-session';
 const CLIENT_SESSION_COOKIE = '__Secure-client-session';
 const LOCAL_CLIENT_SESSION_COOKIE = 'client-session';
+
+export function getAdminSessionCookieName(transport?: string): string {
+  const configuredTransport = arguments.length === 0 ? process.env.AUTH_COOKIE_TRANSPORT : transport;
+  return configuredTransport === 'http' ? 'better-auth.session_token' : '__Secure-better-auth.session_token';
+}
 
 export interface RouteDecision {
   destination: string;
@@ -24,37 +26,6 @@ export function resolveTenantFromHost(host: string): string | null {
   return slug;
 }
 
-interface CookiePayload {
-  role: string | null;
-}
-
-async function parseClientCookie(cookieValue: string | undefined): Promise<CookiePayload> {
-  if (!cookieValue) return { role: null };
-
-  const secret = process.env.CLIENT_JWT_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      console.warn('[middleware] CLIENT_JWT_SECRET not set — cannot verify client token in production');
-      return { role: null };
-    }
-    console.warn('[middleware] CLIENT_JWT_SECRET not set — parsing client token without signature verification (dev only)');
-    try {
-      const payload = JSON.parse(atob(cookieValue.split('.')[1]));
-      return { role: payload?.role ?? null };
-    } catch {
-      return { role: null };
-    }
-  }
-
-  try {
-    const secretKey = new TextEncoder().encode(secret);
-    const { payload } = await jwtVerify(cookieValue, secretKey);
-    return { role: (payload as any)?.role ?? null };
-  } catch {
-    return { role: null };
-  }
-}
-
 export async function resolveAdvisoryRole(params: {
   adminCookie?: string;
   clientCookie?: string;
@@ -62,8 +33,7 @@ export async function resolveAdvisoryRole(params: {
 }): Promise<string | null> {
   if (params.adminCookie) return 'admin';
   if (!params.clientPortalEnabled) return null;
-  const { role } = await parseClientCookie(params.clientCookie);
-  return role;
+  return params.clientCookie ? 'client' : null;
 }
 
 export function resolveRouteByCookie(params: {
@@ -80,11 +50,12 @@ export function resolveRouteByCookie(params: {
   }
 
   const targetPath = role === 'admin' ? '/admin' : '/portal';
-  const suffix = pathname && pathname !== '/' && !pathname.startsWith(`/${role === 'admin' ? 'admin' : 'portal'}`)
+  const isRolePath = pathname === targetPath || pathname.startsWith(`${targetPath}/`);
+  const destination = isRolePath
     ? pathname
-    : '';
-
-  const destination = suffix ? `${targetPath}${suffix}` : targetPath;
+    : pathname && pathname !== '/'
+      ? `${targetPath}${pathname}`
+      : targetPath;
   return { destination, action: 'rewrite' };
 }
 
@@ -103,12 +74,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const adminCookie =
-    request.cookies.get(BETTER_AUTH_SESSION_COOKIE)?.value ??
-    request.cookies.get(LEGACY_ADMIN_SESSION_COOKIE)?.value;
+  const adminCookie = request.cookies.get(getAdminSessionCookieName())?.value;
   const clientCookie =
     request.cookies.get(CLIENT_SESSION_COOKIE)?.value ??
-    (process.env.NODE_ENV === 'production'
+    (process.env.AUTH_COOKIE_TRANSPORT !== 'http'
       ? undefined
       : request.cookies.get(LOCAL_CLIENT_SESSION_COOKIE)?.value);
 

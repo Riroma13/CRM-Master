@@ -24,6 +24,19 @@ interface ItemFormProps {
 const CATEGORIAS = ['Hardware', 'Software', 'Licencia', 'Infraestructura', 'Documentación', 'Usuario', 'Seguridad', 'Otro'];
 const ESTADOS = ['Implementado', 'En progreso', 'Pendiente', 'Requiere atención'];
 
+export function normalizeInventoryDate(value?: string): string {
+  if (!value) return '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:$|T)/.exec(value);
+  if (!match) return '';
+  const [, year, month, day] = match;
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  return date.getUTCFullYear() === Number(year) &&
+    date.getUTCMonth() === Number(month) - 1 &&
+    date.getUTCDate() === Number(day)
+    ? `${year}-${month}-${day}`
+    : '';
+}
+
 export function ItemForm({ sistemaId, initial, onSuccess, onCancel }: ItemFormProps) {
   const isEdit = !!initial?.id;
   const [nombre, setNombre] = useState(initial?.nombre ?? '');
@@ -31,7 +44,7 @@ export function ItemForm({ sistemaId, initial, onSuccess, onCancel }: ItemFormPr
   const [estado, setEstado] = useState(initial?.estado ?? 'Implementado');
   const [descripcion, setDescripcion] = useState(initial?.descripcion ?? '');
   const [responsable, setResponsable] = useState(initial?.responsable ?? '');
-  const [fechaImplementacion, setFechaImplementacion] = useState(initial?.fechaImplementacion ?? '');
+  const [fechaImplementacion, setFechaImplementacion] = useState(normalizeInventoryDate(initial?.fechaImplementacion));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

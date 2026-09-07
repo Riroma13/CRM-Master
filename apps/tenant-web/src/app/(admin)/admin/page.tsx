@@ -1,299 +1,61 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { RefreshCw } from 'lucide-react';
 import { useDashboard } from '@/hooks/use-dashboard';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { useAnnouncements } from '@/hooks/use-announcements';
-import {
-  Users,
-  Calendar,
-  Clock,
-  ClipboardList,
-  HardDrive,
-  RefreshCw,
-  ArrowRight,
-  Megaphone,
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from '@/components/foundation/page-header';
+import { StatePanel } from '@/components/foundation/state-panel';
+import { StatusBadge } from '@/components/foundation/status-badge';
 
-interface KpiCardProps {
-  icon: React.ElementType;
-  label: string;
-  value: number | string;
-  subtitle?: string;
-  color?: string;
-  href?: string;
-}
-
-function KpiCard({ icon: Icon, label, value, subtitle, color, href }: KpiCardProps) {
-  const router = useRouter();
+function SummaryCard({ label, value, detail, href }: { label: string; value: number; detail?: string; href: string }) {
   return (
-    <Card
-      className={`bg-white ${href ? 'cursor-pointer transition-shadow hover:shadow-md' : ''}`}
-      {...(href ? { onClick: () => router.push(href) } : {})}
-    >
-      <CardContent className="flex items-start gap-3 p-4">
-        <div
-          className={`flex h-10 w-10 items-center justify-center rounded-full ${
-            color ? `bg-${color}/10 text-${color}` : 'bg-[#F0EDEF] text-[#45464D]'
-          }`}
-        >
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[#45464D]">
-            {label}
-          </p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-[30px] font-bold leading-none tracking-tight text-[#1B1B1D]">
-              {value}
-            </span>
-            {subtitle && (
-              <span className="text-[13px] font-medium text-[#45464D]">{subtitle}</span>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <Link href={href} className="block rounded-lg border border-[#E2E8F0] bg-white p-4 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F172A]">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[#45464D]">{label}</p>
+      <p className="mt-2 text-3xl font-semibold text-[#1B1B1D]">{value}</p>
+      {detail ? <p className="mt-1 text-sm text-[#45464D]">{detail}</p> : null}
+    </Link>
   );
 }
 
-function SkeletonCard() {
-  return (
-    <div className="h-[100px] animate-pulse rounded-[0.5rem] border border-[#E2E8F0] bg-white p-4">
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-full bg-[#F0EDEF]" />
-        <div className="flex-1 space-y-2">
-          <div className="h-3 w-20 rounded bg-[#F0EDEF]" />
-          <div className="h-8 w-24 rounded bg-[#F0EDEF]" />
-        </div>
-      </div>
-    </div>
-  );
+function LoadingOverview() {
+  return <StatePanel state="loading" label="overview" title="Loading overview" />;
 }
-
-function ErrorBanner({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <div className="rounded-[0.5rem] border border-[#EF4444]/30 bg-[#FEF2F2] p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold text-[#EF4444]">Error al cargar el dashboard</p>
-          <p className="text-xs text-[#45464D]">{message}</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={onRetry}>
-          Reintentar
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-const TIPO_LABELS: Record<string, string> = {
-  decision: 'Decisión',
-  cambio_tecnico: 'Cambio técnico',
-  incidencia: 'Incidencia',
-  reunion: 'Reunión',
-  aprendizaje: 'Aprendizaje',
-};
-
-const TIPO_COLORS: Record<string, string> = {
-  decision: 'bg-[#DAE2FD] text-[#131B2E]',
-  incidencia: 'bg-[#FEE2E2] text-[#EF4444]',
-  reunion: 'bg-[#D1FAE5] text-[#10B981]',
-  aprendizaje: 'bg-[#FEF3C7] text-[#F59E0B]',
-};
 
 export default function AdminDashboardPage() {
-  const router = useRouter();
-  const { data, isLoading, isError, error, refetch } = useDashboard();
+  const { data, isLoading, isError, refetch } = useDashboard();
   const { announcements } = useAnnouncements();
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Dashboard</h1>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Dashboard</h1>
-        </div>
-        <ErrorBanner
-          message={error?.message ?? 'Error desconocido'}
-          onRetry={refetch}
-        />
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Dashboard</h1>
-        <p className="py-8 text-center text-[13px] text-[#45464D]">
-          No hay datos disponibles.
-        </p>
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingOverview />;
+  if (isError) return <StatePanel state="error" title="Unable to load overview" description="Try again to refresh the dashboard." onRetry={refetch} />;
+  if (!data) return <StatePanel state="empty" title="No overview data yet" description="Overview information will appear when it is available." />;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-[16px] font-semibold text-[#1B1B1D]">Dashboard</h1>
-        <button
-          onClick={refetch}
-          className="flex items-center gap-1.5 rounded-[0.25rem] border border-[#E2E8F0] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.05em] text-[#45464D] hover:bg-[#F0EDEF]"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          Actualizar
-        </button>
-      </div>
+      <PageHeader title="Overview" description="A concise view of the work that needs attention." action={<Button variant="outline" size="sm" onClick={refetch}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>} />
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <KpiCard
-          icon={Users}
-          label="Clientes"
-          value={data.clientesActivos}
-          subtitle={`de ${data.totalClientes} totales`}
-          href="/admin/clientes"
-        />
-        <KpiCard
-          icon={Calendar}
-          label="Citas hoy"
-          value={data.citasHoy}
-          href="/admin/calendario"
-        />
-        <KpiCard
-          icon={Clock}
-          label="Pendientes"
-          value={data.citasPendientes}
-          href="/admin/calendario"
-        />
-        <KpiCard
-          icon={ClipboardList}
-          label="Tareas"
-          value={data.tareasPendientes}
-          subtitle="pendientes"
-          href="/admin/tareas"
-        />
-        <KpiCard
-          icon={HardDrive}
-          label="Sistemas"
-          value={data.sistemasActivos}
-          subtitle="activos"
-          href="/admin/sistemas"
-        />
-      </div>
-
-      {/* Onboarding checklist */}
-      {data.onboardingChecklist && data.onboardingChecklist.steps.some((s) => !s.done) && (
-        <Card className="bg-white border-l-[3px] border-l-[#131B2E]">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#131B2E] text-[10px] font-bold text-white">
-                {data.onboardingChecklist.steps.filter((s) => s.done).length}
-              </div>
-              <p className="text-[13px] font-semibold text-[#1B1B1D]">
-                Primeros pasos — {data.onboardingChecklist.steps.filter((s) => s.done).length} de {data.onboardingChecklist.steps.length} completados
-              </p>
-            </div>
-            <div className="space-y-2">
-              {data.onboardingChecklist.steps.map((step) => (
-                <div key={step.id} className={`flex items-center gap-2 text-[13px] ${step.done ? 'text-[#10B981] line-through' : 'text-[#45464D]'}`}>
-                  <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${
-                    step.done ? 'bg-[#D1FAE5] text-[#10B981]' : 'border border-[#C6C6CD] text-[#C6C6CD]'
-                  }`}>
-                    {step.done ? '✓' : ''}
-                  </span>
-                  {step.label}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Announcements */}
-      {announcements.length > 0 && (
-        <div className="space-y-2">
-          {announcements.map((a) => (
-            <div key={a.id} className="flex items-start gap-3 rounded-[0.5rem] border border-[#DAE2FD] bg-[#F8FAFF] p-4">
-              <Megaphone className="h-5 w-5 text-[#131B2E] shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-[13px] text-[#1B1B1D]">{a.message}</p>
-                <p className="text-[11px] text-[#45464D] mt-1">
-                  {new Date(a.createdAt).toLocaleDateString('es-ES')}
-                  {a.expiresAt && ` · Válido hasta ${new Date(a.expiresAt).toLocaleDateString('es-ES')}`}
-                </p>
-              </div>
-            </div>
-          ))}
+      <section aria-label="Attention" className="space-y-3">
+        <h2 className="text-base font-semibold text-[#1B1B1D]">Attention</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <SummaryCard label="Open tasks" value={data.tareasPendientes} href="/admin/tareas" />
+          <SummaryCard label="Appointments pending" value={data.citasPendientes} href="/admin/calendario" />
         </div>
-      )}
+      </section>
 
-      {/* Recent activity */}
-      <Card className="bg-white">
-        <CardContent className="p-4">
-          <h2 className="mb-4 text-[16px] font-semibold text-[#1B1B1D]">
-            Actividad reciente
-          </h2>
-          {data.eventosRecientes.length === 0 ? (
-            <p className="py-4 text-center text-[13px] text-[#45464D]">
-              No hay actividad reciente.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {data.eventosRecientes.map((evento) => (
-                <button
-                  key={evento.id}
-                  onClick={() => router.push(evento.link || '/admin')}
-                  className="flex w-full items-start gap-3 rounded-[0.25rem] border border-[#E2E8F0] bg-white p-3 text-left transition-colors hover:bg-[#FAFAFA]"
-                >
-                  <Badge
-                    variant="outline"
-                    className={
-                      TIPO_COLORS[evento.tipo] ?? 'bg-[#F0EDEF] text-[#45464D]'
-                    }
-                  >
-                    {TIPO_LABELS[evento.tipo] ?? evento.tipo}
-                  </Badge>
-                  <div className="flex-1">
-                    <p className="text-[13px] font-medium text-[#1B1B1D]">
-                      {evento.titulo}
-                    </p>
-                    {evento.descripcion && (
-                      <p className="mt-0.5 text-[12px] text-[#45464D]">
-                        {evento.descripcion}
-                      </p>
-                    )}
-                    <p className="mt-1 text-[11px] text-[#45464D]">
-                      {new Date(evento.fecha).toLocaleDateString('es-ES', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <section aria-label="Summary" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <SummaryCard label="Active clients" value={data.clientesActivos} detail={`of ${data.totalClientes} total`} href="/admin/clientes" />
+        <SummaryCard label="Appointments today" value={data.citasHoy} href="/admin/calendario" />
+        <SummaryCard label="Active systems" value={data.sistemasActivos} href="/admin/sistemas" />
+      </section>
+
+      {announcements.length > 0 ? <section aria-label="Announcements" className="space-y-2"><h2 className="text-base font-semibold text-[#1B1B1D]">Announcements</h2>{announcements.map((announcement) => <Card key={announcement.id}><CardContent className="p-4"><p className="text-sm text-[#1B1B1D]">{announcement.message}</p></CardContent></Card>)}</section> : null}
+
+      <section aria-label="Recent activity" className="space-y-3">
+        <h2 className="text-base font-semibold text-[#1B1B1D]">Recent activity</h2>
+        {data.eventosRecientes.length === 0 ? <StatePanel state="empty" title="No recent activity" /> : <div className="space-y-2">{data.eventosRecientes.slice(0, 5).map((event) => <Card key={event.id}><CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start"><StatusBadge status={event.tipo} label={event.tipo} /><div><p className="font-medium text-[#1B1B1D]">{event.titulo}</p>{event.descripcion ? <p className="text-sm text-[#45464D]">{event.descripcion}</p> : null}<time className="text-xs text-[#45464D]">{new Date(event.fecha).toLocaleDateString('es-ES')}</time></div></CardContent></Card>)}</div>}
+      </section>
     </div>
   );
 }

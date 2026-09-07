@@ -29,8 +29,7 @@ function LoginFormTab({
 
     try {
       if (mode === 'admin') {
-        const user = await login(email, password);
-        try { sessionStorage.setItem('crm_tenant_name', user.tenant.name); } catch {}
+        await login(email, password);
         onSuccess('/admin');
       } else {
         const res = await fetch('/api/v1/client/auth/login', {

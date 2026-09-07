@@ -26,3 +26,18 @@ arrays; do not add those as top-level fields.
 Use exactly the canonical Executor Outcome Contract in
 `docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
 its schema.
+Set `checkpointArtifact` explicitly to the canonical Design artifact; auxiliary
+`artifacts` entries must not replace it.
+
+`NEEDS_EVIDENCE` is a workflow result/evidence condition, never a
+`blocker.class`. When required bounded Design evidence is missing, record the
+condition in the `evidence` string array and exhaust the approved Working Set,
+Read Order, current repository, or one canonical bounded evidence request
+before escalation. If that bounded path can deterministically obtain the
+missing condition, return `status: BLOCKED` with `class: AUTO_RETRY`,
+`human_required: false`, `resume_phase: Design`, and `next: Design` so the
+runtime applies `RETRY_CURRENT_ACTION`. Use `class: HUMAN_SCOPE`,
+`human_required: true` only when the evidence or decision remains genuinely
+HUMAN-owned or unavailable after that allowed bounded path; give a specific
+reason and set `resume_phase: null`. Never emit `NEEDS_EVIDENCE` as a blocker
+class.

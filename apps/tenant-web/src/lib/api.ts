@@ -26,7 +26,7 @@ export class ApiError extends Error {
 type Params = Record<string, string | number | boolean | undefined | null>;
 
 interface RequestOpts {
-  /** Send credentials: 'include' for session cookie auth (default: false). */
+  /** Request through the cookie-authenticated API seam. */
   auth?: boolean;
 }
 
@@ -66,23 +66,12 @@ async function handleResponse<T>(response: Response): Promise<T> {
     );
   }
 
+  if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
-}
-
-function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return sessionStorage.getItem('crm_session_token') || localStorage.getItem('crm_session_token');
-  } catch {
-    return null;
-  }
 }
 
 function clearAuthAndRedirect() {
   if (typeof window === 'undefined') return;
-  try { sessionStorage.removeItem('crm_session_token'); } catch {}
-  try { sessionStorage.removeItem('crm_user'); } catch {}
-  try { localStorage.removeItem('crm_session_token'); } catch {}
   window.location.href = '/login';
 }
 
@@ -99,16 +88,7 @@ async function request<T>(
 
   const url = buildUrl(path, params);
 
-  const init: RequestInit = { method, headers };
-
-  if (opts?.auth) {
-    const token = getAuthToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    } else {
-      init.credentials = 'include';
-    }
-  }
+  const init: RequestInit = { method, headers, credentials: 'include' };
 
   if (body !== undefined && method !== 'GET') {
     init.body = JSON.stringify(body);

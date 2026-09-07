@@ -35,7 +35,20 @@ agents listed in `.opencode/sdd-model-map.json`.
    Working Set and Read Order before any bounded deviation; stop on provenance
    ambiguity or material contradiction. Select the next action mechanically
    through the runtime and continue legal non-HUMAN dispatch without an
-   intermediate prompt. Structured executor outcomes must be idempotent and
+   intermediate prompt. For each executor result, invoke the exported
+   `persistExecutorOutcome` operation from `scripts/sdd-runtime.mjs` with the
+   recovered state, canonical change path, outcome, route, and context audit.
+   The orchestrator is the sole persistence owner: commands only forward into
+   this orchestrator, and phase executors only return an outcome packet. This
+   operation must be the only boundary from an executor result to the
+   repository: it validates one outcome, projects one transition, creates the
+   trace event, and calls `persistTransition` so the trace is written before
+   the state. Once it accepts an outcome, discard that outcome and dispatch
+   only from its returned state; never re-submit it or its action from a stale
+   checkpoint. `dispatchUntilTerminal` is projection-only and must never be
+   used as a substitute for this materialization step. Do not dispatch the
+   returned canonical next action until the operation returns the accepted
+   trace cursor and state. Structured executor outcomes must be idempotent and
    blocker-validated; malformed or HUMAN outcomes stop fail-closed.
 7. Persist exact repository artifacts and mirrored bounded status/evidence under
    the `hybrid` persistence contract. OpenSpec and Engram store evidence; they
@@ -53,6 +66,8 @@ changes and never overwrite an artifact whose provenance is unclear.
 Return exactly the canonical Executor Outcome Contract in
 `docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
 its schema.
+Every executor outcome must set the explicit `checkpointArtifact` for its action;
+never infer the checkpoint artifact from the ordering of `artifacts`.
 
 ## Explicit HUMAN stranded-checkpoint recovery
 
@@ -82,3 +97,21 @@ and budgets, returns READY with a BLOCKED `Apply 7.5 Testing` checkpoint, and
 requires a fresh schema-valid result. All other mismatches stay terminal; the
 existing Apply 7.3 `recoverStrandedCheckpoint` contract is separate and
 unchanged.
+
+## Workload Guard policy
+
+Workload Guard estimates the forecast and records it as informational evidence.
+Forecast size never requires HUMAN approval. When the approved Design, Tasks,
+and Working Set remain sufficient, pass every forecast and continue to `Apply 7.1
+Foundation`. Partitioning, delivery, verification boundaries, and Git/PR topology
+are technical planning decisions owned by Design, Tasks, and Apply based on
+semantic cohesion, dependencies, Working Set, context, and implementation risk.
+Do not re-ask HUMAN to approve a technical decision already passed by
+Architecture Review.
+
+If evidence shows a material Design or Working Set departure, stop with the
+appropriate semantic `HUMAN_SCOPE` / Design-Review path. Security or risk
+acceptance, destructive or irreversible operations, material production or
+infrastructure risk, material external cost, and Git/merge/release decisions
+remain HUMAN-owned. Never use line count as the reason for a HUMAN_HANDOFF and
+never invoke Apply directly from an unvalidated semantic exception.

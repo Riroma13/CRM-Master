@@ -13,6 +13,48 @@ export type OAuthConfig = {
   returnPaths: readonly ['/admin', '/login'];
 };
 
+export type SessionCookieConfig = {
+  name: '__Secure-better-auth.session_token' | 'better-auth.session_token';
+  attributes: {
+    domain?: '.crmmaster.com';
+    path: '/';
+    httpOnly: true;
+    sameSite: 'lax';
+    secure: boolean;
+  };
+};
+
+export type AuthCookieTransport = 'http' | 'https';
+
+export function resolveAuthCookieTransport(value = process.env.AUTH_COOKIE_TRANSPORT): AuthCookieTransport {
+  return value === 'http' || value === 'https' ? value : 'https';
+}
+
+export function getSessionCookieConfig(transport?: string): SessionCookieConfig {
+  if (resolveAuthCookieTransport(transport) === 'https') {
+    return {
+      name: '__Secure-better-auth.session_token',
+      attributes: {
+        domain: '.crmmaster.com',
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
+      },
+    };
+  }
+
+  return {
+    name: 'better-auth.session_token',
+    attributes: {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+    },
+  };
+}
+
 function exactOrigins(value: string | undefined): string[] {
   if (!value) return [];
 
@@ -118,7 +160,7 @@ function isSupportedSessionLifecycle(data: unknown, context: unknown): boolean {
 
 export function createAuth(prisma: PrismaClient) {
   const oauth = createOAuthConfig();
-  const secureCookies = process.env.NODE_ENV === 'production';
+  const sessionCookie = getSessionCookieConfig();
 
   return betterAuth({
     baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
@@ -127,14 +169,7 @@ export function createAuth(prisma: PrismaClient) {
     advanced: {
       cookies: {
         session_token: {
-          name: '__Secure-better-auth.session_token',
-          attributes: {
-            domain: '.crmmaster.com',
-            path: '/',
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: secureCookies,
-          },
+          ...sessionCookie,
         },
       },
     },

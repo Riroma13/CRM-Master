@@ -1,28 +1,46 @@
 import { describe, it, expect, vi } from 'vitest';
 
 const capturedQuery = vi.hoisted(() => ({ handler: undefined as any }));
+const prismaState = vi.hoisted(() => ({ constructions: 0 }));
 
 vi.mock('@prisma/client', () => {
-  const createMockClient = () => ({
-    $extends: vi.fn((extension: any) => {
+  const createMockClient = () => {
+    const base = {
+      $extends: vi.fn((extension: any) => {
       if (extension.query?.$allModels?.$allOperations) {
         capturedQuery.handler = extension.query.$allModels.$allOperations;
       }
 
       return {
+        __baseClient: base,
         ...(extension.client ?? {}),
-        ...createMockClient(),
+        $extends: base.$extends,
       };
-    }),
-  });
+      }),
+    };
+    return { ...base, __baseClient: base };
+  };
 
-  const mockPrismaClient = vi.fn(() => createMockClient());
+  const mockPrismaClient = vi.fn(() => {
+    prismaState.constructions += 1;
+    return createMockClient();
+  });
   return { PrismaClient: mockPrismaClient };
 });
 
 import { createPrismaClient } from '../index';
 
 describe('createPrismaClient with clienteId', () => {
+  it('constructs one underlying client while returning fresh scope wrappers', () => {
+    const before = prismaState.constructions;
+    const first = createPrismaClient({ tenantId: 'tenant-a', clienteId: 'client-a' }) as any;
+    const second = createPrismaClient({ tenantId: 'tenant-b', clienteId: 'client-b' }) as any;
+
+    expect(prismaState.constructions - before).toBe(1);
+    expect(first).not.toBe(second);
+    expect(first.__baseClient).toBe(second.__baseClient);
+  });
+
   it('accepts { tenantId } without clienteId (backward compat)', () => {
     const client = createPrismaClient({ tenantId: 't1' });
     expect(client).toBeDefined();
@@ -146,5 +164,11 @@ describe('createPrismaClient with clienteId', () => {
     expect(args.where.clienteId).toBe('c1');
     expect(args.create.clienteId).toBe('c1');
     expect(args.create.tenantId).toBe('t1');
+  });
+
+  it.each(['$queryRaw', '$queryRawUnsafe', '$executeRaw'])('rejects %s on scoped clients', async method => {
+    const client = createPrismaClient({ tenantId: 't1' }) as any;
+
+    await expect(client[method]()).rejects.toThrow('Raw SQL not allowed on tenant-scoped client');
   });
 });

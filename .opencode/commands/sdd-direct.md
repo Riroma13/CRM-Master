@@ -10,19 +10,23 @@ name is required. Load `AGENTS.md`, then the semantic workflow authority at
 `docs/SDD-WORKFLOW.md`, and recover the active state from
 `openspec/changes/<change-name>/` before any additional inspection.
 
-Use only project-local Direct agents and `.opencode/sdd-model-map.json`. Persist
-artifacts under the canonical change directory and mirror bounded status and
-evidence under the `hybrid` contract. Run `pnpm sdd:validate` before execution
-and at handoff. Bootstrap `scripts/sdd-runtime.mjs` with the validated change
-identity, fingerprints, Working Set, and current checkpoint before dispatch.
-Continue only through legal non-HUMAN actions, persist event-first state/trace
-evidence under the change-local `.sdd-runtime/` path when execution output is
-required, and stop at Repository Ready for the maintainer Git handoff. Do not
-commit, push, merge, release, or tag.
+Use only project-local Direct agents and `.opencode/sdd-model-map.json`. This
+command is an entry adapter only: it forwards lifecycle control to
+`sdd-direct-orchestrator` and never dispatches an executor, materializes an
+executor outcome, or writes change-local runtime state itself. The orchestrator
+is the sole persistence owner under the `hybrid` contract and owns the
+`sdd-runtime` bootstrap and autonomous dispatch boundary. It runs
+`pnpm sdd:validate`, bootstraps the validated identity, and uses the canonical
+event-first persistence boundary before each next dispatch. Stop at Repository
+Ready for the maintainer Git handoff. Do not commit, push, merge, release, or
+tag.
 
 Return exactly the canonical Executor Outcome Contract in
 `docs/architecture/sdd-direct.md`; do not add phase-specific fields or duplicate
 its schema.
+Every outcome must include the explicit `checkpointArtifact` required by the
+action-to-artifact mapping; auxiliary `artifacts` entries are unordered evidence
+and never select the checkpoint by position.
 
 ## Explicit HUMAN stranded-checkpoint recovery
 
@@ -51,3 +55,21 @@ handoff hashes. It appends one event and returns READY/BLOCKED with
 `next: Apply 7.5 Testing`; the next executor result must be fresh and
 schema-valid. It does not alter the executor outcome contract or the existing
 Apply 7.3 recovery operation.
+
+## Workload Guard policy
+
+Workload Guard estimates the forecast and records it as informational evidence.
+Forecast size never requires HUMAN approval. When the approved Design, Tasks,
+and Working Set remain sufficient, pass every forecast and continue to `Apply 7.1
+Foundation`. Partitioning, delivery, verification boundaries, and Git/PR topology
+are technical planning decisions owned by Design, Tasks, and Apply based on
+semantic cohesion, dependencies, Working Set, context, and implementation risk.
+Do not re-ask HUMAN to approve a technical decision already passed by
+Architecture Review.
+
+If evidence shows a material Design or Working Set departure, stop with the
+appropriate semantic `HUMAN_SCOPE` / Design-Review path. Security or risk
+acceptance, destructive or irreversible operations, material production or
+infrastructure risk, material external cost, and Git/merge/release decisions
+remain HUMAN-owned. Never use line count as the reason for a HUMAN_HANDOFF and
+never invoke Apply directly from an unvalidated semantic exception.

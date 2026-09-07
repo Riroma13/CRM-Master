@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { ForbiddenException, ValidationPipe } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException, ValidationPipe } from '@nestjs/common';
 
 jest.mock('better-auth/plugins/access', () => ({
   createAccessControl: () => ({
@@ -35,7 +35,7 @@ describe('TenantSettingsController', () => {
     });
   });
 
-  it('denies anonymous and permissionless callers with 403 under the existing guard', () => {
+  it('denies anonymous callers with 401 and permissionless callers with 403', () => {
     const audit = { log: jest.fn() };
     const reflector = {
       getAllAndOverride: jest.fn().mockReturnValue({ resource: 'configuracion', action: 'read' }),
@@ -47,7 +47,7 @@ describe('TenantSettingsController', () => {
       switchToHttp: () => ({ getRequest: () => ({ user }) }),
     }) as never;
 
-    expect(() => guard.canActivate(context())).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(context())).toThrow(UnauthorizedException);
     expect(() => guard.canActivate(context({ role: 'lector' }))).toThrow(ForbiddenException);
   });
 

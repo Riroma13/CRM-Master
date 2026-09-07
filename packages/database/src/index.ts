@@ -11,6 +11,16 @@ interface CreatePrismaClientOptions {
   clienteId?: string;
 }
 
+let baseClient: any;
+
+function getBaseClient() {
+  if (!baseClient) {
+    baseClient = new PrismaClient().$extends(auditAppendOnlyExtension) as any;
+  }
+
+  return baseClient;
+}
+
 /**
  * Creates a Prisma client with automatic tenant scoping.
  *
@@ -41,7 +51,7 @@ export function createPrismaClient(opts?: CreatePrismaClientOptions | string) {
     );
   }
 
-  const client = new PrismaClient().$extends(auditAppendOnlyExtension) as any;
+  const client = getBaseClient();
 
   if (!tenantId) return client;
 

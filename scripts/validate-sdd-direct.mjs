@@ -335,7 +335,7 @@ const contractBlock = markedBlock(
   '<!-- executor-outcome-contract:end -->',
 );
 for (const required of [
-  'change:', 'action:', 'role:', 'status:', 'artifacts:', 'evidence:', 'next:',
+  'change:', 'action:', 'role:', 'status:', 'checkpointArtifact:', 'artifacts:', 'evidence:', 'next:',
   'blocker:', 'class:', 'human_required:', 'reason:', 'resume_phase:',
 ]) {
   if (!contractBlock.includes(required)) fail(`Direct outcome contract is missing ${required}`);

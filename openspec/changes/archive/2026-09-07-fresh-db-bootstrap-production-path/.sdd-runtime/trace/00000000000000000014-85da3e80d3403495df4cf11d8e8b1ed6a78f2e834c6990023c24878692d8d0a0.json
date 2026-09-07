@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "sequence": 14,
+  "idempotencyKey": "c7d6d9171f8b12fd0cce800981c64eab4bf8c75df9a0c7b5d72729deb560146f",
+  "previousEventHash": "807114fedbde495c49f766f1853397e01cbdf80c85de50ee82c2b390f1088e7c",
+  "chainHash": "21e4623bd24b750ffeffd1bec247bbe0f0aeb0dd919ca6be1e0a160ef7700fdf",
+  "change": "fresh-db-bootstrap-production-path",
+  "action": "Apply 7.5 Testing",
+  "role": "MID",
+  "inputHash": "e9f0f6a6d4c4f0af007de8df6b61111d049229c31418ef0fc6c46649484e81db",
+  "outcomeHash": "e9f0f6a6d4c4f0af007de8df6b61111d049229c31418ef0fc6c46649484e81db",
+  "route": {
+    "configured": "MID",
+    "resolved": "MID",
+    "rejections": []
+  },
+  "beforeStateHash": "92208bb74de2e752da1cc6529af9b3e1fcec1be1ded9580d2d758ba7775499c0",
+  "afterStateHash": "a5aaa1b21c042f86b7398e9204f8703ff780915c8da685a34cd3a439231f0066",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 14,
+    "checkpoint": {
+      "phase": "Apply 7.5 Testing",
+      "artifact": "apply-7.5-testing.md",
+      "verdict": "PASS",
+      "next": "Apply 7.6 Apply Summary"
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "9f9b72c7823b7ea42f80e0692662a8521b1e3f51ae2f5a017f51fc1b296c1c2a",
+      "modelMap": "68cadbd5c0fe6793cb84c20b2164508e46c4955f373b61e88eda1c8bef071eb7",
+      "config": "09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 2,
+      "Design Refinement": 1,
+      "Tasks": 1,
+      "Tasks Review": 2,
+      "Tasks Refinement": 1,
+      "Workload Guard": 1,
+      "Apply 7.1 Foundation": 1,
+      "Apply 7.2 Core Engine": 1,
+      "Apply 7.3 Feature Implementation": 1,
+      "Apply 7.4 Integration": 1,
+      "Apply 7.5 Testing": 1
+    },
+    "traceCursor": {
+      "sequence": 14,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "c7d6d9171f8b12fd0cce800981c64eab4bf8c75df9a0c7b5d72729deb560146f",
+      "action": "Apply 7.5 Testing",
+      "inputHash": "e9f0f6a6d4c4f0af007de8df6b61111d049229c31418ef0fc6c46649484e81db",
+      "outcomeHash": "e9f0f6a6d4c4f0af007de8df6b61111d049229c31418ef0fc6c46649484e81db",
+      "afterStateHash": "52efe5bfb555a057c666b83c503f79ea8fdff9ca22fae06d6fe23aeffbe283eb"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "config": "openspec/config.yaml"
+    },
+    "workingSetSource": "design.md/tasks.md",
+    "readOrderConsumed": true,
+    "applyDelivery": "auto-chain:stacked-to-main"
+  },
+  "timestamp": "2026-09-07T17:42:19.648Z",
+  "eventHash": "85da3e80d3403495df4cf11d8e8b1ed6a78f2e834c6990023c24878692d8d0a0"
+}

@@ -81,6 +81,20 @@ export interface TenantDashboardResponse {
   onboardingChecklist?: { steps: { id: string; label: string; done: boolean }[] };
 }
 
+// ─── Tarea types ───────────────────────────────────────────────
+
+export interface TareaDetail {
+  id: string;
+  tenantId: string;
+  clienteId: string | null;
+  sistemaId: string | null;
+  titulo: string;
+  estado: string;
+  prioridad: string;
+  fechaLimite: string | null;
+  cliente: { id: string; nombre: string } | null;
+}
+
 // ─── Documento types ──────────────────────────────────────────
 
 export type DocumentCategory = 'contrato' | 'factura' | 'informe' | 'modelo' | 'otro';

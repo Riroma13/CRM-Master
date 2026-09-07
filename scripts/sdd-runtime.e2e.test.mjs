@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import {
   BLOCKER_POLICIES,
   buildInitialState,
+  canonicalCheckpointArtifact,
   dispatchUntilTerminal,
   evaluateWorkloadGuard,
   reconstructState,
@@ -28,7 +29,10 @@ const edges = {
   'Apply 7.6 Apply Summary': 'Verify', Verify: 'Archive', Archive: 'Health Report', 'Health Report': 'Repository Ready',
 };
 const highPhases = new Set(['Design', 'Architecture Review', 'Design Refinement', 'Verify']);
-const outcomeFor = (change, action) => ({ change, action, role: highPhases.has(action) ? 'HIGH' : ['Archive', 'Health Report', 'Repository Ready'].includes(action) ? 'LOW' : 'MID', status: 'PASS', artifacts: [], evidence: [`fixture:${action}`], next: edges[action] || 'HUMAN_HANDOFF' });
+const outcomeFor = (change, action, overrides = {}) => {
+  const checkpointArtifact = canonicalCheckpointArtifact(action);
+  return { change, action, role: highPhases.has(action) ? 'HIGH' : ['Archive', 'Health Report', 'Repository Ready'].includes(action) ? 'LOW' : 'MID', status: 'PASS', checkpointArtifact, artifacts: [checkpointArtifact], evidence: [`fixture:${action}`], next: edges[action] || 'HUMAN_HANDOFF', ...overrides };
+};
 
 function initialState() {
   return buildInitialState({ root: '/repo', change: 'e2e-change', fingerprints: hashes });
@@ -60,7 +64,7 @@ test('one generic recovery invocation continues from an interrupted READY checkp
 test('all AC-06 HUMAN blocker classes stop without executor dispatch', () => {
   for (const blockerClass of ['HUMAN_ARCHITECTURE', 'HUMAN_SECURITY', 'HUMAN_SCOPE', 'HUMAN_GIT']) {
     let calls = 0;
-    const result = dispatchUntilTerminal({ state: initialState(), execute: () => { calls += 1; return outcomeFor('e2e-change', 'Design'); }, outcomes: [{ change: 'e2e-change', action: 'Design', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: [], next: 'Design', blocker: { class: blockerClass, human_required: true, reason: blockerClass, resume_phase: null } }] });
+    const result = dispatchUntilTerminal({ state: initialState(), execute: () => { calls += 1; return outcomeFor('e2e-change', 'Design'); }, outcomes: [outcomeFor('e2e-change', 'Design', { status: 'BLOCKED', evidence: [], next: 'Design', blocker: { class: blockerClass, human_required: true, reason: blockerClass, resume_phase: null } })] });
     assert.equal(result.status, 'HUMAN_HANDOFF');
     assert.equal(result.blocker.class, blockerClass);
     assert.equal(calls, 0);
@@ -69,7 +73,7 @@ test('all AC-06 HUMAN blocker classes stop without executor dispatch', () => {
 
 test('machine-recoverable blocker follows bounded retry policy without HUMAN', () => {
   const outcomes = [
-    { change: 'e2e-change', action: 'Design', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: ['quota'], next: 'Design', blocker: { class: 'AUTO_RETRY', human_required: false, reason: 'transient', resume_phase: 'Design' } },
+    outcomeFor('e2e-change', 'Design', { status: 'BLOCKED', evidence: ['quota'], next: 'Design', blocker: { class: 'AUTO_RETRY', human_required: false, reason: 'transient', resume_phase: 'Design' } }),
     outcomeFor('e2e-change', 'Design'),
   ];
   const result = dispatchUntilTerminal({ state: initialState(), outcomes });
@@ -78,9 +82,22 @@ test('machine-recoverable blocker follows bounded retry policy without HUMAN', (
   assert.equal(result.state.attempts.Design, 2);
 });
 
-test('standing chained workload proceeds while true exception stops', () => {
-  assert.equal(evaluateWorkloadGuard({ estimatedLines: 900, delivery: 'force-chained', chainStrategy: 'stacked-to-main' }).status, 'PASS');
-  assert.equal(evaluateWorkloadGuard({ estimatedLines: 900, delivery: 'size-exception', chainStrategy: 'stacked-to-main', exception: true }).status, 'HUMAN_HANDOFF');
+test('small and very large in-scope forecasts pass without execution topology', () => {
+  for (const estimatedLines of [100, 1500, 1000000]) {
+    const result = evaluateWorkloadGuard({ estimatedLines, withinApprovedDesign: true, withinApprovedTasks: true, withinApprovedWorkingSet: true });
+    assert.equal(result.status, 'PASS');
+    assert.equal(result.human_required, false);
+    assert.equal(Object.hasOwn(result, 'partition'), false);
+    assert.equal(Object.hasOwn(result, 'delivery'), false);
+    assert.equal(Object.hasOwn(result, 'chainStrategy'), false);
+  }
+});
+
+test('material scope expansion remains a semantic HUMAN stop', () => {
+  const result = evaluateWorkloadGuard({ estimatedLines: 1500, withinApprovedWorkingSet: false });
+  assert.equal(result.status, 'HUMAN_HANDOFF');
+  assert.equal(result.blocker.class, 'HUMAN_SCOPE');
+  assert.equal(result.blocker.resume_phase, 'Design Refinement');
 });
 
 test('scope and unsafe state remain fail-closed', () => {
@@ -96,8 +113,16 @@ test('local agents and legacy commands remain project-local and STOP-only', asyn
   assert.equal(map.phase_roles.Push, 'HUMAN');
   assert.equal(map.phase_roles.Merge, 'HUMAN');
   const orchestrator = await readFile(new URL('../.opencode/agents/sdd-direct-orchestrator.md', import.meta.url), 'utf8');
+  const direct = await readFile(new URL('../.opencode/commands/sdd-direct.md', import.meta.url), 'utf8');
   const legacy = await readFile(new URL('../opencode.json', import.meta.url), 'utf8');
   assert.match(orchestrator, /sdd-runtime\.mjs/);
+  assert.match(orchestrator, /persistExecutorOutcome/);
+  assert.match(orchestrator, /persistTransition/);
+  assert.match(orchestrator, /sole persistence owner/i);
+  assert.match(direct, /entry adapter only/i);
+  assert.doesNotMatch(direct, /persistExecutorOutcome/);
+  assert.match(orchestrator, /technical planning/i);
+  assert.match(direct, /technical planning/i);
   assert.match(legacy, /CRM_SDD_LEGACY_BOUNDARY/);
   assert.deepEqual(Object.keys(BLOCKER_POLICIES).length, 12);
 });

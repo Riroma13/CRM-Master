@@ -183,8 +183,10 @@ manual maintainer gates.
 
 **Rules:**
 - Architecture Review is executed **exactly once** per SPEC
-- Complexity Score: ≤3 = Size Exception, ≥4 = Chained PRs
-- Default chain strategy: stacked-to-main
+- Complexity and forecast size are informational; semantic cohesion,
+  dependencies, Working Set, context, verification boundaries, and implementation
+  risk determine technical partitioning.
+- Delivery and Git/PR topology are not derived from line count.
 
 ---
 

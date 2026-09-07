@@ -8,7 +8,9 @@ import { AuthGuard } from './auth-guard';
 import { Breadcrumbs } from './breadcrumbs';
 import { CommandPalette } from '@/components/search/command-palette';
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { AccountMenu } from './account-menu';
 import { ToastProvider } from '@/components/ui/toast';
+import { api } from '@/lib/api';
 
 interface SearchResult {
   type: string;
@@ -40,15 +42,9 @@ function GlobalSearch() {
     if (q.length < 2) { setResults([]); setOpen(false); return; }
     debounceRef.current = setTimeout(async () => {
       try {
-        const token = sessionStorage.getItem('crm_session_token') || localStorage.getItem('crm_session_token');
-        const res = await fetch(`/api/v1/search?q=${encodeURIComponent(q)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setResults(data.results || []);
-          setOpen(true);
-        }
+        const data = await api.get<{ results?: SearchResult[] }>('/api/v1/search', { q }, { auth: true });
+        setResults(data.results || []);
+        setOpen(true);
       } catch {}
     }, 300);
   };
@@ -110,6 +106,15 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile wrapper */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Desktop top bar */}
+        <div className="hidden md:flex md:items-center md:justify-end md:gap-3 border-b border-[#E2E8F0] bg-white px-6 py-4">
+          <div className="min-w-0 flex-1 max-w-xs">
+            <GlobalSearch />
+          </div>
+          <NotificationBell />
+          <AccountMenu />
+        </div>
+
         {/* Mobile header with hamburger + notifications */}
         <div className="flex items-center justify-between border-b border-[#E2E8F0] bg-white px-4 py-3 md:hidden">
           <div className="flex items-center gap-2">
@@ -122,12 +127,6 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             </button>
             <span className="text-[15px] font-semibold text-[#1B1B1D]">Mi Portal</span>
           </div>
-          <NotificationBell />
-        </div>
-
-        {/* Desktop top bar */}
-        <div className="hidden md:flex md:absolute md:right-6 md:top-4 md:z-10 md:items-center md:gap-3">
-          <GlobalSearch />
           <NotificationBell />
         </div>
 

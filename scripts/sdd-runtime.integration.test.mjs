@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import {
   bootstrapChange,
   buildInitialState,
+  canonicalCheckpointArtifact,
   createContextPacket,
   createTraceEvent,
   dispatchUntilTerminal,
@@ -18,10 +19,25 @@ import {
   recoverStrandedCheckpoint,
   recoverDispatchMaterialization,
   hashObject,
+  persistExecutorOutcome,
   STRANDED_RECOVERY_TARGET,
 } from './sdd-runtime.mjs';
 
 const hashes = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
+const outcomeFor = (change, action, overrides = {}) => {
+  const checkpointArtifact = canonicalCheckpointArtifact(action);
+  return {
+    change,
+    action,
+    role: ['Design', 'Architecture Review', 'Design Refinement', 'Verify'].includes(action) ? 'HIGH' : ['Archive', 'Health Report', 'Repository Ready'].includes(action) ? 'LOW' : 'MID',
+    status: 'PASS',
+    checkpointArtifact,
+    artifacts: [checkpointArtifact],
+    evidence: [],
+    next: { Design: 'Architecture Review', 'Architecture Review': 'Tasks', 'Apply 7.3 Feature Implementation': 'Apply 7.4 Integration', 'Apply 7.5 Testing': 'Apply 7.6 Apply Summary' }[action] ?? 'HUMAN_HANDOFF',
+    ...overrides,
+  };
+};
 
 test('PASS after two environment retries persists the next Apply action without changing history or attempts', async () => {
   const root = await mkdtemp(join(tmpdir(), 'crm-runtime-pass-after-retries-'));
@@ -30,10 +46,10 @@ test('PASS after two environment retries persists the next Apply action without 
   const action = 'Apply 7.3 Feature Implementation';
   const before = {
     ...buildInitialState({ root, change, fingerprints: hashes }),
-    checkpoint: { phase: action, artifact: 'apply-progress.md', verdict: 'BLOCKED', next: action },
+    checkpoint: { phase: action, artifact: 'apply-7.3-feature-implementation.md', verdict: 'BLOCKED', next: action },
     attempts: { [action]: 2 },
   };
-  const pass = { change, action, role: 'MID', status: 'PASS', artifacts: ['apply-progress.md'], evidence: ['accepted fresh PASS'], next: 'Apply 7.4 Integration' };
+  const pass = outcomeFor(change, action, { evidence: ['accepted fresh PASS'] });
 
   try {
     const result = dispatchUntilTerminal({ state: before, outcomes: [pass] });
@@ -119,6 +135,231 @@ test('event-first trace publication reconciles an event-only interruption', asyn
   }
 });
 
+test('Design executor outcomes are materialized event-first before the next dispatch', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-design-materialization-'));
+  const change = 'design-materialization';
+  const fingerprints = { ...hashes, artifacts: {} };
+  try {
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints });
+    const designPath = join(bootstrapped.changePath, 'design.md');
+    await writeFile(designPath, '# Design\n');
+    const outcome = {
+      change,
+      action: 'Design',
+      role: 'HIGH',
+      status: 'PASS',
+      checkpointArtifact: 'design.md',
+      artifacts: ['design.md', 'auxiliary Working Set evidence'],
+      evidence: ['design pre-gate passed'],
+      next: 'Architecture Review',
+    };
+
+    const result = await persistExecutorOutcome({
+      changePath: bootstrapped.changePath,
+      state: bootstrapped.state,
+      outcome,
+      route: { configured: 'HIGH', resolved: 'sdd-direct-design', rejections: [] },
+      contextAudit: {
+        bootstrapReadCount: 1,
+        normalPhaseBootstrapReadCount: 0,
+        references: { workflow: 'docs/SDD-WORKFLOW.md', modelMap: '.opencode/sdd-model-map.json', config: 'openspec/config.yaml' },
+      },
+    });
+
+    assert.equal(result.persisted, true);
+    assert.equal(result.event.action, 'Design');
+    assert.equal(result.event.sequence, 1);
+    assert.equal(result.state.checkpoint.artifact, 'design.md');
+    assert.equal(result.state.checkpoint.next, 'Architecture Review');
+    assert.equal(result.state.traceCursor.eventHash, result.event.eventHash);
+    assert.deepEqual(JSON.parse(await readFile(join(bootstrapped.changePath, '.sdd-runtime', 'state.json'))), result.state);
+    assert.deepEqual(await readdir(join(bootstrapped.changePath, '.sdd-runtime', 'trace')), [
+      `${String(result.event.sequence).padStart(20, '0')}-${result.event.eventHash}.json`,
+    ]);
+
+    const duplicate = await persistExecutorOutcome({ changePath: bootstrapped.changePath, state: result.state, outcome });
+    assert.equal(duplicate.duplicate, true);
+    assert.equal(duplicate.persisted, false);
+    assert.equal(duplicate.event, null);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('the forwarding command leaves one owner to materialize an Apply 7.1 outcome exactly once', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-apply-single-owner-'));
+  const change = 'apply-single-owner';
+  try {
+    const command = await readFile(new URL('../.opencode/commands/sdd-direct.md', import.meta.url), 'utf8');
+    const orchestrator = await readFile(new URL('../.opencode/agents/sdd-direct-orchestrator.md', import.meta.url), 'utf8');
+    assert.match(command, /entry adapter only[\s\S]*never dispatches an executor, materializes an\s+executor outcome, or writes change-local runtime state itself/i);
+    assert.doesNotMatch(command, /persistExecutorOutcome/);
+    assert.match(orchestrator, /orchestrator is the sole persistence owner/i);
+    assert.match(orchestrator, /Once it accepts an outcome, discard that outcome[\s\S]*never re-submit it or its action from a stale\s+checkpoint/i);
+
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: { ...hashes, artifacts: {} } });
+    const checkpoint = 'apply-7.1-foundation.md';
+    await writeFile(join(bootstrapped.changePath, checkpoint), '# Apply 7.1 Foundation\n');
+    const before = {
+      ...bootstrapped.state,
+      checkpoint: { phase: 'Workload Guard', artifact: 'workload-guard.md', verdict: 'PASS', next: 'Apply 7.1 Foundation' },
+    };
+    const result = await persistExecutorOutcome({
+      changePath: bootstrapped.changePath,
+      state: before,
+      outcome: outcomeFor(change, 'Apply 7.1 Foundation', { next: 'Apply 7.2 Core Engine' }),
+      route: { configured: 'MID', resolved: 'sdd-direct-apply', rejections: [] },
+    });
+
+    assert.equal(result.persisted, true);
+    assert.equal(result.state.sequence, 1);
+    assert.equal(result.state.checkpoint.next, 'Apply 7.2 Core Engine');
+
+    const nextCheckpoint = 'apply-7.2-core-engine.md';
+    await writeFile(join(bootstrapped.changePath, nextCheckpoint), '# Apply 7.2 Core Engine\n');
+    const next = await persistExecutorOutcome({
+      changePath: bootstrapped.changePath,
+      state: result.state,
+      outcome: outcomeFor(change, 'Apply 7.2 Core Engine', {
+        next: 'Apply 7.3 Feature Implementation',
+        checkpointArtifact: nextCheckpoint,
+        artifacts: [nextCheckpoint],
+      }),
+      route: { configured: 'MID', resolved: 'sdd-direct-apply', rejections: [] },
+    });
+
+    assert.equal(next.persisted, true);
+    assert.equal(next.event.action, 'Apply 7.2 Core Engine');
+    assert.equal(next.state.sequence, 2);
+    assert.deepEqual(await readdir(join(bootstrapped.changePath, '.sdd-runtime', 'trace')), [
+      `${String(1).padStart(20, '0')}-${result.event.eventHash}.json`,
+      `${String(2).padStart(20, '0')}-${next.event.eventHash}.json`,
+    ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('Design evidence blockers use canonical retry or HUMAN handoff policies and reject unknown classes', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-design-needs-evidence-'));
+  const change = 'design-needs-evidence';
+  try {
+    const designAgent = await readFile(new URL('../.opencode/agents/sdd-direct-design.md', import.meta.url), 'utf8');
+    assert.match(designAgent, /`NEEDS_EVIDENCE` is a workflow result\/evidence condition, never a\s+`blocker\.class`/);
+    assert.match(designAgent, /exhaust the approved Working Set,\s+Read Order, current repository, or one canonical bounded evidence request/i);
+    assert.match(designAgent, /class: AUTO_RETRY[\s\S]*human_required: false[\s\S]*resume_phase: Design[\s\S]*next: Design/);
+    assert.match(designAgent, /class: HUMAN_SCOPE/);
+
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: hashes });
+    await writeFile(join(bootstrapped.changePath, 'design.md'), '# Design\n');
+    const retry = outcomeFor(change, 'Design', {
+      status: 'BLOCKED',
+      evidence: ['NEEDS_EVIDENCE: bounded Design input is available through the approved Read Order'],
+      next: 'Design',
+      blocker: { class: 'AUTO_RETRY', human_required: false, reason: 'Read the deterministic bounded Design input', resume_phase: 'Design' },
+    });
+
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath: bootstrapped.changePath, state: bootstrapped.state, outcome: { ...retry, blocker: { ...retry.blocker, class: 'NEEDS_EVIDENCE' } } }),
+      /unknown blocker class/i,
+    );
+
+    const retried = await persistExecutorOutcome({ changePath: bootstrapped.changePath, state: bootstrapped.state, outcome: retry });
+    assert.equal(retried.status, 'READY');
+    assert.equal(retried.state.checkpoint.verdict, 'BLOCKED');
+    assert.equal(retried.state.checkpoint.next, 'Design');
+    assert.equal(retried.state.status, 'READY');
+
+    const humanChange = 'design-human-owned-evidence';
+    const humanBootstrapped = await bootstrapChange({ root, change: humanChange, fingerprints: hashes });
+    await writeFile(join(humanBootstrapped.changePath, 'design.md'), '# Design\n');
+    const humanOwned = outcomeFor(humanChange, 'Design', {
+      status: 'BLOCKED',
+      evidence: ['NEEDS_EVIDENCE: maintainer-owned scope decision remains unavailable after the bounded request'],
+      next: 'Design',
+      blocker: { class: 'HUMAN_SCOPE', human_required: true, reason: 'Maintainer must decide the requested material scope expansion', resume_phase: null },
+    });
+    const handedOff = await persistExecutorOutcome({ changePath: humanBootstrapped.changePath, state: humanBootstrapped.state, outcome: humanOwned });
+    assert.equal(handedOff.status, 'HUMAN_HANDOFF');
+    assert.equal(handedOff.blocker.class, 'HUMAN_SCOPE');
+
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath: bootstrapped.changePath, state: bootstrapped.state, outcome: { ...retry, blocker: { ...retry.blocker, class: 'UNRELATED_UNKNOWN' } } }),
+      /unknown blocker class/i,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('Apply 7.1 producers use the canonical checkpoint basename and reject path-qualified entries', async () => {
+  const applyAgent = await readFile(new URL('../.opencode/agents/sdd-direct-apply.md', import.meta.url), 'utf8');
+  assert.match(applyAgent, /exact canonical checkpoint basename for both `checkpointArtifact` and its\s+matching `artifacts` entry/i);
+  assert.match(applyAgent, /never emit a full\/path-qualified checkpoint reference/i);
+
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-apply-checkpoint-contract-'));
+  const change = 'apply-checkpoint-contract';
+  try {
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: hashes });
+    const checkpoint = 'apply-7.1-foundation.md';
+    await writeFile(join(bootstrapped.changePath, checkpoint), '# Apply 7.1 Foundation\n');
+    const foundationState = {
+      ...bootstrapped.state,
+      sequence: 1,
+      checkpoint: { phase: 'Workload Guard', artifact: 'workload-guard.md', verdict: 'PASS', next: 'Apply 7.1 Foundation' },
+      traceCursor: { sequence: 1, eventHash: 'a'.repeat(64), chainHash: 'b'.repeat(64) },
+      lastTransition: { inputHash: 'c'.repeat(64), outcomeHash: 'd'.repeat(64), afterStateHash: 'e'.repeat(64) },
+    };
+    const canonical = outcomeFor(change, 'Apply 7.1 Foundation', {
+      checkpointArtifact: checkpoint,
+      artifacts: [checkpoint],
+      evidence: ['canonical checkpoint basename'],
+      next: 'Apply 7.2 Core Engine',
+    });
+    const pathQualified = {
+      ...canonical,
+      artifacts: [join(bootstrapped.changePath, checkpoint)],
+    };
+
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath: bootstrapped.changePath, state: foundationState, outcome: pathQualified }),
+      /invalid checkpoint artifact or outcome shape/i,
+    );
+
+    const persisted = await persistExecutorOutcome({
+      changePath: bootstrapped.changePath,
+      state: foundationState,
+      outcome: canonical,
+    });
+    assert.equal(persisted.persisted, true);
+    assert.equal(persisted.state.sequence, 2);
+    assert.equal(persisted.state.checkpoint.artifact, checkpoint);
+    assert.equal(persisted.state.checkpoint.next, 'Apply 7.2 Core Engine');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('executor persistence rejects missing or non-file canonical checkpoint artifacts', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-checkpoint-provenance-'));
+  const change = 'checkpoint-provenance';
+  try {
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: hashes });
+    const outcome = outcomeFor(change, 'Design');
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath: bootstrapped.changePath, state: bootstrapped.state, outcome }),
+      /missing canonical checkpoint artifact/i,
+    );
+    await mkdir(join(bootstrapped.changePath, 'design.md'));
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath: bootstrapped.changePath, state: bootstrapped.state, outcome }),
+      /invalid canonical checkpoint artifact/i,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('local wiring barriers reject Git/PR mutation requests before any subprocess', () => {
   for (const operation of ['commit', 'push', 'merge', 'rebase', 'release', 'deploy', 'tag']) {
     assert.throws(() => gitMutationBarrier({ operation, target: 'main' }), /HUMAN_GIT/);
@@ -187,7 +428,7 @@ test('integration dispatch converts exhausted Architecture refinement to FATAL/H
     attempts: { 'Design Refinement': 1 },
   };
   const outcome = {
-    change: 'integration-change', action: 'Architecture Review', role: 'HIGH', status: 'BLOCKED', artifacts: [], evidence: ['budget'], next: 'Design Refinement',
+    ...outcomeFor('integration-change', 'Architecture Review', { status: 'BLOCKED', evidence: ['budget'], next: 'Design Refinement' }),
     blocker: { class: 'AUTO_REFINE', human_required: false, reason: 'budget', resume_phase: 'Architecture Review' },
   };
   const result = dispatchUntilTerminal({ state, outcomes: [outcome] });
@@ -244,18 +485,18 @@ test('authorized dispatch-materialization recovery is append-only, preserves bud
   try {
     let state = f.state;
     for (let sequence = 9; sequence < 20; sequence += 1) {
-      const after = { ...state, status: 'READY', sequence, checkpoint: { phase: 'Apply 7.3 Feature Implementation', artifact: 'tasks.md', verdict: 'PASS', next: 'Apply 7.4 Integration' }, traceCursor: { sequence, eventHash: null, chainHash: null } };
+      const after = { ...state, status: 'READY', sequence, checkpoint: { phase: 'Apply 7.3 Feature Implementation', artifact: 'apply-7.3-feature-implementation.md', verdict: 'PASS', next: 'Apply 7.4 Integration' }, traceCursor: { sequence, eventHash: null, chainHash: null } };
       const event = createTraceEvent({ change: f.change, sequence, action: 'Apply 7.3 Feature Implementation', role: 'MID', inputHash: String(sequence).repeat(64).slice(0, 64), outcomeHash: String(sequence + 1).repeat(64).slice(0, 64), beforeState: state, afterState: after });
       await persistTransition({ changePath: f.changePath, event, state: after });
       state = { ...after, traceCursor: { sequence, eventHash: event.eventHash, chainHash: event.chainHash } };
     }
-    const predecessor = { ...state, sequence: 20, checkpoint: { phase: 'Apply 7.4 Integration', artifact: 'tasks.md', verdict: 'PASS', next: 'Apply 7.5 Testing' }, traceCursor: { sequence: 20, eventHash: null, chainHash: null } };
+    const predecessor = { ...state, sequence: 20, checkpoint: { phase: 'Apply 7.4 Integration', artifact: 'apply-7.4-integration.md', verdict: 'PASS', next: 'Apply 7.5 Testing' }, traceCursor: { sequence: 20, eventHash: null, chainHash: null } };
     const event20 = createTraceEvent({ change: f.change, sequence: 20, action: 'Apply 7.4 Integration', role: 'MID', inputHash: '1'.repeat(64), outcomeHash: '2'.repeat(64), beforeState: { ...state, sequence: 19, traceCursor: state.traceCursor }, afterState: predecessor });
     await persistTransition({ changePath: f.changePath, event: event20, state: predecessor });
     state = { ...predecessor, traceCursor: { sequence: 20, eventHash: event20.eventHash, chainHash: event20.chainHash } };
-    const blockedOutcome = { change: f.change, action: 'Apply 7.5 Testing', role: 'MID', status: 'BLOCKED', artifacts: ['tasks.md'], evidence: ['recoverable regression evidence'], next: 'Apply 7.5 Testing', blocker: { class: 'HUMAN_SCOPE', human_required: true, reason: 'bounded regression decision', resume_phase: 'Apply 7.5 Testing' } };
+    const blockedOutcome = { ...outcomeFor(f.change, 'Apply 7.5 Testing', { status: 'BLOCKED', artifacts: ['apply-7.5-testing.md', 'recoverable regression evidence'], evidence: ['recoverable regression evidence'], next: 'Apply 7.5 Testing' }), blocker: { class: 'HUMAN_SCOPE', human_required: true, reason: 'bounded regression decision', resume_phase: 'Apply 7.5 Testing' } };
     const normalizedBlockedOutcome = { ...blockedOutcome, status: 'HUMAN_HANDOFF', next: null };
-    const handoffState = { ...state, status: 'HUMAN_HANDOFF', sequence: 21, checkpoint: { phase: 'Apply 7.4 Integration', artifact: 'tasks.md', verdict: 'BLOCKED', next: null }, traceCursor: { sequence: 21, eventHash: null, chainHash: null }, lastTransition: { action: 'Apply 7.5 Testing', inputHash: hashObject(blockedOutcome), outcomeHash: hashObject(normalizedBlockedOutcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF' }) } };
+    const handoffState = { ...state, status: 'HUMAN_HANDOFF', sequence: 21, checkpoint: { phase: 'Apply 7.4 Integration', artifact: 'apply-7.5-testing.md', verdict: 'BLOCKED', next: null }, traceCursor: { sequence: 21, eventHash: null, chainHash: null }, lastTransition: { action: 'Apply 7.5 Testing', inputHash: hashObject(blockedOutcome), outcomeHash: hashObject(normalizedBlockedOutcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF' }) } };
     const event21 = createTraceEvent({ change: f.change, sequence: 21, action: 'Apply 7.5 Testing', role: 'MID', inputHash: hashObject(blockedOutcome), outcomeHash: hashObject(normalizedBlockedOutcome), beforeState: state, afterState: handoffState });
     await persistTransition({ changePath: f.changePath, event: event21, state: handoffState });
     state = { ...handoffState, traceCursor: { sequence: 21, eventHash: event21.eventHash, chainHash: event21.chainHash } };
@@ -287,7 +528,7 @@ test('authorized dispatch-materialization recovery is append-only, preserves bud
     const beforeState = JSON.stringify(JSON.parse(await readFile(join(f.changePath, '.sdd-runtime', 'state.json'))));
     const result = await recoverDispatchMaterialization(request);
     assert.equal(result.state.status, 'READY');
-    assert.deepEqual(result.state.checkpoint, { phase: 'Apply 7.5 Testing', artifact: 'tasks.md', verdict: 'BLOCKED', next: 'Apply 7.5 Testing' });
+    assert.deepEqual(result.state.checkpoint, { phase: 'Apply 7.5 Testing', artifact: 'apply-7.5-testing.md', verdict: 'BLOCKED', next: 'Apply 7.5 Testing' });
     assert.deepEqual(result.state.attempts, state.attempts);
     assert.deepEqual(result.state.fingerprints, state.fingerprints);
     assert.equal(result.event.operation, 'RECOVER_DISPATCH_MATERIALIZATION');
@@ -303,7 +544,7 @@ test('authorized dispatch-materialization recovery is append-only, preserves bud
     assert.equal(replay.duplicate, true);
     assert.equal(replay.state.checkpoint.next, 'Apply 7.5 Testing');
     const { blocker: _blocked, ...freshBase } = blockedOutcome;
-    const fresh = { ...freshBase, status: 'PASS', evidence: ['fresh executor result'], next: 'Apply 7.6 Apply Summary' };
+    const fresh = { ...freshBase, status: 'PASS', checkpointArtifact: 'apply-7.5-testing.md', artifacts: ['apply-7.5-testing.md'], evidence: ['fresh executor result'], next: 'Apply 7.6 Apply Summary' };
     assert.equal(dispatchUntilTerminal({ state: result.state, outcomes: [fresh] }).state.checkpoint.next, 'Apply 7.6 Apply Summary');
     await assert.rejects(() => recoverDispatchMaterialization(request), /stale/i);
   } finally { await rm(f.root, { recursive: true, force: true }); }
