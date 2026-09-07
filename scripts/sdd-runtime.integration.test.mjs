@@ -186,6 +186,58 @@ test('Design executor outcomes are materialized event-first before the next disp
   }
 });
 
+test('Design evidence blockers use canonical retry or HUMAN handoff policies and reject unknown classes', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-design-needs-evidence-'));
+  const change = 'design-needs-evidence';
+  try {
+    const designAgent = await readFile(new URL('../.opencode/agents/sdd-direct-design.md', import.meta.url), 'utf8');
+    assert.match(designAgent, /`NEEDS_EVIDENCE` is a workflow result\/evidence condition, never a\s+`blocker\.class`/);
+    assert.match(designAgent, /exhaust the approved Working Set,\s+Read Order, current repository, or one canonical bounded evidence request/i);
+    assert.match(designAgent, /class: AUTO_RETRY[\s\S]*human_required: false[\s\S]*resume_phase: Design[\s\S]*next: Design/);
+    assert.match(designAgent, /class: HUMAN_SCOPE/);
+
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: hashes });
+    await writeFile(join(bootstrapped.changePath, 'design.md'), '# Design\n');
+    const retry = outcomeFor(change, 'Design', {
+      status: 'BLOCKED',
+      evidence: ['NEEDS_EVIDENCE: bounded Design input is available through the approved Read Order'],
+      next: 'Design',
+      blocker: { class: 'AUTO_RETRY', human_required: false, reason: 'Read the deterministic bounded Design input', resume_phase: 'Design' },
+    });
+
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath: bootstrapped.changePath, state: bootstrapped.state, outcome: { ...retry, blocker: { ...retry.blocker, class: 'NEEDS_EVIDENCE' } } }),
+      /unknown blocker class/i,
+    );
+
+    const retried = await persistExecutorOutcome({ changePath: bootstrapped.changePath, state: bootstrapped.state, outcome: retry });
+    assert.equal(retried.status, 'READY');
+    assert.equal(retried.state.checkpoint.verdict, 'BLOCKED');
+    assert.equal(retried.state.checkpoint.next, 'Design');
+    assert.equal(retried.state.status, 'READY');
+
+    const humanChange = 'design-human-owned-evidence';
+    const humanBootstrapped = await bootstrapChange({ root, change: humanChange, fingerprints: hashes });
+    await writeFile(join(humanBootstrapped.changePath, 'design.md'), '# Design\n');
+    const humanOwned = outcomeFor(humanChange, 'Design', {
+      status: 'BLOCKED',
+      evidence: ['NEEDS_EVIDENCE: maintainer-owned scope decision remains unavailable after the bounded request'],
+      next: 'Design',
+      blocker: { class: 'HUMAN_SCOPE', human_required: true, reason: 'Maintainer must decide the requested material scope expansion', resume_phase: null },
+    });
+    const handedOff = await persistExecutorOutcome({ changePath: humanBootstrapped.changePath, state: humanBootstrapped.state, outcome: humanOwned });
+    assert.equal(handedOff.status, 'HUMAN_HANDOFF');
+    assert.equal(handedOff.blocker.class, 'HUMAN_SCOPE');
+
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath: bootstrapped.changePath, state: bootstrapped.state, outcome: { ...retry, blocker: { ...retry.blocker, class: 'UNRELATED_UNKNOWN' } } }),
+      /unknown blocker class/i,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('executor persistence rejects missing or non-file canonical checkpoint artifacts', async () => {
   const root = await mkdtemp(join(tmpdir(), 'crm-runtime-checkpoint-provenance-'));
   const change = 'checkpoint-provenance';
