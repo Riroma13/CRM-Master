@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "postgresMajor": 16,
+  "components": [
+    {
+      "path": "bootstrap/v1/components/01-pgvector.sql",
+      "sha256": "9e9b2cfec47519f49ee73cb533c459e22f8ca54fe5ba1cbec59f3d5883fe191c",
+      "transaction": "required"
+    },
+    {
+      "path": "bootstrap/v1/schema.sql",
+      "sha256": "184a443d26efcdb153764919a529fcbdc82f344bb5a3630c92231c5d4fdba6b2",
+      "transaction": "required"
+    },
+    {
+      "path": "bootstrap/v1/reporting.sql",
+      "sha256": "41ec2da835e2500f98d2166a57c3466d7da870fd5af058c698ebd1f38221c8c6",
+      "transaction": "required"
+    },
+    {
+      "path": "bootstrap/v1/components/04-activity-timeline-trigger.sql",
+      "sha256": "a824da3bb6dcb3152ce1529837988f154cf79f4a600c5b4b17c6938dbfeecd04",
+      "transaction": "required"
+    },
+    {
+      "path": "bootstrap/v1/components/05-audit-append-only-trigger.sql",
+      "sha256": "e6d737413e1cf468466e9256908abef0ffddc3061fc55cd50da5f20a279e7f2f",
+      "transaction": "forbidden"
+    }
+  ],
+  "migrations": [
+    {
+      "name": "20260714222500_add_client_users",
+      "sha256": "f66a61433f35277ecb2bb4a17a4d2d85e021e9b19f4dbd7d35421607809448a1"
+    },
+    {
+      "name": "20260716212500_add_client_user_fields",
+      "sha256": "42c29ea4a1a120973057afaff229896b039a0cb4eb1eb6c4d0b733207ad62d1a"
+    },
+    {
+      "name": "20260720220000_add_activity_timeline_fields",
+      "sha256": "fdbf5fc2317008cc35c567ff249b429890f487608a03a4bd574f3e118e49b710"
+    },
+    {
+      "name": "20260720220000_add_audit_tables",
+      "sha256": "ee2e73a82eab250e6d3e942d252377ef7266d1eebf33d93d3f6009558d0b57db"
+    },
+    {
+      "name": "20260720220000_add_notification_tables",
+      "sha256": "4a1c6c733cd40f1f4efebfb2939d3e4826ada3960b7999599df43d189e1090be"
+    },
+    {
+      "name": "20260720220000_add_reporting_tables",
+      "sha256": "26a85ee811b6fe6a8765e799320c340a2c1190376d74a66b2e6e60c03bfbac49"
+    },
+    {
+      "name": "20260720230000_add_billing",
+      "sha256": "cfb33f1b283eb41ff19528211ff8f834d75b45c165c1e2f9a1eac15c5014a4d1"
+    },
+    {
+      "name": "20260720230000_add_knowledge_base",
+      "sha256": "5fededf61c7e3da3a08291675821d507622ab1ff4bdc42a3197bae72591f83b1"
+    },
+    {
+      "name": "20260720230000_add_observability",
+      "sha256": "73d87d97625affd26c324788c91e4dc3511320cb58496c735ca58a309d07f273"
+    },
+    {
+      "name": "20260720230000_add_plugin_platform",
+      "sha256": "a460e78fdc12b03086de02993f0e94aa532f3a57ce79750162cc173371f591f5"
+    },
+    {
+      "name": "20260720230000_add_public_api",
+      "sha256": "653d7ff9dacee5f469f08a2fe1e7e66dcee6e22102fedba3a5a5c56dccc89c32"
+    },
+    {
+      "name": "20260728150000_add_identity_platform",
+      "sha256": "5254c99a9558bbcbd9da87552413f3c1e82de882824f09658665e7421ea5db67"
+    },
+    {
+      "name": "20260730150000_add_better_auth_session_metadata",
+      "sha256": "2d61faa9abe82eddd4316257bcaecc4de5e2786297975c704aa3082c8525c9fa"
+    },
+    {
+      "name": "20260815000000_add_data_lifecycle_platform",
+      "sha256": "fa21d728d41fc9b6a3f96b9e2cc0f9548284ce648a326cf42279de3d811f0657"
+    },
+    {
+      "name": "20260903120000_add_cliente_contact_fields",
+      "sha256": "06b3b22bd8fd2f3fb9a328bf758529db9e1cd90834d1e30aa0e4e5e5c122f90d"
+    }
+  ],
+  "schemaSha256": "184a443d26efcdb153764919a529fcbdc82f344bb5a3630c92231c5d4fdba6b2",
+  "reportingSha256": "41ec2da835e2500f98d2166a57c3466d7da870fd5af058c698ebd1f38221c8c6"
+}
