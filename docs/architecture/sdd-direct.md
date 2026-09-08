@@ -93,6 +93,16 @@ and projects exactly one result, creates its trace event, and invokes
 `dispatchUntilTerminal` is a projection helper only; using it without
 `persistExecutorOutcome` is incomplete and must stop before the next dispatch.
 
+Archive is the one filesystem-boundary exception owned by that same operation:
+the Archive executor leaves the active change directory and
+`archive-report.md` at the active canonical path. After `persistTransition`
+accepts the Archive event, the runtime atomically relocates the complete change
+directory to its deterministic date-prefixed archive destination and
+materializes the returned state with that destination as `canonicalPath`.
+Health Report and Repository Ready consume that returned path. No executor or
+orchestrator may move the directory, persist a second Archive event, or rewrite
+the path manually.
+
 Workload Guard has no size-based approval transition. The runtime records the
 forecast as informational evidence and materializes the normal `READY` result
 whose next action is `Apply 7.1 Foundation`; it does not derive partitioning,

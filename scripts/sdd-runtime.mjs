@@ -134,6 +134,13 @@ export function validateIdentity({ root, change, canonicalPath } = {}) {
   return { root: resolve(root), change, changePath: expected };
 }
 
+export function archiveDestinationPath({ root, change, date = new Date() } = {}) {
+  const identity = validateIdentity({ root, change });
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) fail('invalid archive date');
+  const datePrefix = date.toISOString().slice(0, 10);
+  return join(dirname(identity.changePath), 'archive', `${datePrefix}-${change}`);
+}
+
 export function validateScope(scope = {}) {
   const identity = validateIdentity(scope);
   if (scope.branch !== undefined && (typeof scope.branch !== 'string' || !scope.branch.trim())) fail('invalid branch');
@@ -564,44 +571,111 @@ export async function persistExecutorOutcome({ changePath, state, outcome, route
   try { checkpointStats = await lstat(checkpointPath); } catch (error) { if (error.code === 'ENOENT') fail(`missing canonical checkpoint artifact ${validatedOutcome.checkpointArtifact}`); throw error; }
   if (!checkpointStats.isFile() || checkpointStats.isSymbolicLink()) fail(`invalid canonical checkpoint artifact ${validatedOutcome.checkpointArtifact}`);
 
-  const result = dispatchUntilTerminal({ state, outcomes: [validatedOutcome], projection });
-  if (result.state.sequence === state.sequence) {
-    if (result.duplicate && state.traceCursor.eventHash !== null) {
-      return { ...result, persisted: false, event: null, tracePath: null };
+  const isArchiveOutcome = validatedOutcome.action === 'Archive' && validatedOutcome.status === 'PASS';
+  const canonicalRoot = dirname(dirname(dirname(resolve(changePath))));
+  let archiveDate = null;
+  let archivePath = null;
+  let archiveLockHandle = null;
+  let archiveLockPath = null;
+  let archiveRelocated = false;
+  let archiveRelocationRequired = false;
+
+  try {
+    const result = dispatchUntilTerminal({ state, outcomes: [validatedOutcome], projection });
+    if (result.state.sequence === state.sequence) {
+      if (result.duplicate && state.traceCursor.eventHash !== null) {
+        return { ...result, persisted: false, event: null, tracePath: null };
+      }
+      fail('executor outcome did not produce one transition');
     }
-    fail('executor outcome did not produce one transition');
+    if (result.state.sequence !== state.sequence + 1) fail('executor outcome produced more than one transition');
+
+    archiveRelocationRequired = isArchiveOutcome
+      && result.status === 'READY'
+      && result.state.status === 'READY'
+      && result.state.checkpoint.phase === 'Archive'
+      && result.state.checkpoint.verdict === 'PASS'
+      && result.state.checkpoint.next === 'Health Report';
+    if (archiveRelocationRequired) {
+      archiveDate = new Date();
+      archivePath = archiveDestinationPath({ root: canonicalRoot, change: state.change, date: archiveDate });
+      archiveLockPath = join(changePath, '.sdd-runtime', 'archive-materialization.lock');
+      try {
+        archiveLockHandle = await open(archiveLockPath, 'wx', 0o600);
+      } catch (error) {
+        if (error.code === 'EEXIST') fail('concurrent Archive materialization');
+        throw error;
+      }
+      await mkdir(dirname(archivePath), { recursive: true });
+      try {
+        await lstat(archivePath);
+        fail('archive destination already exists');
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+      }
+    }
+
+    const normalizedOutcome = safeValidateOutcome(outcome);
+    const afterState = result.state;
+    const eventAction = CANONICAL_ACTIONS.has(afterState.lastTransition.action)
+      ? afterState.lastTransition.action
+      : 'Repository Ready';
+    const eventRole = LOGICAL_ROLES.has(normalizedOutcome.role) ? normalizedOutcome.role : 'HUMAN';
+    const eventRoute = route ?? { configured: eventRole, resolved: eventRole, rejections: [] };
+    const baseContextAudit = contextAudit ?? { bootstrapReadCount: 1, normalPhaseBootstrapReadCount: 0, references: {} };
+    const eventContextAudit = archiveRelocationRequired
+      ? {
+        ...baseContextAudit,
+        archiveRelocation: {
+          boundary: 'after-persistTransition',
+          source: resolve(changePath),
+          destination: resolve(archivePath),
+        },
+      }
+      : baseContextAudit;
+    validateRoute(eventRoute);
+    assertObject(eventContextAudit, 'contextAudit');
+
+    const event = createTraceEvent({
+      change: state.change,
+      sequence: afterState.sequence,
+      action: eventAction,
+      role: eventRole,
+      inputHash: afterState.lastTransition.inputHash,
+      outcomeHash: afterState.lastTransition.outcomeHash,
+      beforeState: state,
+      afterState,
+      route: eventRoute,
+      contextAudit: eventContextAudit,
+      timestamp: archiveDate?.toISOString(),
+    });
+    const persisted = await persistTransition({ changePath, event, state: afterState });
+    const materializedState = validateRuntimeState({
+      ...afterState,
+      traceCursor: { sequence: event.sequence, eventHash: event.eventHash, chainHash: event.chainHash },
+    });
+
+    if (!archiveRelocationRequired) return { ...result, ...persisted, persisted: !persisted.duplicate, state: materializedState, event };
+
+    await rename(changePath, archivePath);
+    archiveRelocated = true;
+    const archivedState = validateRuntimeState({ ...materializedState, canonicalPath: archivePath });
+    await atomicWriteJson(join(archivePath, '.sdd-runtime', 'state.json'), archivedState);
+    return {
+      ...result,
+      ...persisted,
+      persisted: !persisted.duplicate,
+      state: archivedState,
+      tracePath: join(archivePath, relative(changePath, persisted.tracePath)),
+      event,
+    };
+  } finally {
+    if (archiveLockHandle) await archiveLockHandle.close();
+    if (archiveRelocationRequired) {
+      const lockDirectory = archiveRelocated ? archivePath : changePath;
+      await unlink(join(lockDirectory, '.sdd-runtime', 'archive-materialization.lock')).catch(() => {});
+    }
   }
-  if (result.state.sequence !== state.sequence + 1) fail('executor outcome produced more than one transition');
-
-  const normalizedOutcome = safeValidateOutcome(outcome);
-  const afterState = result.state;
-  const eventAction = CANONICAL_ACTIONS.has(afterState.lastTransition.action)
-    ? afterState.lastTransition.action
-    : 'Repository Ready';
-  const eventRole = LOGICAL_ROLES.has(normalizedOutcome.role) ? normalizedOutcome.role : 'HUMAN';
-  const eventRoute = route ?? { configured: eventRole, resolved: eventRole, rejections: [] };
-  const eventContextAudit = contextAudit ?? { bootstrapReadCount: 1, normalPhaseBootstrapReadCount: 0, references: {} };
-  validateRoute(eventRoute);
-  assertObject(eventContextAudit, 'contextAudit');
-
-  const event = createTraceEvent({
-    change: state.change,
-    sequence: afterState.sequence,
-    action: eventAction,
-    role: eventRole,
-    inputHash: afterState.lastTransition.inputHash,
-    outcomeHash: afterState.lastTransition.outcomeHash,
-    beforeState: state,
-    afterState,
-    route: eventRoute,
-    contextAudit: eventContextAudit,
-  });
-  const persisted = await persistTransition({ changePath, event, state: afterState });
-  const materializedState = validateRuntimeState({
-    ...afterState,
-    traceCursor: { sequence: event.sequence, eventHash: event.eventHash, chainHash: event.chainHash },
-  });
-  return { ...result, ...persisted, persisted: !persisted.duplicate, state: materializedState, event };
 }
 
 export async function persistTransition({ changePath, event, state } = {}) {

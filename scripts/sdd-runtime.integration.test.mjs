@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import { mkdir, readFile, readdir, rm, mkdtemp, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readFile, readdir, rm, mkdtemp, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
 
 import {
   bootstrapChange,
+  archiveDestinationPath,
   buildInitialState,
   canonicalCheckpointArtifact,
   createContextPacket,
@@ -192,10 +193,14 @@ test('the forwarding command leaves one owner to materialize an Apply 7.1 outcom
   try {
     const command = await readFile(new URL('../.opencode/commands/sdd-direct.md', import.meta.url), 'utf8');
     const orchestrator = await readFile(new URL('../.opencode/agents/sdd-direct-orchestrator.md', import.meta.url), 'utf8');
+    const archiveAgent = await readFile(new URL('../.opencode/agents/sdd-direct-archive.md', import.meta.url), 'utf8');
     assert.match(command, /entry adapter only[\s\S]*never dispatches an executor, materializes an\s+executor outcome, or writes change-local runtime state itself/i);
     assert.doesNotMatch(command, /persistExecutorOutcome/);
     assert.match(orchestrator, /orchestrator is the sole persistence owner/i);
     assert.match(orchestrator, /Once it accepts an outcome, discard that outcome[\s\S]*never re-submit it or its action from a stale\s+checkpoint/i);
+    assert.match(archiveAgent, /active change directory is the canonical source[\s\S]*do not move, rename, copy, or delete the directory/i);
+    assert.match(archiveAgent, /do not move, rename, copy, or delete the directory/i);
+    assert.match(orchestrator, /runtime's\s+`persistExecutorOutcome` persists the Archive event\/state first/i);
 
     const bootstrapped = await bootstrapChange({ root, change, fingerprints: { ...hashes, artifacts: {} } });
     const checkpoint = 'apply-7.1-foundation.md';
@@ -355,6 +360,47 @@ test('executor persistence rejects missing or non-file canonical checkpoint arti
       () => persistExecutorOutcome({ changePath: bootstrapped.changePath, state: bootstrapped.state, outcome }),
       /invalid canonical checkpoint artifact/i,
     );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('failed Archive persistence leaves the Verify checkpoint active and unarchived', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-archive-failure-'));
+  const change = 'archive-failure';
+  const changePath = join(root, 'openspec', 'changes', change);
+  try {
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: { ...hashes, artifacts: {} } });
+    const before = {
+      ...bootstrapped.state,
+      sequence: 16,
+      checkpoint: { phase: 'Verify', artifact: 'verify-report.md', verdict: 'PASS', next: 'Archive' },
+      traceCursor: { sequence: 16, eventHash: 'd'.repeat(64), chainHash: 'e'.repeat(64) },
+      lastTransition: { inputHash: 'f'.repeat(64), outcomeHash: 'a'.repeat(64), afterStateHash: 'b'.repeat(64) },
+    };
+    await writeFile(join(changePath, 'verify-report.md'), '# Verify\nPASS\n');
+    await writeFile(join(changePath, '.sdd-runtime', 'state.json'), `${JSON.stringify(before)}\n`);
+
+    const outcome = outcomeFor(change, 'Archive', { next: 'Health Report', evidence: ['Archive report was not available at the active checkpoint'] });
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath, state: before, outcome }),
+      /missing canonical checkpoint artifact archive-report\.md/i,
+    );
+
+    const archivePath = archiveDestinationPath({ root, change });
+    await assert.rejects(() => lstat(archivePath), { code: 'ENOENT' });
+    assert.equal((await lstat(changePath)).isDirectory(), true);
+    assert.deepEqual(JSON.parse(await readFile(join(changePath, '.sdd-runtime', 'state.json'))), before);
+    await assert.rejects(() => lstat(join(changePath, '.sdd-runtime', 'trace')), { code: 'ENOENT' });
+
+    await writeFile(join(changePath, 'archive-report.md'), '# Archive\nPASS\n');
+    await writeFile(join(changePath, '.sdd-runtime', 'trace'), 'not a directory');
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath, state: before, outcome }),
+      /ENOTDIR|not a directory/i,
+    );
+    await assert.rejects(() => lstat(archivePath), { code: 'ENOENT' });
+    assert.deepEqual(JSON.parse(await readFile(join(changePath, '.sdd-runtime', 'state.json'))), before);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
