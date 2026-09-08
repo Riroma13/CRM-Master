@@ -3,6 +3,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateProjectProfile } from './sdd-runtime.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const failures = [];
@@ -128,6 +129,11 @@ const legacyCommandTexts = Object.fromEntries(
 const projectConfig = parseJson(files.projectConfig);
 const modelMap = parseJson(files.modelMap);
 const packageJson = parseJson(files.package);
+try {
+  validateProjectProfile(modelMap);
+} catch (error) {
+  fail(`model map project profile: ${error.message}`);
+}
 
 // The workflow is the only file allowed to declare semantic authority.
 const authorityCandidates = [

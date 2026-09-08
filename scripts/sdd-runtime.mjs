@@ -946,7 +946,7 @@ export function resolveRoute({ role, requiredCapability, minimumQuality = 0, can
 
 export async function resolveConfiguredRoute({ modelMapPath, modelMap, role, requiredCapability, minimumQuality = 0 } = {}) {
   if (!modelMap && typeof modelMapPath === 'string') modelMap = JSON.parse(await readFile(modelMapPath, 'utf8'));
-  assertObject(modelMap, 'modelMap');
+  validateProjectProfile(modelMap);
   const routing = modelMap.runtime_routing;
   assertObject(routing, 'modelMap.runtime_routing');
   const primaryId = routing.primary?.[role];
@@ -964,6 +964,36 @@ export function validateRoute(route) {
   assertObject(route, 'route');
   if (typeof route.configured !== 'string' || typeof route.resolved !== 'string' || !Array.isArray(route.rejections)) fail('invalid route');
   return route;
+}
+
+function validateProfileSources(value, name) {
+  if (!Array.isArray(value) || value.length === 0 || value.some((source) => (
+    typeof source !== 'string' || !source.trim() || isAbsolute(source) || source.includes('..')
+  ))) fail(`${name} must contain relative repository paths`);
+  return [...value];
+}
+
+export function validateProjectProfile(modelMap) {
+  assertObject(modelMap, 'modelMap');
+  if (typeof modelMap.project !== 'string' || !modelMap.project.trim()) fail('project profile id is required');
+  validateChangeName(modelMap.project);
+  const profile = modelMap.project_profile;
+  assertObject(profile, 'project_profile');
+  if (!own(profile, new Set(['name', 'memory_key', 'context_sources', 'invariant_sources']))) fail('unknown project profile field');
+  if (typeof profile.name !== 'string' || !profile.name.trim()) fail('project profile name is required');
+  if (typeof profile.memory_key !== 'string' || !profile.memory_key.trim()) fail('project profile memory_key is required');
+  return Object.freeze({
+    id: modelMap.project,
+    name: profile.name.trim(),
+    memoryKey: profile.memory_key.trim(),
+    contextSources: validateProfileSources(profile.context_sources, 'project_profile.context_sources'),
+    invariantSources: validateProfileSources(profile.invariant_sources, 'project_profile.invariant_sources'),
+  });
+}
+
+export async function loadProjectProfile({ modelMapPath, modelMap } = {}) {
+  if (!modelMap && typeof modelMapPath === 'string') modelMap = JSON.parse(await readFile(modelMapPath, 'utf8'));
+  return validateProjectProfile(modelMap);
 }
 
 export { HUMAN_CLASSES, AUTO_CLASSES };

@@ -1,11 +1,26 @@
 {
-  "schema": "crm-master.sdd-model-map/v1",
+  "schema": "sdd-model-map/v1",
   "classification": "EXECUTION ADAPTER",
   "project": "crm-master",
+  "project_profile": {
+    "name": "CRM-Master",
+    "memory_key": "crm-master",
+    "context_sources": [
+      "AGENTS.md",
+      ".ai/context/PROJECT.md",
+      ".ai/context/SESSION.md",
+      ".ai/context/DECISIONS.md",
+      ".ai/context/KNOWN_ISSUES.md",
+      ".ai/context/ROADMAP.md"
+    ],
+    "invariant_sources": [
+      "AGENTS.md"
+    ]
+  },
   "workflow_version": "v3",
   "persistence": "hybrid",
   "runtime_routing": {
-    "schema": "crm-master.sdd-runtime-routing/v1",
+    "schema": "sdd-runtime-routing/v1",
     "fallback_policy": "same-role-compatible-only",
     "quality_required": true,
     "cost_ordered": true,

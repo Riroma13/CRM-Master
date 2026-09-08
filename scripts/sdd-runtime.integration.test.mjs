@@ -20,10 +20,14 @@ import {
   recoverStrandedCheckpoint,
   recoverDispatchMaterialization,
   hashObject,
+  loadProjectProfile,
+  projectCanonicalWorkflow,
   persistExecutorOutcome,
   STRANDED_RECOVERY_TARGET,
   validateOutcomePacket,
 } from './sdd-runtime.mjs';
+
+import { resolveRepositoryChangeName } from './sdd-resume.mjs';
 
 const hashes = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
 const outcomeFor = (change, action, overrides = {}) => {
@@ -517,6 +521,77 @@ test('configured LOW routing has one Luna candidate and fails closed without cro
   const crossRole = structuredClone(unavailablePrimary);
   crossRole.runtime_routing.candidates.LOW.push({ id: 'mid-cross-role', model: 'openai/gpt-5.6-luna', local_executor: 'sdd-direct-apply', role: 'MID', capabilities: ['evidence'], quality: 0.95, cost: 1, available: true });
   await assert.rejects(() => resolveConfiguredRoute({ modelMap: crossRole, role: 'LOW', requiredCapability: 'evidence', minimumQuality: 0.8 }), /no compatible route/);
+});
+
+test('portable project profile preserves CRM behavior and resolves a neutral second project', async () => {
+  const modelMap = JSON.parse(await readFile(join(process.cwd(), '.opencode', 'sdd-model-map.json'), 'utf8'));
+  const crmProfile = await loadProjectProfile({ modelMap });
+  assert.deepEqual(
+    { id: crmProfile.id, name: crmProfile.name, memoryKey: crmProfile.memoryKey },
+    { id: 'crm-master', name: 'CRM-Master', memoryKey: 'crm-master' },
+  );
+
+  const neutralMap = structuredClone(modelMap);
+  neutralMap.project = 'sample-project';
+  neutralMap.project_profile = {
+    name: 'Sample Project',
+    memory_key: 'sample-project',
+    context_sources: ['AGENTS.md', 'docs/PROJECT.md'],
+    invariant_sources: ['AGENTS.md'],
+  };
+  const neutralProfile = await loadProjectProfile({ modelMap: neutralMap });
+  assert.equal(neutralProfile.id, 'sample-project');
+  assert.equal(neutralProfile.name, 'Sample Project');
+  assert.equal(neutralProfile.contextSources.includes('docs/PROJECT.md'), true);
+  assert.doesNotMatch(JSON.stringify(neutralProfile), /crm-master/i);
+  assert.deepEqual(
+    {
+      Verify: projectCanonicalWorkflow().roles.Verify,
+      Apply: projectCanonicalWorkflow().roles['Apply 7.1 Foundation'],
+      Archive: projectCanonicalWorkflow().roles.Archive,
+    },
+    { Verify: 'HIGH', Apply: 'MID', Archive: 'LOW' },
+  );
+  for (const role of ['HIGH', 'MID', 'LOW']) {
+    const route = resolveRoute({
+      role,
+      requiredCapability: 'portable-profile',
+      candidates: [{ id: `${role.toLowerCase()}-executor`, role, capabilities: ['portable-profile'], quality: 1, cost: 1 }],
+    });
+    assert.equal(route.configured, role);
+    assert.equal(route.resolved, `${role.toLowerCase()}-executor`);
+  }
+
+  const root = await mkdtemp(join(tmpdir(), 'sdd-portable-profile-'));
+  const change = 'sample-change';
+  try {
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: { ...hashes, artifacts: {} } });
+    const resumed = resolveRepositoryChangeName({
+      cwd: root,
+      branch: 'feature/sample-change',
+      changesRoot: join(root, 'openspec', 'changes'),
+    });
+    assert.equal(resumed.status, 'READY');
+    assert.equal(resumed.change, change);
+    assert.equal(resumed.checkpoint.next, 'Design');
+    assert.equal((await lstat(join(bootstrapped.changePath, '.sdd-runtime', 'state.json'))).isFile(), true);
+    await assert.rejects(() => lstat(join(root, 'apps')), { code: 'ENOENT' });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+
+  const incomplete = structuredClone(neutralMap);
+  delete incomplete.project_profile.context_sources;
+  await assert.rejects(
+    () => loadProjectProfile({ modelMap: incomplete }),
+    /project_profile\.context_sources/i,
+  );
+  await assert.rejects(
+    () => resolveConfiguredRoute({ modelMap: incomplete, role: 'LOW', requiredCapability: 'evidence' }),
+    /project_profile\.context_sources/i,
+  );
+  assert.equal(Object.hasOwn(modelMap, 'project_profile'), true);
+  assert.equal(Object.hasOwn(modelMap, 'sdd_profile'), false);
 });
 
 test('canonical runtime command enumerates every runtime suite exactly once', async () => {

@@ -6,9 +6,9 @@ status: ACTIVE/STABLE
 persistence: hybrid
 ---
 
-# SDD Workflow — CRM-Master
+# SDD Workflow
 
-This document is the sole semantic workflow authority for CRM-Master. It
+This document is the sole semantic workflow authority for the consuming project. It
 defines the canonical lifecycle, ownership, gates, transition rules, recovery
 budget, evidence contract, and terminal handoff. `AGENTS.md` governs startup,
 repository safety, and maintainer boundaries. The Workflow Guard is a
@@ -241,12 +241,12 @@ units; it does not introduce another phase.
 
 ## Hybrid Persistence Contract
 
-`hybrid` is the only active persistence vocabulary for CRM-Master:
+`hybrid` is the only active persistence vocabulary for the consuming project:
 
 1. Exact technical artifacts and phase evidence are stored in
    `openspec/changes/<change-name>/`.
 2. Engram stores durable bounded context, decisions, status summaries, and
-   recovery metadata under the `crm-master` project key.
+   recovery metadata under the `memory_key` supplied by the project profile.
 3. Repository files remain the exact artifact record; Engram does not replace,
    reinterpret, or override them.
 4. Neither OpenSpec configuration nor Engram defines lifecycle transitions.

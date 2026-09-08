@@ -13,7 +13,12 @@ agents listed in `.opencode/sdd-model-map.json`.
 ## Execution Contract
 
 1. Load `AGENTS.md`, `docs/SDD-WORKFLOW.md`,
-   `docs/architecture/sdd-direct.md`, and the model map.
+   `docs/architecture/sdd-direct.md`, and the model map. Validate the model
+   map's required `project_profile` with `loadProjectProfile` from
+   `scripts/sdd-runtime.mjs`, then consume its context and invariant source
+   paths before additional repository exploration. Missing profile data is a
+   deterministic fail-closed error; never infer a project identity from prose
+   or ask the HUMAN for mechanically discoverable profile values.
 2. If the prompt contains `CRM_SDD_LEGACY_BOUNDARY`, return `STOP` without
    creating artifacts or starting a lifecycle; direct the user to
    `/sdd-direct <change-name>`.
