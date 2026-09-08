@@ -13,12 +13,25 @@ agents listed in `.opencode/sdd-model-map.json`.
 ## Execution Contract
 
 1. Load `AGENTS.md`, `docs/SDD-WORKFLOW.md`,
-   `docs/architecture/sdd-direct.md`, and the model map.
+   `docs/architecture/sdd-direct.md`, and the model map. Validate the model
+   map's required `project_profile` with `loadProjectProfile` from
+   `scripts/sdd-runtime.mjs`, then consume its context and invariant source
+   paths before additional repository exploration. Missing profile data is a
+   deterministic fail-closed error; never infer a project identity from prose
+   or ask the HUMAN for mechanically discoverable profile values.
 2. If the prompt contains `CRM_SDD_LEGACY_BOUNDARY`, return `STOP` without
    creating artifacts or starting a lifecycle; direct the user to
    `/sdd-direct <change-name>`.
-3. Require an explicit change name and recover its current state from
-   `openspec/changes/<change-name>/` before exploring further.
+3. Resolve the change identity before recovery. An explicit non-blank command
+   argument wins. When it is omitted, invoke the repository-local read-only
+   resolver with `node scripts/sdd-resume.mjs --resolve-direct` and accept only
+   its deterministic `READY` result: one unambiguous active change associated
+   with the current branch/session/state wins; otherwise the full feature
+   branch is converted to canonical kebab-case. Never ask the HUMAN merely
+   because the argument was omitted. Protected/default branches, multiple
+   conflicting candidates, incompatible existing paths, or unsafe branch/state
+   evidence remain fail-closed `HUMAN_REQUIRED` stops. Recover the resolved
+   state from `openspec/changes/<change-name>/` before exploring further.
 4. Run `pnpm sdd:validate` before phase execution. Resolve the current logical
    role and local executor from the canonical workflow and model map.
 5. After governance validation, call the exported `bootstrapChange` operation
@@ -40,16 +53,22 @@ agents listed in `.opencode/sdd-model-map.json`.
    recovered state, canonical change path, outcome, route, and context audit.
    The orchestrator is the sole persistence owner: commands only forward into
    this orchestrator, and phase executors only return an outcome packet. This
-   operation must be the only boundary from an executor result to the
-   repository: it validates one outcome, projects one transition, creates the
-   trace event, and calls `persistTransition` so the trace is written before
-   the state. Once it accepts an outcome, discard that outcome and dispatch
-   only from its returned state; never re-submit it or its action from a stale
-   checkpoint. `dispatchUntilTerminal` is projection-only and must never be
-   used as a substitute for this materialization step. Do not dispatch the
-   returned canonical next action until the operation returns the accepted
-   trace cursor and state. Structured executor outcomes must be idempotent and
-   blocker-validated; malformed or HUMAN outcomes stop fail-closed.
+    operation must be the only boundary from an executor result to the
+    repository: it validates one outcome, projects one transition, creates the
+    trace event, and calls `persistTransition` so the trace is written before
+    the state. Once it accepts an outcome, discard that outcome and dispatch
+    only from its returned state; never re-submit it or its action from a stale
+    checkpoint. `dispatchUntilTerminal` is projection-only and must never be
+    used as a substitute for this materialization step. Do not dispatch the
+    returned canonical next action until the operation returns the accepted
+    trace cursor and state. For Archive specifically, the executor must leave
+    the active directory and `archive-report.md` in place; the runtime's
+    `persistExecutorOutcome` persists the Archive event/state first, then
+    performs the deterministic date-prefixed relocation and returns a state
+    whose `canonicalPath` is the archive destination. The orchestrator must not
+    move the directory, rewrite state, normalize paths, or dispatch Health Report
+    from a stale active path. Structured executor outcomes must be idempotent
+    and blocker-validated; malformed or HUMAN outcomes stop fail-closed.
 7. Persist exact repository artifacts and mirrored bounded status/evidence under
    the `hybrid` persistence contract. OpenSpec and Engram store evidence; they
    do not redefine workflow authority.

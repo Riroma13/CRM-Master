@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
-import { mkdir, readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
+import { lstat, mkdir, readFile, readdir, writeFile, mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
 
 import {
   BLOCKER_POLICIES,
+  archiveDestinationPath,
+  bootstrapChange,
   buildInitialState,
   canonicalCheckpointArtifact,
   dispatchUntilTerminal,
@@ -13,9 +15,11 @@ import {
   reconstructState,
   resolveRoute,
   selectNextTransition,
+  validateTraceSequence,
   validateRuntimeState,
   createTraceEvent,
   persistTransition,
+  persistExecutorOutcome,
   recoverStrandedCheckpoint,
   hashObject,
   STRANDED_RECOVERY_TARGET,
@@ -37,6 +41,122 @@ const outcomeFor = (change, action, overrides = {}) => {
 function initialState() {
   return buildInitialState({ root: '/repo', change: 'e2e-change', fingerprints: hashes });
 }
+
+async function verifyCheckpointFixture() {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-archive-e2e-'));
+  const change = 'archive-e2e';
+  const bootstrapped = await bootstrapChange({ root, change, fingerprints: { ...hashes, artifacts: {} } });
+  const history = [
+    ['Design', 'PASS', 'Architecture Review'],
+    ['Architecture Review', 'BLOCKED', 'Design Refinement'],
+    ['Design Refinement', 'PASS', 'Architecture Review'],
+    ['Architecture Review', 'PASS', 'Tasks'],
+    ['Tasks', 'PASS', 'Tasks Review'],
+    ['Tasks Review', 'BLOCKED', 'Tasks Refinement'],
+    ['Tasks Refinement', 'PASS', 'Tasks Review'],
+    ['Tasks Review', 'PASS', 'Workload Guard'],
+    ['Workload Guard', 'PASS', 'Apply 7.1 Foundation'],
+    ['Apply 7.1 Foundation', 'PASS', 'Apply 7.2 Core Engine'],
+    ['Apply 7.2 Core Engine', 'PASS', 'Apply 7.3 Feature Implementation'],
+    ['Apply 7.3 Feature Implementation', 'PASS', 'Apply 7.4 Integration'],
+    ['Apply 7.4 Integration', 'PASS', 'Apply 7.5 Testing'],
+    ['Apply 7.5 Testing', 'PASS', 'Apply 7.6 Apply Summary'],
+    ['Apply 7.6 Apply Summary', 'PASS', 'Verify'],
+    ['Verify', 'PASS', 'Archive'],
+  ];
+  let state = bootstrapped.state;
+  for (const [action, verdict, next] of history) {
+    const checkpointArtifact = canonicalCheckpointArtifact(action);
+    await writeFile(join(bootstrapped.changePath, checkpointArtifact), `# ${action}\n${verdict}\n`);
+    const sequence = state.sequence + 1;
+    const inputHash = hashObject({ action, sequence, verdict });
+    const outcomeHash = hashObject({ action, sequence, next });
+    const after = {
+      ...state,
+      status: 'READY',
+      sequence,
+      checkpoint: { phase: action, artifact: checkpointArtifact, verdict, next },
+      attempts: { ...state.attempts, [action]: (state.attempts[action] ?? 0) + 1 },
+      traceCursor: { sequence, eventHash: null, chainHash: null },
+      lastTransition: { inputHash, outcomeHash, afterStateHash: hashObject({ action, sequence }) },
+    };
+    const event = createTraceEvent({
+      change,
+      sequence,
+      action,
+      role: highPhases.has(action) ? 'HIGH' : 'MID',
+      inputHash,
+      outcomeHash,
+      beforeState: state,
+      afterState: after,
+    });
+    await persistTransition({ changePath: bootstrapped.changePath, event, state: after });
+    state = { ...after, traceCursor: { sequence, eventHash: event.eventHash, chainHash: event.chainHash } };
+  }
+  return { root, change, changePath: bootstrapped.changePath, state };
+}
+
+test('Archive persists once before relocation and carries Health Report through Repository Ready', async () => {
+  const fixture = await verifyCheckpointFixture();
+  try {
+    const archiveOutcome = outcomeFor(fixture.change, 'Archive', { evidence: ['archive report retained at active checkpoint'] });
+    const expectedArchivePath = archiveDestinationPath({ root: fixture.root, change: fixture.change });
+    await writeFile(join(fixture.changePath, 'archive-report.md'), '# Archive Report\nPASS\n');
+
+    const archive = await persistExecutorOutcome({
+      changePath: fixture.changePath,
+      state: fixture.state,
+      outcome: archiveOutcome,
+      route: { configured: 'LOW', resolved: 'sdd-direct-archive', rejections: [] },
+    });
+
+    assert.equal(archive.persisted, true);
+    assert.equal(archive.event.action, 'Archive');
+    assert.equal(archive.event.sequence, 17);
+    assert.equal(archive.state.canonicalPath, expectedArchivePath);
+    assert.equal(archive.state.checkpoint.next, 'Health Report');
+    assert.equal(archive.event.contextAudit.archiveRelocation.boundary, 'after-persistTransition');
+    assert.equal(archive.tracePath.startsWith(expectedArchivePath), true);
+    await assert.rejects(() => lstat(fixture.changePath), { code: 'ENOENT' });
+    assert.equal((await lstat(expectedArchivePath)).isDirectory(), true);
+    assert.equal((await lstat(join(expectedArchivePath, 'archive-report.md'))).isFile(), true);
+
+    await writeFile(join(expectedArchivePath, 'health-report.md'), '# Health Report\nPASS\n');
+    const health = await persistExecutorOutcome({
+      changePath: expectedArchivePath,
+      state: archive.state,
+      outcome: outcomeFor(fixture.change, 'Health Report', { evidence: ['archived path is canonical'] }),
+      route: { configured: 'LOW', resolved: 'sdd-direct-health-report', rejections: [] },
+    });
+    assert.equal(health.persisted, true);
+    assert.equal(health.state.sequence, 18);
+    assert.equal(health.state.checkpoint.next, 'Repository Ready');
+
+    await writeFile(join(expectedArchivePath, 'repository-ready.md'), '# Repository Ready\nPASS\n');
+    const ready = await persistExecutorOutcome({
+      changePath: expectedArchivePath,
+      state: health.state,
+      outcome: outcomeFor(fixture.change, 'Repository Ready', { evidence: ['maintainer Git handoff'] }),
+      route: { configured: 'LOW', resolved: 'sdd-direct-repository-ready', rejections: [] },
+    });
+    assert.equal(ready.persisted, true);
+    assert.equal(ready.state.status, 'HUMAN_HANDOFF');
+    assert.equal(ready.state.sequence, 19);
+    assert.deepEqual(ready.state.checkpoint, { phase: 'Repository Ready', artifact: 'repository-ready.md', verdict: 'PASS', next: null });
+    assert.equal(ready.state.canonicalPath, expectedArchivePath);
+
+    const traceNames = await readdir(join(expectedArchivePath, '.sdd-runtime', 'trace'));
+    const events = await Promise.all(traceNames.map(async (name) => JSON.parse(await readFile(join(expectedArchivePath, '.sdd-runtime', 'trace', name), 'utf8'))));
+    assert.equal(validateTraceSequence(events).length, 19);
+    assert.equal(events.filter((event) => event.action === 'Archive').length, 1);
+    assert.deepEqual(events.slice(-3).map((event) => event.action), ['Archive', 'Health Report', 'Repository Ready']);
+    assert.equal(events.some((event) => event.operation !== undefined), false);
+    assert.equal(traceNames.length, 19);
+    assert.deepEqual(JSON.parse(await readFile(join(expectedArchivePath, '.sdd-runtime', 'state.json'), 'utf8')), ready.state);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
 
 test('one invocation reaches Repository Ready with exactly one final HUMAN handoff', () => {
   let executorCalls = 0;

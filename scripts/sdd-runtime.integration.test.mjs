@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import { mkdir, readFile, readdir, rm, mkdtemp, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readFile, readdir, rm, mkdtemp, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
 
 import {
   bootstrapChange,
+  archiveDestinationPath,
   buildInitialState,
   canonicalCheckpointArtifact,
   createContextPacket,
@@ -19,9 +20,14 @@ import {
   recoverStrandedCheckpoint,
   recoverDispatchMaterialization,
   hashObject,
+  loadProjectProfile,
+  projectCanonicalWorkflow,
   persistExecutorOutcome,
   STRANDED_RECOVERY_TARGET,
+  validateOutcomePacket,
 } from './sdd-runtime.mjs';
+
+import { resolveRepositoryChangeName } from './sdd-resume.mjs';
 
 const hashes = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
 const outcomeFor = (change, action, overrides = {}) => {
@@ -38,6 +44,14 @@ const outcomeFor = (change, action, overrides = {}) => {
     ...overrides,
   };
 };
+
+const verifyStateFor = (change = 'verify-gate-semantics') => ({
+  ...buildInitialState({ root: '/repo', change, fingerprints: hashes }),
+  sequence: 16,
+  checkpoint: { phase: 'Apply 7.6 Apply Summary', artifact: 'apply-7.6-apply-summary.md', verdict: 'PASS', next: 'Verify' },
+  traceCursor: { sequence: 16, eventHash: 'd'.repeat(64), chainHash: 'e'.repeat(64) },
+  lastTransition: { inputHash: 'f'.repeat(64), outcomeHash: 'a'.repeat(64), afterStateHash: 'b'.repeat(64) },
+});
 
 test('PASS after two environment retries persists the next Apply action without changing history or attempts', async () => {
   const root = await mkdtemp(join(tmpdir(), 'crm-runtime-pass-after-retries-'));
@@ -192,10 +206,14 @@ test('the forwarding command leaves one owner to materialize an Apply 7.1 outcom
   try {
     const command = await readFile(new URL('../.opencode/commands/sdd-direct.md', import.meta.url), 'utf8');
     const orchestrator = await readFile(new URL('../.opencode/agents/sdd-direct-orchestrator.md', import.meta.url), 'utf8');
+    const archiveAgent = await readFile(new URL('../.opencode/agents/sdd-direct-archive.md', import.meta.url), 'utf8');
     assert.match(command, /entry adapter only[\s\S]*never dispatches an executor, materializes an\s+executor outcome, or writes change-local runtime state itself/i);
     assert.doesNotMatch(command, /persistExecutorOutcome/);
     assert.match(orchestrator, /orchestrator is the sole persistence owner/i);
     assert.match(orchestrator, /Once it accepts an outcome, discard that outcome[\s\S]*never re-submit it or its action from a stale\s+checkpoint/i);
+    assert.match(archiveAgent, /active change directory is the canonical source[\s\S]*do not move, rename, copy, or delete the directory/i);
+    assert.match(archiveAgent, /do not move, rename, copy, or delete the directory/i);
+    assert.match(orchestrator, /runtime's\s+`persistExecutorOutcome` persists the Archive event\/state first/i);
 
     const bootstrapped = await bootstrapChange({ root, change, fingerprints: { ...hashes, artifacts: {} } });
     const checkpoint = 'apply-7.1-foundation.md';
@@ -292,6 +310,77 @@ test('Design evidence blockers use canonical retry or HUMAN handoff policies and
   }
 });
 
+test('Verify required-gate semantics fail closed without converting deterministic classification into a HUMAN prompt', async () => {
+  const verifyAgent = await readFile(new URL('../.opencode/agents/sdd-direct-verify.md', import.meta.url), 'utf8');
+  const applyAgent = await readFile(new URL('../.opencode/agents/sdd-direct-apply.md', import.meta.url), 'utf8');
+  const workflow = await readFile(new URL('../docs/SDD-WORKFLOW.md', import.meta.url), 'utf8');
+
+  assert.match(verifyAgent, /Required-Gate Ledger/i);
+  assert.match(verifyAgent, /Verify may return/i);
+  assert.match(verifyAgent, /PASS.*only when every required gate/i);
+  assert.match(verifyAgent, /actually executed/i);
+  assert.match(verifyAgent, /credible passing evidence/i);
+  assert.match(verifyAgent, /FAIL[\s\S]*CANCELLED[\s\S]*SKIPPED[\s\S]*NOT_EXECUTED[\s\S]*BLOCKED/i);
+  assert.match(verifyAgent, /gate failure must not be relabeled.*BASELINE_DEBT/i);
+  assert.match(verifyAgent, /gate failure must not be relabeled.*CONDITION/i);
+  assert.match(verifyAgent, /CONDITION[\s\S]*outside repository[\s\S]*not required/i);
+  assert.match(verifyAgent, /class: AUTO_RETRY[\s\S]*human_required: false[\s\S]*resume_phase: Verify[\s\S]*next: Verify/i);
+  assert.match(applyAgent, /required gate[\s\S]*must not be relabeled[\s\S]*BASELINE_DEBT[\s\S]*CONDITION/i);
+  assert.match(workflow, /Verify required-gate semantics[\s\S]*required gate[\s\S]*PASS/i);
+
+  const change = 'verify-gate-semantics';
+  const requiredPass = outcomeFor(change, 'Verify', {
+    evidence: ['REQUIRED_GATE production images | execution=PASS | evidence=api-and-tenant-build-logs'],
+    next: 'Archive',
+  });
+  const passResult = dispatchUntilTerminal({ state: verifyStateFor(change), outcomes: [requiredPass] });
+  assert.equal(passResult.status, 'READY');
+  assert.equal(passResult.state.checkpoint.verdict, 'PASS');
+  assert.equal(passResult.state.checkpoint.next, 'Archive');
+  validateOutcomePacket(requiredPass);
+
+  const requiredFailures = [
+    ['production image build failure labelled BASELINE_DEBT', 'REQUIRED_GATE tenant-web production image | execution=FAIL | classification=BASELINE_DEBT'],
+    ['cancelled required gate', 'REQUIRED_GATE api production image | execution=CANCELLED'],
+    ['not executed required gate', 'REQUIRED_GATE docker compose production config | execution=NOT_EXECUTED'],
+    ['required gate failure labelled CONDITION', 'REQUIRED_GATE tenant isolation | execution=FAIL | classification=CONDITION'],
+    ['required security gate failure', 'REQUIRED_GATE tenant isolation security test | execution=FAIL'],
+  ];
+  for (const [name, evidence] of requiredFailures) {
+    const blocked = outcomeFor(change, 'Verify', {
+      status: 'BLOCKED',
+      evidence: [evidence],
+      next: 'Verify',
+      blocker: { class: 'AUTO_RETRY', human_required: false, reason: `${name} must be corrected before Verify can pass`, resume_phase: 'Verify' },
+    });
+    const result = dispatchUntilTerminal({ state: verifyStateFor(change), outcomes: [blocked] });
+    assert.equal(result.status, 'READY', name);
+    assert.equal(result.state.status, 'READY', name);
+    assert.equal(result.state.checkpoint.verdict, 'BLOCKED', name);
+    assert.equal(result.state.checkpoint.next, 'Verify', name);
+    assert.notEqual(result.status, 'HUMAN_HANDOFF', name);
+  }
+
+  const unrelatedBaseline = outcomeFor(change, 'Verify', {
+    evidence: ['BASELINE_DEBT unrelated pre-existing lint warning outside the Working Set'],
+    next: 'Archive',
+  });
+  assert.equal(dispatchUntilTerminal({ state: verifyStateFor(change), outcomes: [unrelatedBaseline] }).state.checkpoint.next, 'Archive');
+
+  const allowedExternalCondition = outcomeFor(change, 'Verify', {
+    evidence: ['CONDITION external wildcard DNS provisioning is explicitly outside repository scope and not an acceptance gate'],
+    next: 'Archive',
+  });
+  assert.equal(dispatchUntilTerminal({ state: verifyStateFor(change), outcomes: [allowedExternalCondition] }).state.checkpoint.next, 'Archive');
+
+  const malformedCheckpoint = outcomeFor(change, 'Verify', {
+    checkpointArtifact: 'apply-7.6-apply-summary.md',
+    artifacts: ['apply-7.6-apply-summary.md'],
+    next: 'Archive',
+  });
+  assert.throws(() => validateOutcomePacket(malformedCheckpoint), /invalid checkpoint artifact or outcome shape/i);
+});
+
 test('Apply 7.1 producers use the canonical checkpoint basename and reject path-qualified entries', async () => {
   const applyAgent = await readFile(new URL('../.opencode/agents/sdd-direct-apply.md', import.meta.url), 'utf8');
   assert.match(applyAgent, /exact canonical checkpoint basename for both `checkpointArtifact` and its\s+matching `artifacts` entry/i);
@@ -360,6 +449,47 @@ test('executor persistence rejects missing or non-file canonical checkpoint arti
   }
 });
 
+test('failed Archive persistence leaves the Verify checkpoint active and unarchived', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'crm-runtime-archive-failure-'));
+  const change = 'archive-failure';
+  const changePath = join(root, 'openspec', 'changes', change);
+  try {
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: { ...hashes, artifacts: {} } });
+    const before = {
+      ...bootstrapped.state,
+      sequence: 16,
+      checkpoint: { phase: 'Verify', artifact: 'verify-report.md', verdict: 'PASS', next: 'Archive' },
+      traceCursor: { sequence: 16, eventHash: 'd'.repeat(64), chainHash: 'e'.repeat(64) },
+      lastTransition: { inputHash: 'f'.repeat(64), outcomeHash: 'a'.repeat(64), afterStateHash: 'b'.repeat(64) },
+    };
+    await writeFile(join(changePath, 'verify-report.md'), '# Verify\nPASS\n');
+    await writeFile(join(changePath, '.sdd-runtime', 'state.json'), `${JSON.stringify(before)}\n`);
+
+    const outcome = outcomeFor(change, 'Archive', { next: 'Health Report', evidence: ['Archive report was not available at the active checkpoint'] });
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath, state: before, outcome }),
+      /missing canonical checkpoint artifact archive-report\.md/i,
+    );
+
+    const archivePath = archiveDestinationPath({ root, change });
+    await assert.rejects(() => lstat(archivePath), { code: 'ENOENT' });
+    assert.equal((await lstat(changePath)).isDirectory(), true);
+    assert.deepEqual(JSON.parse(await readFile(join(changePath, '.sdd-runtime', 'state.json'))), before);
+    await assert.rejects(() => lstat(join(changePath, '.sdd-runtime', 'trace')), { code: 'ENOENT' });
+
+    await writeFile(join(changePath, 'archive-report.md'), '# Archive\nPASS\n');
+    await writeFile(join(changePath, '.sdd-runtime', 'trace'), 'not a directory');
+    await assert.rejects(
+      () => persistExecutorOutcome({ changePath, state: before, outcome }),
+      /ENOTDIR|not a directory/i,
+    );
+    await assert.rejects(() => lstat(archivePath), { code: 'ENOENT' });
+    assert.deepEqual(JSON.parse(await readFile(join(changePath, '.sdd-runtime', 'state.json'))), before);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('local wiring barriers reject Git/PR mutation requests before any subprocess', () => {
   for (const operation of ['commit', 'push', 'merge', 'rebase', 'release', 'deploy', 'tag']) {
     assert.throws(() => gitMutationBarrier({ operation, target: 'main' }), /HUMAN_GIT/);
@@ -391,6 +521,77 @@ test('configured LOW routing has one Luna candidate and fails closed without cro
   const crossRole = structuredClone(unavailablePrimary);
   crossRole.runtime_routing.candidates.LOW.push({ id: 'mid-cross-role', model: 'openai/gpt-5.6-luna', local_executor: 'sdd-direct-apply', role: 'MID', capabilities: ['evidence'], quality: 0.95, cost: 1, available: true });
   await assert.rejects(() => resolveConfiguredRoute({ modelMap: crossRole, role: 'LOW', requiredCapability: 'evidence', minimumQuality: 0.8 }), /no compatible route/);
+});
+
+test('portable project profile preserves CRM behavior and resolves a neutral second project', async () => {
+  const modelMap = JSON.parse(await readFile(join(process.cwd(), '.opencode', 'sdd-model-map.json'), 'utf8'));
+  const crmProfile = await loadProjectProfile({ modelMap });
+  assert.deepEqual(
+    { id: crmProfile.id, name: crmProfile.name, memoryKey: crmProfile.memoryKey },
+    { id: 'crm-master', name: 'CRM-Master', memoryKey: 'crm-master' },
+  );
+
+  const neutralMap = structuredClone(modelMap);
+  neutralMap.project = 'sample-project';
+  neutralMap.project_profile = {
+    name: 'Sample Project',
+    memory_key: 'sample-project',
+    context_sources: ['AGENTS.md', 'docs/PROJECT.md'],
+    invariant_sources: ['AGENTS.md'],
+  };
+  const neutralProfile = await loadProjectProfile({ modelMap: neutralMap });
+  assert.equal(neutralProfile.id, 'sample-project');
+  assert.equal(neutralProfile.name, 'Sample Project');
+  assert.equal(neutralProfile.contextSources.includes('docs/PROJECT.md'), true);
+  assert.doesNotMatch(JSON.stringify(neutralProfile), /crm-master/i);
+  assert.deepEqual(
+    {
+      Verify: projectCanonicalWorkflow().roles.Verify,
+      Apply: projectCanonicalWorkflow().roles['Apply 7.1 Foundation'],
+      Archive: projectCanonicalWorkflow().roles.Archive,
+    },
+    { Verify: 'HIGH', Apply: 'MID', Archive: 'LOW' },
+  );
+  for (const role of ['HIGH', 'MID', 'LOW']) {
+    const route = resolveRoute({
+      role,
+      requiredCapability: 'portable-profile',
+      candidates: [{ id: `${role.toLowerCase()}-executor`, role, capabilities: ['portable-profile'], quality: 1, cost: 1 }],
+    });
+    assert.equal(route.configured, role);
+    assert.equal(route.resolved, `${role.toLowerCase()}-executor`);
+  }
+
+  const root = await mkdtemp(join(tmpdir(), 'sdd-portable-profile-'));
+  const change = 'sample-change';
+  try {
+    const bootstrapped = await bootstrapChange({ root, change, fingerprints: { ...hashes, artifacts: {} } });
+    const resumed = resolveRepositoryChangeName({
+      cwd: root,
+      branch: 'feature/sample-change',
+      changesRoot: join(root, 'openspec', 'changes'),
+    });
+    assert.equal(resumed.status, 'READY');
+    assert.equal(resumed.change, change);
+    assert.equal(resumed.checkpoint.next, 'Design');
+    assert.equal((await lstat(join(bootstrapped.changePath, '.sdd-runtime', 'state.json'))).isFile(), true);
+    await assert.rejects(() => lstat(join(root, 'apps')), { code: 'ENOENT' });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+
+  const incomplete = structuredClone(neutralMap);
+  delete incomplete.project_profile.context_sources;
+  await assert.rejects(
+    () => loadProjectProfile({ modelMap: incomplete }),
+    /project_profile\.context_sources/i,
+  );
+  await assert.rejects(
+    () => resolveConfiguredRoute({ modelMap: incomplete, role: 'LOW', requiredCapability: 'evidence' }),
+    /project_profile\.context_sources/i,
+  );
+  assert.equal(Object.hasOwn(modelMap, 'project_profile'), true);
+  assert.equal(Object.hasOwn(modelMap, 'sdd_profile'), false);
 });
 
 test('canonical runtime command enumerates every runtime suite exactly once', async () => {

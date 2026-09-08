@@ -7,10 +7,15 @@ import { after, describe, test } from 'node:test';
 
 import {
   branchChangeName,
+  canonicalBranchChangeName,
   discoverActiveChanges,
+  discoverExistingChangeNames,
   formatResumeResult,
+  resolveChangeName,
+  resolveRepositoryChangeName,
   resolveResume,
 } from './sdd-resume.mjs';
+import { buildInitialState } from './sdd-runtime.mjs';
 
 const temporaryDirectories = [];
 
@@ -21,6 +26,145 @@ after(async () => {
 });
 
 describe('/sdd-resume resolution', () => {
+  test('canonicalizes the full feature branch instead of using only its suffix', () => {
+    assert.equal(canonicalBranchChangeName('fix/sdd-export-hardening'), 'fix-sdd-export-hardening');
+    assert.equal(canonicalBranchChangeName('feat/client-import'), 'feat-client-import');
+    assert.equal(branchChangeName('fix/sdd-export-hardening'), 'fix-sdd-export-hardening');
+    assert.equal(canonicalBranchChangeName('main'), null);
+    assert.equal(canonicalBranchChangeName('master'), null);
+  });
+
+  test('direct resolution precedence is explicit, active, then branch-derived', () => {
+    const explicit = resolveChangeName({
+      explicitChange: 'my-change',
+      branch: 'main',
+      activeChanges: [{ name: 'first-change' }, { name: 'second-change' }],
+    });
+    assert.equal(explicit.status, 'READY');
+    assert.equal(explicit.change, 'my-change');
+    assert.equal(explicit.source, 'explicit');
+    assert.equal(explicit.human_required, false);
+
+    const active = resolveChangeName({
+      branch: 'feat/client-import',
+      activeChanges: [{ name: 'existing-change' }],
+    });
+    assert.equal(active.status, 'READY');
+    assert.equal(active.change, 'existing-change');
+    assert.equal(active.source, 'active');
+    assert.equal(active.human_required, false);
+
+    const branch = resolveChangeName({ branch: 'feat/client-import' });
+    assert.equal(branch.status, 'READY');
+    assert.equal(branch.change, 'feat-client-import');
+    assert.equal(branch.source, 'branch');
+    assert.equal(branch.human_required, false);
+  });
+
+  test('direct resolution fails closed for ambiguity, protected branches, and incompatible paths', () => {
+    const multiple = resolveChangeName({
+      branch: 'feat/client-import',
+      activeChanges: [{ name: 'first-change' }, { name: 'second-change' }],
+    });
+    assert.equal(multiple.status, 'STOP');
+    assert.equal(multiple.human_required, true);
+    assert.equal(multiple.reason, 'multiple-active-changes');
+
+    const protectedBranch = resolveChangeName({ branch: 'main' });
+    assert.equal(protectedBranch.status, 'STOP');
+    assert.equal(protectedBranch.human_required, true);
+
+    const conflict = resolveChangeName({
+      branch: 'fix/sdd-export-hardening',
+      existingChanges: ['fix-sdd-export-hardening'],
+    });
+    assert.equal(conflict.status, 'STOP');
+    assert.equal(conflict.human_required, true);
+    assert.equal(conflict.reason, 'branch-derived-name-conflict');
+  });
+
+  test('repository resolution derives the current branch without creating duplicate directories', async () => {
+    const changesRoot = await mkdtemp(join(tmpdir(), 'crm-sdd-direct-resolution-'));
+    temporaryDirectories.push(changesRoot);
+    const before = await import('node:fs/promises').then(({ readdir }) => readdir(changesRoot));
+
+    const first = resolveRepositoryChangeName({
+      branch: 'fix/sdd-export-hardening',
+      changesRoot,
+      cwd: changesRoot,
+    });
+    const second = resolveRepositoryChangeName({
+      branch: 'fix/sdd-export-hardening',
+      changesRoot,
+      cwd: changesRoot,
+    });
+
+    assert.equal(first.status, 'READY');
+    assert.equal(first.change, 'fix-sdd-export-hardening');
+    assert.deepEqual(second, first);
+    assert.deepEqual(await import('node:fs/promises').then(({ readdir }) => readdir(changesRoot)), before);
+    assert.deepEqual(discoverExistingChangeNames(changesRoot), []);
+  });
+
+  test('repository resolution stops when multiple active paths are associated with one branch', async () => {
+    const changesRoot = await mkdtemp(join(tmpdir(), 'crm-sdd-direct-ambiguous-'));
+    temporaryDirectories.push(changesRoot);
+    await Promise.all(
+      ['feat-client-import', 'client-import'].map(async (name) => {
+        await mkdir(join(changesRoot, name), { recursive: true });
+        await writeFile(join(changesRoot, name, 'design.md'), '# Design\n');
+      }),
+    );
+
+    const result = resolveRepositoryChangeName({
+      branch: 'feat/client-import',
+      changesRoot,
+      cwd: changesRoot,
+    });
+
+    assert.equal(result.status, 'STOP');
+    assert.equal(result.human_required, true);
+    assert.equal(result.reason, 'multiple-active-changes');
+    assert.deepEqual(result.candidates, ['client-import', 'feat-client-import']);
+  });
+
+  test('repository resolution reuses a freshly bootstrapped runtime-only active change', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'crm-sdd-direct-runtime-only-'));
+    temporaryDirectories.push(root);
+    const changesRoot = join(root, 'openspec', 'changes');
+    const change = 'fix-sdd-export-hardening';
+    const changePath = join(changesRoot, change);
+    const fingerprints = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
+    await mkdir(join(changePath, '.sdd-runtime'), { recursive: true });
+    await writeFile(
+      join(changePath, '.sdd-runtime', 'state.json'),
+      JSON.stringify(buildInitialState({ root, change, fingerprints })),
+    );
+
+    const result = resolveRepositoryChangeName({
+      branch: 'fix/sdd-export-hardening',
+      cwd: root,
+      changesRoot,
+    });
+
+    assert.equal(result.status, 'READY');
+    assert.equal(result.change, change);
+    assert.equal(result.source, 'runtime-state');
+    assert.equal(result.next, 'Design');
+  });
+
+  test('direct resolution has no HUMAN prompt for explicit, active, or branch-derived identities', () => {
+    for (const result of [
+      resolveChangeName({ explicitChange: 'my-change', branch: 'main' }),
+      resolveChangeName({ activeChanges: [{ name: 'active-change' }], branch: 'main' }),
+      resolveChangeName({ branch: 'fix/sdd-export-hardening' }),
+    ]) {
+      assert.equal(result.status, 'READY');
+      assert.equal(result.human_required, false);
+      assert.equal(Object.hasOwn(result, 'prompt'), false);
+    }
+  });
+
   test('resolves an exact branch-to-change match', () => {
     const result = resolveResume({
       branch: 'example-change',
@@ -33,8 +177,8 @@ describe('/sdd-resume resolution', () => {
   });
 
   test('resolves a prefixed branch by its change-name suffix', () => {
-    assert.equal(branchChangeName('sec/example-change'), 'example-change');
-    assert.equal(branchChangeName('chore/example-change'), 'example-change');
+    assert.equal(branchChangeName('sec/example-change'), 'sec-example-change');
+    assert.equal(branchChangeName('chore/example-change'), 'chore-example-change');
 
     const result = resolveResume({
       branch: 'chore/example-change',
@@ -190,6 +334,8 @@ describe('/sdd-resume resolution', () => {
     const resume = readFileSync(new URL('../.opencode/commands/sdd-resume.md', import.meta.url), 'utf8');
     assert.match(direct, /sdd-runtime|runtime bootstrap/i);
     assert.match(direct, /Repository Ready|autonomous dispatch/i);
+    assert.match(direct, /scripts\/sdd-resume\.mjs\s+--resolve-direct/);
+    assert.doesNotMatch(direct, /change\s+name\s+is\s+required/i);
     assert.match(resume, /sdd-runtime|runtime state/i);
     assert.match(resume, /STOP/i);
   });
