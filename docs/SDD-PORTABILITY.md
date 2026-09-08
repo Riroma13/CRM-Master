@@ -42,7 +42,12 @@ fingerprint, not a competing identity source.
 3. Provide the consuming repository's own `AGENTS.md`, context, product
    invariants, OpenSpec config, and application files.
 4. Run `pnpm sdd:validate` and `pnpm test:sdd-runtime`.
-5. Start normal work with `/sdd-direct <change-name>`.
+5. On an ordinary unambiguous feature branch, start normal work with
+   `/sdd-direct`. Deterministic resolution uses an explicit argument when
+   supplied, one unambiguous active state, persisted state, and otherwise the
+   current feature branch. Use `/sdd-direct <change-name>` as an explicit
+   override; HUMAN input is required only for genuine ambiguity or other
+   fail-closed cases.
 
 Do not copy CRM-Master's `.ai/context`, tenant/security rules, ADRs, roadmap,
 product specs, application source, or historical artifacts as portable
