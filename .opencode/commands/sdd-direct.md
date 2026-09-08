@@ -5,10 +5,26 @@ agent: sdd-direct-orchestrator
 
 Classification: EXECUTION ADAPTER.
 
-Start the project-local CRM-SDD execution adapter for `$ARGUMENTS`. The change
-name is required. Load `AGENTS.md`, then the semantic workflow authority at
-`docs/SDD-WORKFLOW.md`, and recover the active state from
-`openspec/changes/<change-name>/` before any additional inspection.
+Start the project-local CRM-SDD execution adapter for `$ARGUMENTS`. The
+invocation may omit the change name. Load `AGENTS.md`, then the semantic
+workflow authority at `docs/SDD-WORKFLOW.md`, and recover the active state from
+`openspec/changes/<change-name>/` after deterministic identity resolution and
+before any additional inspection.
+
+Resolve the identity mechanically before bootstrap or lifecycle dispatch:
+
+1. A non-blank `$ARGUMENTS` value is the explicit change name and wins exactly
+   as provided after normal validation.
+2. When `$ARGUMENTS` is blank, run `node scripts/sdd-resume.mjs
+   --resolve-direct` and consume its JSON result. The resolver first reuses one
+   unambiguous active change associated with the current branch/session/state.
+3. If no such change exists, derive the full current feature branch by
+   replacing separators with `-`, collapsing duplicates, lowercasing, and
+   trimming separators. Protected/default branches and genuine conflicts stop
+   with `HUMAN_REQUIRED`; omission alone never prompts the HUMAN.
+
+Accept only a `READY` resolver result. A `STOP` result is fail-closed and must
+not bootstrap, create a duplicate directory, or guess a semantic name.
 
 Use only project-local Direct agents and `.opencode/sdd-model-map.json`. This
 command is an entry adapter only: it forwards lifecycle control to

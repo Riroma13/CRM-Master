@@ -17,8 +17,16 @@ agents listed in `.opencode/sdd-model-map.json`.
 2. If the prompt contains `CRM_SDD_LEGACY_BOUNDARY`, return `STOP` without
    creating artifacts or starting a lifecycle; direct the user to
    `/sdd-direct <change-name>`.
-3. Require an explicit change name and recover its current state from
-   `openspec/changes/<change-name>/` before exploring further.
+3. Resolve the change identity before recovery. An explicit non-blank command
+   argument wins. When it is omitted, invoke the repository-local read-only
+   resolver with `node scripts/sdd-resume.mjs --resolve-direct` and accept only
+   its deterministic `READY` result: one unambiguous active change associated
+   with the current branch/session/state wins; otherwise the full feature
+   branch is converted to canonical kebab-case. Never ask the HUMAN merely
+   because the argument was omitted. Protected/default branches, multiple
+   conflicting candidates, incompatible existing paths, or unsafe branch/state
+   evidence remain fail-closed `HUMAN_REQUIRED` stops. Recover the resolved
+   state from `openspec/changes/<change-name>/` before exploring further.
 4. Run `pnpm sdd:validate` before phase execution. Resolve the current logical
    role and local executor from the canonical workflow and model map.
 5. After governance validation, call the exported `bootstrapChange` operation
