@@ -22,6 +22,7 @@ import {
   hashObject,
   persistExecutorOutcome,
   STRANDED_RECOVERY_TARGET,
+  validateOutcomePacket,
 } from './sdd-runtime.mjs';
 
 const hashes = { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) };
@@ -39,6 +40,14 @@ const outcomeFor = (change, action, overrides = {}) => {
     ...overrides,
   };
 };
+
+const verifyStateFor = (change = 'verify-gate-semantics') => ({
+  ...buildInitialState({ root: '/repo', change, fingerprints: hashes }),
+  sequence: 16,
+  checkpoint: { phase: 'Apply 7.6 Apply Summary', artifact: 'apply-7.6-apply-summary.md', verdict: 'PASS', next: 'Verify' },
+  traceCursor: { sequence: 16, eventHash: 'd'.repeat(64), chainHash: 'e'.repeat(64) },
+  lastTransition: { inputHash: 'f'.repeat(64), outcomeHash: 'a'.repeat(64), afterStateHash: 'b'.repeat(64) },
+});
 
 test('PASS after two environment retries persists the next Apply action without changing history or attempts', async () => {
   const root = await mkdtemp(join(tmpdir(), 'crm-runtime-pass-after-retries-'));
@@ -295,6 +304,77 @@ test('Design evidence blockers use canonical retry or HUMAN handoff policies and
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test('Verify required-gate semantics fail closed without converting deterministic classification into a HUMAN prompt', async () => {
+  const verifyAgent = await readFile(new URL('../.opencode/agents/sdd-direct-verify.md', import.meta.url), 'utf8');
+  const applyAgent = await readFile(new URL('../.opencode/agents/sdd-direct-apply.md', import.meta.url), 'utf8');
+  const workflow = await readFile(new URL('../docs/SDD-WORKFLOW.md', import.meta.url), 'utf8');
+
+  assert.match(verifyAgent, /Required-Gate Ledger/i);
+  assert.match(verifyAgent, /Verify may return/i);
+  assert.match(verifyAgent, /PASS.*only when every required gate/i);
+  assert.match(verifyAgent, /actually executed/i);
+  assert.match(verifyAgent, /credible passing evidence/i);
+  assert.match(verifyAgent, /FAIL[\s\S]*CANCELLED[\s\S]*SKIPPED[\s\S]*NOT_EXECUTED[\s\S]*BLOCKED/i);
+  assert.match(verifyAgent, /gate failure must not be relabeled.*BASELINE_DEBT/i);
+  assert.match(verifyAgent, /gate failure must not be relabeled.*CONDITION/i);
+  assert.match(verifyAgent, /CONDITION[\s\S]*outside repository[\s\S]*not required/i);
+  assert.match(verifyAgent, /class: AUTO_RETRY[\s\S]*human_required: false[\s\S]*resume_phase: Verify[\s\S]*next: Verify/i);
+  assert.match(applyAgent, /required gate[\s\S]*must not be relabeled[\s\S]*BASELINE_DEBT[\s\S]*CONDITION/i);
+  assert.match(workflow, /Verify required-gate semantics[\s\S]*required gate[\s\S]*PASS/i);
+
+  const change = 'verify-gate-semantics';
+  const requiredPass = outcomeFor(change, 'Verify', {
+    evidence: ['REQUIRED_GATE production images | execution=PASS | evidence=api-and-tenant-build-logs'],
+    next: 'Archive',
+  });
+  const passResult = dispatchUntilTerminal({ state: verifyStateFor(change), outcomes: [requiredPass] });
+  assert.equal(passResult.status, 'READY');
+  assert.equal(passResult.state.checkpoint.verdict, 'PASS');
+  assert.equal(passResult.state.checkpoint.next, 'Archive');
+  validateOutcomePacket(requiredPass);
+
+  const requiredFailures = [
+    ['production image build failure labelled BASELINE_DEBT', 'REQUIRED_GATE tenant-web production image | execution=FAIL | classification=BASELINE_DEBT'],
+    ['cancelled required gate', 'REQUIRED_GATE api production image | execution=CANCELLED'],
+    ['not executed required gate', 'REQUIRED_GATE docker compose production config | execution=NOT_EXECUTED'],
+    ['required gate failure labelled CONDITION', 'REQUIRED_GATE tenant isolation | execution=FAIL | classification=CONDITION'],
+    ['required security gate failure', 'REQUIRED_GATE tenant isolation security test | execution=FAIL'],
+  ];
+  for (const [name, evidence] of requiredFailures) {
+    const blocked = outcomeFor(change, 'Verify', {
+      status: 'BLOCKED',
+      evidence: [evidence],
+      next: 'Verify',
+      blocker: { class: 'AUTO_RETRY', human_required: false, reason: `${name} must be corrected before Verify can pass`, resume_phase: 'Verify' },
+    });
+    const result = dispatchUntilTerminal({ state: verifyStateFor(change), outcomes: [blocked] });
+    assert.equal(result.status, 'READY', name);
+    assert.equal(result.state.status, 'READY', name);
+    assert.equal(result.state.checkpoint.verdict, 'BLOCKED', name);
+    assert.equal(result.state.checkpoint.next, 'Verify', name);
+    assert.notEqual(result.status, 'HUMAN_HANDOFF', name);
+  }
+
+  const unrelatedBaseline = outcomeFor(change, 'Verify', {
+    evidence: ['BASELINE_DEBT unrelated pre-existing lint warning outside the Working Set'],
+    next: 'Archive',
+  });
+  assert.equal(dispatchUntilTerminal({ state: verifyStateFor(change), outcomes: [unrelatedBaseline] }).state.checkpoint.next, 'Archive');
+
+  const allowedExternalCondition = outcomeFor(change, 'Verify', {
+    evidence: ['CONDITION external wildcard DNS provisioning is explicitly outside repository scope and not an acceptance gate'],
+    next: 'Archive',
+  });
+  assert.equal(dispatchUntilTerminal({ state: verifyStateFor(change), outcomes: [allowedExternalCondition] }).state.checkpoint.next, 'Archive');
+
+  const malformedCheckpoint = outcomeFor(change, 'Verify', {
+    checkpointArtifact: 'apply-7.6-apply-summary.md',
+    artifacts: ['apply-7.6-apply-summary.md'],
+    next: 'Archive',
+  });
+  assert.throws(() => validateOutcomePacket(malformedCheckpoint), /invalid checkpoint artifact or outcome shape/i);
 });
 
 test('Apply 7.1 producers use the canonical checkpoint basename and reject path-qualified entries', async () => {

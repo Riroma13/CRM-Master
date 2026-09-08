@@ -16,6 +16,55 @@ declared dependencies, and tenant isolation where applicable. Produce
 correction, archive, or a maintainer Git operation. The orchestrator follows
 the canonical recovery rule after a blocked result.
 
+## Required-gate semantics (mandatory)
+
+Before selecting a Verify verdict, build a bounded **Required-Gate Ledger** from
+the accepted Design, Architecture Review, Tasks, Tasks Review, Apply artifacts,
+and acceptance criteria. For every gate, record the gate name, why it is
+required, the exact command or validation, execution status, exact evidence
+path/result, and the final classification. A gate is REQUIRED when the Design
+explicitly requires it, Tasks or Tasks Review requires it, an accepted
+acceptance criterion cannot be proven without it, or the change objective
+materially depends on it.
+
+Verify may return `PASS` only when every required gate has actually executed,
+has credible passing evidence, and has no unresolved failure. `FAIL`,
+`CANCELLED`, `SKIPPED`, `NOT_EXECUTED`, or missing/unclear evidence for a
+required gate is a Verify blocker; it is never a passing condition. A required
+gate failure must not be relabeled `BASELINE_DEBT`, `CONDITION`, unrelated debt,
+or another non-blocking classification merely to permit `PASS`.
+
+`BASELINE_DEBT` is non-blocking only when the failure is demonstrably
+pre-existing, outside the accepted Working Set and objective, not required by
+Design/Tasks, not needed for an acceptance criterion, and irrelevant to safe
+completion. A pre-existing label alone is not evidence. `CONDITION` is
+non-blocking only for a genuinely external condition explicitly allowed by the
+Design/Tasks as outside repository authority and not required to prove the
+repository change; it cannot substitute for a required repository gate.
+
+For a production-runtime objective, production image buildability, required
+Compose rendering, required ingress validation, directly affected validation,
+and any explicitly required diff/build gate remain required. A missing operator
+`.env` does not make a required Compose render non-required; use a safe
+ephemeral non-secret input when possible or remain `BLOCKED`. A failed or
+cancelled API/tenant production image build is therefore blocking even if an
+Apply artifact calls it `BASELINE_DEBT` or `CONDITION`. The same rule applies
+to explicitly required tenant-isolation or security tests.
+
+Use the existing deterministic blocker taxonomy; do not add a new class or ask
+the HUMAN merely to classify a required gate. For a correctable required-gate
+failure, return the canonical Verify retry shape:
+
+```yaml
+status: BLOCKED
+blocker:
+  class: AUTO_RETRY
+  human_required: false
+  reason: <required gate and missing/failing evidence>
+  resume_phase: Verify
+next: Verify
+```
+
 Return acceptance, test, lint, build, and finding details through the packet's
 string arrays; do not add verification-specific top-level fields.
 

@@ -126,6 +126,24 @@ findings are closed or explicitly non-blocking. A BLOCKED review may enter only
 its corresponding refinement. Verify normalizes to PASS only when the approved
 Design, Tasks, implementation, and required evidence agree.
 
+### Verify required-gate semantics
+
+Verify PASS is legal only when every required gate has actually executed,
+returned PASS, and has credible evidence. A gate is required when the accepted
+Design explicitly requires it, Tasks or Tasks Review requires it, an accepted
+acceptance criterion depends on it, or the change objective materially depends
+on it. A required gate that FAILs, is CANCELLED, SKIPPED, NOT_EXECUTED, or lacks
+credible evidence blocks Verify; its label cannot convert it into a PASS.
+
+`BASELINE_DEBT` is non-blocking only when the failure is demonstrably
+pre-existing, outside the accepted Working Set and objective, not required by
+Design or Tasks, not needed to prove an acceptance criterion, and irrelevant to
+safe completion. `CONDITION` is non-blocking only for a genuinely external
+condition explicitly allowed by the accepted Design/Tasks as outside repository
+authority and not required to prove the repository change. Neither classification
+may substitute for a required repository gate. Required-gate blockers use the
+existing deterministic blocker taxonomy and do not create a new HUMAN class.
+
 ## Conditional Refinement and Correction Budget
 
 The correction budget is one retry for each bounded correction loop:

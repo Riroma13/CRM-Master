@@ -15,6 +15,15 @@ isolation evidence explicit when applicable. Write the standard Apply Summary
 as the final nested Apply artifact. Use only the project-local Direct wiring;
 never route implementation through a global executor.
 
+For Apply 7.5, preserve the Required-Gate Ledger implied by the accepted
+Design, Tasks, Tasks Review, and acceptance criteria. Record whether each
+required gate actually ran and whether it PASSed, FAILed, was CANCELLED,
+SKIPPED, or was NOT_EXECUTED, with exact evidence. A required gate failure or
+missing execution must not be relabeled `BASELINE_DEBT` or `CONDITION` to make
+Apply or Verify appear successful. Return the existing `AUTO_RETRY` blocked
+shape when a correctable required gate is not passing; do not invent a blocker
+class or a HUMAN prompt for deterministic classification.
+
 Return one validated, idempotent outcome packet for each assigned Apply
 substep, including artifacts, evidence, legal next action, and structured
 blocker when applicable. Do not dispatch later substeps or force a stop when a
