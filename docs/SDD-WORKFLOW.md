@@ -217,6 +217,13 @@ fresh schema-valid executor result; it never infers PASS. All other mismatches
 and HUMAN handoffs remain terminal. This is separate from the existing Apply
 7.3 stranded-checkpoint recovery contract, which remains unchanged.
 
+The generic HUMAN_HANDOFF also supports one explicit maintainer resolution for
+the demonstrated exhausted Verify case only: a terminal Verify BLOCKED handoff
+with `attempts.Verify >= 2` may append bounded HUMAN provenance and reopen one
+fresh Verify checkpoint. Attempts and prior trace events remain unchanged; the
+authorization is consumed by the next Verify result, and a resumed BLOCKED
+Verify returns directly to terminal HUMAN_HANDOFF.
+
 ## Baseline Debt
 
 A failing check blocks only when it is caused by the active change, violates an

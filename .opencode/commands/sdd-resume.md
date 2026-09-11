@@ -37,3 +37,14 @@ For a successful recovery, briefly report the resolved change, current branch,
 recovered lifecycle checkpoint, and next canonical action. If resolution fails,
 return `STOP`; for multiple candidates, list only their change names. Run
 `pnpm sdd:validate` before the canonical action and at handoff.
+
+## Explicit exhausted-Verify recovery
+
+Plain `/sdd-resume` never reopens a terminal handoff. A maintainer may explicitly
+authorize the single bounded Verify resume with:
+
+`/sdd-resume --human-resolved <change-name> --approval "<approval>" --blocker-id "<bounded-id>" --blocker-class <class> --summary "<bounded resolution summary>" [--reference "<bounded reference>"]`
+
+This appends HUMAN provenance, preserves the existing trace and Verify attempt
+count, and permits exactly one fresh Verify execution. The resolution is not a
+Verify PASS; Verify must rerun and independently evaluate every required gate.

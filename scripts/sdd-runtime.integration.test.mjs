@@ -19,11 +19,13 @@ import {
   resolveConfiguredRoute,
   recoverStrandedCheckpoint,
   recoverDispatchMaterialization,
+  recoverHumanVerifyResume,
   hashObject,
   loadProjectProfile,
   projectCanonicalWorkflow,
   persistExecutorOutcome,
   STRANDED_RECOVERY_TARGET,
+  HUMAN_VERIFY_RESUME_OPERATION,
   validateOutcomePacket,
 } from './sdd-runtime.mjs';
 
@@ -119,6 +121,54 @@ async function fixture() {
   const event = createTraceEvent({ change, sequence: after.sequence, action: 'Apply 7.3 Feature Implementation', role: 'MID', inputHash: after.lastTransition.inputHash, outcomeHash: after.lastTransition.outcomeHash, beforeState: state, afterState: after });
   await persistTransition({ changePath, event, state: after }); return { root, change, changePath, state: { ...after, traceCursor: { sequence: event.sequence, eventHash: event.eventHash, chainHash: event.chainHash } }, fingerprints, refs };
 }
+
+async function exhaustedVerifyFixture() {
+  const f = await fixture();
+  await writeFile(join(f.changePath, 'verify-report.md'), '# Verify\n');
+  let state = f.state;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const after = { ...state, status: 'READY', sequence: state.sequence + 1, checkpoint: { phase: 'Verify', artifact: 'verify-report.md', verdict: 'BLOCKED', next: 'Verify' }, attempts: { ...state.attempts, Verify: attempt }, traceCursor: { sequence: state.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { inputHash: String(attempt).repeat(64), outcomeHash: String(attempt + 1).repeat(64), afterStateHash: hashObject({ attempt }) } };
+    const event = createTraceEvent({ change: f.change, sequence: after.sequence, action: 'Verify', role: 'HIGH', inputHash: after.lastTransition.inputHash, outcomeHash: after.lastTransition.outcomeHash, beforeState: state, afterState: after });
+    await persistTransition({ changePath: f.changePath, event, state: after });
+    state = { ...after, traceCursor: { sequence: event.sequence, eventHash: event.eventHash, chainHash: event.chainHash } };
+  }
+  const after = { ...state, status: 'HUMAN_HANDOFF', sequence: state.sequence + 1, checkpoint: { phase: 'Verify', artifact: 'verify-report.md', verdict: 'BLOCKED', next: null }, traceCursor: { sequence: state.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { inputHash: 'f'.repeat(64), outcomeHash: 'e'.repeat(64), afterStateHash: hashObject({ handoff: true }) } };
+  const event = createTraceEvent({ change: f.change, sequence: after.sequence, action: 'Verify', role: 'HIGH', inputHash: after.lastTransition.inputHash, outcomeHash: after.lastTransition.outcomeHash, beforeState: state, afterState: after });
+  await persistTransition({ changePath: f.changePath, event, state: after });
+  return { ...f, state: { ...after, traceCursor: { sequence: event.sequence, eventHash: event.eventHash, chainHash: event.chainHash } } };
+}
+
+test('explicit HUMAN Verify resume is append-only, one-shot, and never inherits PASS', async () => {
+  const f = await exhaustedVerifyFixture();
+  try {
+    const request = { root: f.root, change: f.change, canonicalPath: f.changePath, expectedSequence: f.state.sequence, target: 'Verify', authorityRefs: f.refs, fingerprints: f.fingerprints, authorization: { actor: 'HUMAN / MAINTAINER', approval: 'environment prepared' }, resolution: { blockerId: 'postgres-16', blockerClass: 'HUMAN_INFRASTRUCTURE', summary: 'External database preparation completed', reference: 'bounded-check-1' } };
+    const resumed = await recoverHumanVerifyResume(request);
+    assert.equal(resumed.event.operation, HUMAN_VERIFY_RESUME_OPERATION);
+    assert.equal(resumed.state.status, 'READY');
+    assert.equal(resumed.state.checkpoint.next, 'Verify');
+    assert.equal(resumed.state.attempts.Verify, 2);
+    assert.equal(resumed.state.verifyResumeAuthorization.blockerId, 'postgres-16');
+    const pass = { ...outcomeFor(f.change, 'Verify'), evidence: ['fresh required gates'], next: 'Archive' };
+    const passed = dispatchUntilTerminal({ state: resumed.state, outcomes: [pass] });
+    assert.equal(passed.state.checkpoint.next, 'Archive');
+    assert.equal(passed.state.attempts.Verify, 2);
+    await assert.rejects(() => recoverHumanVerifyResume(request), /stale|already pending/i);
+    const trace = await readdir(join(f.changePath, '.sdd-runtime', 'trace'));
+    assert.equal(trace.length, f.state.sequence + 1);
+  } finally { await rm(f.root, { recursive: true, force: true }); }
+});
+
+test('resumed Verify BLOCKED returns directly to terminal HUMAN_HANDOFF', async () => {
+  const f = await exhaustedVerifyFixture();
+  try {
+    const resumed = await recoverHumanVerifyResume({ root: f.root, change: f.change, canonicalPath: f.changePath, expectedSequence: f.state.sequence, target: 'Verify', authorityRefs: f.refs, fingerprints: f.fingerprints, authorization: { actor: 'HUMAN / MAINTAINER', approval: 'resolved' }, resolution: { blockerId: 'doorbell', blockerClass: 'HUMAN_INFRASTRUCTURE', summary: 'Environment resolved', reference: null } });
+    const blocked = { ...outcomeFor(f.change, 'Verify', { status: 'BLOCKED', next: 'Verify', evidence: ['fresh gate blocked'] }), blocker: { class: 'AUTO_RETRY', human_required: false, reason: 'fresh required gate remains blocked', resume_phase: 'Verify' } };
+    const result = dispatchUntilTerminal({ state: resumed.state, outcomes: [blocked] });
+    assert.equal(result.status, 'HUMAN_HANDOFF');
+    assert.equal(result.state.checkpoint.next, null);
+    assert.equal(result.state.attempts.Verify, 2);
+  } finally { await rm(f.root, { recursive: true, force: true }); }
+});
 
 test('live dispatch context is reused without bootstrap bodies or repeated reads', () => {
   const packet = createContextPacket({
