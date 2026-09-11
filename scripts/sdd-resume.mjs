@@ -2,10 +2,11 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { CHANGE_NAME_PATTERN, validateChangeName, validateRuntimeState } from './sdd-runtime.mjs';
+import { CHANGE_NAME_PATTERN, STRANDED_RECOVERY_AUTHORITY_REFERENCES, recoverHumanVerifyResume, validateChangeName, validateRuntimeState } from './sdd-runtime.mjs';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -288,6 +289,9 @@ function readyResult({ branch, candidate = null, source, change = null }) {
   if (candidate?.runtimeStateInvalid) {
     return stopResult(branch, 'corrupt-runtime-state', [candidate]);
   }
+  if (candidate?.runtimeState?.status === 'HUMAN_HANDOFF' && candidate.runtimeState.checkpoint?.next === null) {
+    return stopResult(branch, 'terminal-human-handoff', [candidate]);
+  }
   const resolvedChange = candidate?.name || change;
   const checkpoint = candidate ? recoverCheckpoint(candidate) : normalizeCheckpoint();
   return {
@@ -533,6 +537,22 @@ export function resolveRepositoryResume(options = {}) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
+  const humanIndex = process.argv.findIndex((value) => value === '--human-resolved' || value.startsWith('--human-resolved='));
+  if (humanIndex >= 0) {
+    const value = process.argv[humanIndex].includes('=') ? process.argv[humanIndex].split('=').slice(1).join('=') : process.argv[humanIndex + 1];
+    const option = (name) => { const index = process.argv.indexOf(name); return index >= 0 ? process.argv[index + 1] : null; };
+    try {
+      validateChangeName(value);
+      const changePath = join(ROOT, 'openspec', 'changes', value);
+      const state = validateRuntimeState(JSON.parse(await readFile(join(changePath, '.sdd-runtime', 'state.json'), 'utf8')));
+      const authorityPaths = Object.fromEntries(Object.entries(STRANDED_RECOVERY_AUTHORITY_REFERENCES).map(([key, path]) => [key, join(ROOT, path)]));
+      const fingerprints = { ...state.fingerprints, artifacts: state.fingerprints.artifacts };
+      for (const [key, path] of Object.entries(authorityPaths)) fingerprints[key] = (await import('./sdd-runtime.mjs')).sha256(await readFile(path));
+      const result = await recoverHumanVerifyResume({ root: ROOT, change: value, canonicalPath: changePath, expectedSequence: state.sequence, target: 'Verify', authorityRefs: STRANDED_RECOVERY_AUTHORITY_REFERENCES, fingerprints, authorization: { actor: 'HUMAN / MAINTAINER', approval: option('--approval') }, resolution: { blockerId: option('--blocker-id'), blockerClass: option('--blocker-class'), summary: option('--summary'), reference: option('--reference') || null } });
+      process.stdout.write(`${JSON.stringify(result.state)}\n`);
+    } catch (error) { process.stderr.write(`STOP: ${error.message}\n`); process.exitCode = 2; }
+    process.exit();
+  }
   const direct = process.argv.includes('--resolve-direct');
   const result = direct ? resolveRepositoryChangeName() : resolveRepositoryResume();
   if (direct) {

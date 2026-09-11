@@ -18,6 +18,7 @@ export const CANONICAL_ACTIONS = new Set([
 export const STRANDED_RECOVERY_OPERATION = 'RECOVER_STRANDED_CHECKPOINT';
 export const STRANDED_RECOVERY_TARGET = 'Apply 7.3 Feature Implementation';
 export const DISPATCH_MATERIALIZATION_RECOVERY_OPERATION = 'RECOVER_DISPATCH_MATERIALIZATION';
+export const HUMAN_VERIFY_RESUME_OPERATION = 'HUMAN_VERIFY_RESUME';
 export const STRANDED_RECOVERY_AUTHORITY_REFERENCES = Object.freeze({
   workflow: 'docs/SDD-WORKFLOW.md',
   modelMap: '.opencode/sdd-model-map.json',
@@ -32,6 +33,7 @@ const AUTO_CLASSES = new Set([
   'AUTO_RETRY', 'AUTO_REFINE', 'AUTO_RECOVER', 'ENVIRONMENT_RECOVERABLE', 'PROVIDER_FALLBACK',
 ]);
 const RECOVERABLE_HANDOFF_CLASS = 'HUMAN_SCOPE';
+const VERIFY_RESOLVABLE_CLASSES = new Set(['AUTO_RETRY', 'AUTO_RECOVER', 'ENVIRONMENT_RECOVERABLE', 'HUMAN_INFRASTRUCTURE']);
 export const BLOCKER_POLICIES = Object.freeze({
   AUTO_RETRY: { human_required: false, policy: 'RETRY_CURRENT_ACTION' },
   AUTO_REFINE: { human_required: false, policy: 'CANONICAL_REFINEMENT' },
@@ -367,7 +369,7 @@ function validateCheckpoint(checkpoint) {
 
 export function validateRuntimeState(state) {
   assertObject(state, 'state');
-  if (!own(state, new Set(['schemaVersion', 'change', 'canonicalPath', 'status', 'sequence', 'checkpoint', 'fingerprints', 'attempts', 'traceCursor', 'lastTransition']))) fail('unknown state field');
+  if (!own(state, new Set(['schemaVersion', 'change', 'canonicalPath', 'status', 'sequence', 'checkpoint', 'fingerprints', 'attempts', 'traceCursor', 'lastTransition', 'verifyResumeAuthorization']))) fail('unknown state field');
   if (state.schemaVersion !== RUNTIME_SCHEMA_VERSION) fail('unsupported state schema');
   validateChangeName(state.change);
   if (typeof state.canonicalPath !== 'string' || !isAbsolute(state.canonicalPath)) fail('invalid state canonicalPath');
@@ -387,14 +389,24 @@ export function validateRuntimeState(state) {
     assertObject(state.lastTransition, 'lastTransition');
     for (const key of ['inputHash', 'outcomeHash', 'afterStateHash']) assertHash(state.lastTransition[key], `lastTransition.${key}`);
   }
+  if (state.verifyResumeAuthorization !== undefined && state.verifyResumeAuthorization !== null) {
+    assertObject(state.verifyResumeAuthorization, 'verifyResumeAuthorization');
+    if (!own(state.verifyResumeAuthorization, new Set(['sourceSequence', 'sourceEventHash', 'blockerClass', 'blockerId']))) fail('invalid Verify resume authorization');
+    if (!Number.isSafeInteger(state.verifyResumeAuthorization.sourceSequence) || state.verifyResumeAuthorization.sourceSequence < 1) fail('invalid Verify resume authorization sequence');
+    assertHash(state.verifyResumeAuthorization.sourceEventHash, 'verifyResumeAuthorization.sourceEventHash');
+    if (!VERIFY_RESOLVABLE_CLASSES.has(state.verifyResumeAuthorization.blockerClass)) fail('invalid Verify resume blocker class');
+    if (typeof state.verifyResumeAuthorization.blockerId !== 'string' || !state.verifyResumeAuthorization.blockerId.trim() || state.verifyResumeAuthorization.blockerId.length > 200) fail('invalid Verify resume blocker id');
+  }
   return state;
 }
 
 function materialization(state) {
-  return { status: state.status, sequence: state.sequence, checkpoint: state.checkpoint, fingerprints: state.fingerprints, attempts: state.attempts, traceCursor: state.traceCursor, lastTransition: state.lastTransition };
+  const value = { status: state.status, sequence: state.sequence, checkpoint: state.checkpoint, fingerprints: state.fingerprints, attempts: state.attempts, traceCursor: state.traceCursor, lastTransition: state.lastTransition };
+  if (state.verifyResumeAuthorization !== undefined) value.verifyResumeAuthorization = state.verifyResumeAuthorization;
+  return value;
 }
 
-export function createTraceEvent({ change, sequence, action, role, inputHash, outcomeHash, beforeState, afterState, route = { configured: role, resolved: role, rejections: [] }, contextAudit = { bootstrapReadCount: 1, normalPhaseBootstrapReadCount: 0, references: {} }, timestamp = new Date().toISOString(), operation = undefined, previousSequence = undefined, newSequence = undefined, sourceStatus = undefined, target = undefined, authorization = undefined, authorityFingerprints = undefined }) {
+export function createTraceEvent({ change, sequence, action, role, inputHash, outcomeHash, beforeState, afterState, route = { configured: role, resolved: role, rejections: [] }, contextAudit = { bootstrapReadCount: 1, normalPhaseBootstrapReadCount: 0, references: {} }, timestamp = new Date().toISOString(), operation = undefined, previousSequence = undefined, newSequence = undefined, sourceStatus = undefined, target = undefined, authorization = undefined, authorityFingerprints = undefined, resolution = undefined }) {
   validateChangeName(change);
   if (!Number.isSafeInteger(sequence) || sequence < 1 || !CANONICAL_ACTIONS.has(action)) fail('invalid trace sequence or action');
   if (!LOGICAL_ROLES.has(role)) fail('invalid trace role');
@@ -402,10 +414,11 @@ export function createTraceEvent({ change, sequence, action, role, inputHash, ou
   validateRuntimeState(beforeState); validateRuntimeState(afterState);
   const event = { schemaVersion: TRACE_SCHEMA_VERSION, sequence, idempotencyKey: sha256(`${change}${sequence}${action}${inputHash}`), previousEventHash: beforeState.traceCursor.eventHash, chainHash: '', change, action, role, inputHash, outcomeHash, route, beforeStateHash: hashObject(materialization(beforeState)), afterStateHash: hashObject(materialization(afterState)), stateMaterialization: materialization(afterState), contextAudit, timestamp };
   if (operation !== undefined) {
-    if (![STRANDED_RECOVERY_OPERATION, DISPATCH_MATERIALIZATION_RECOVERY_OPERATION].includes(operation)
+     if (![STRANDED_RECOVERY_OPERATION, DISPATCH_MATERIALIZATION_RECOVERY_OPERATION, HUMAN_VERIFY_RESUME_OPERATION].includes(operation)
       || role !== 'HUMAN' || action !== target
       || (operation === STRANDED_RECOVERY_OPERATION && target !== STRANDED_RECOVERY_TARGET)
-      || (operation === DISPATCH_MATERIALIZATION_RECOVERY_OPERATION && target !== 'Apply 7.5 Testing')) fail('invalid recovery trace operation');
+      || (operation === DISPATCH_MATERIALIZATION_RECOVERY_OPERATION && target !== 'Apply 7.5 Testing')
+      || (operation === HUMAN_VERIFY_RESUME_OPERATION && target !== 'Verify')) fail('invalid recovery trace operation');
     if (previousSequence !== sequence - 1 || newSequence !== sequence || sourceStatus !== 'HUMAN_HANDOFF') fail('invalid recovery trace sequence');
     validateRecoveryAuthorization(authorization);
     assertObject(authorityFingerprints, 'authorityFingerprints');
@@ -413,6 +426,7 @@ export function createTraceEvent({ change, sequence, action, role, inputHash, ou
     assertObject(authorityFingerprints.artifacts, 'authorityFingerprints.artifacts');
     for (const hash of Object.values(authorityFingerprints.artifacts)) assertHash(hash, 'authority artifact fingerprint');
     Object.assign(event, { operation, previousSequence, newSequence, sourceStatus, target, authorization, authorityFingerprints });
+    if (operation === HUMAN_VERIFY_RESUME_OPERATION) event.resolution = resolution;
   }
   event.eventHash = sha256(Object.fromEntries(Object.entries(event).filter(([key]) => !['eventHash', 'chainHash'].includes(key))));
   event.chainHash = sha256(`${beforeState.traceCursor.chainHash || 'genesis'}${event.eventHash}`);
@@ -534,6 +548,7 @@ export function dispatchUntilTerminal({ state, outcomes = [], execute = null, pr
       const artifact = actualBlockedOutcome ? validatedRawOutcome.checkpointArtifact : current.checkpoint.artifact;
       const inputHash = rawInputHash;
       current = validateRuntimeState({ ...current, status: 'HUMAN_HANDOFF', sequence: current.sequence + 1, checkpoint: { phase, artifact, verdict: 'BLOCKED', next: null }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { idempotencyKey: idempotencyKey(current.change, current.sequence + 1, current.checkpoint.next || 'HUMAN_HANDOFF', inputHash), action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF', blocker: outcome.blocker }) } });
+      if (outcome.action === 'Verify' && current.verifyResumeAuthorization !== undefined) current = validateRuntimeState({ ...current, verifyResumeAuthorization: null });
       return { status: current.status, state: current, duplicate, blocker: outcome.blocker };
     }
     const inputHash = hashObject(outcome);
@@ -544,13 +559,17 @@ export function dispatchUntilTerminal({ state, outcomes = [], execute = null, pr
     }
     const transition = selectNextTransition(current, outcome, projection);
     if (transition.kind === 'human' || transition.kind === 'terminal') {
-      current = validateRuntimeState({ ...current, status: 'HUMAN_HANDOFF', sequence: current.sequence + 1, checkpoint: { phase: outcome.action, artifact: outcome.checkpointArtifact, verdict: outcome.status === 'PASS' ? 'PASS' : 'BLOCKED', next: null }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { idempotencyKey: key, action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF' }) } });
+       current = validateRuntimeState({ ...current, status: 'HUMAN_HANDOFF', sequence: current.sequence + 1, checkpoint: { phase: outcome.action, artifact: outcome.checkpointArtifact, verdict: outcome.status === 'PASS' ? 'PASS' : 'BLOCKED', next: null }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null }, lastTransition: { idempotencyKey: key, action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ status: 'HUMAN_HANDOFF' }) } });
+       if (outcome.action === 'Verify' && current.verifyResumeAuthorization !== undefined) current = validateRuntimeState({ ...current, verifyResumeAuthorization: null });
       return { status: current.status, state: current, duplicate, blocker: transition.blocker };
     }
     if (outcome.status !== 'PASS' || (current.attempts[outcome.action] || 0) < 2) {
       current = recordAttempt(current, outcome.action);
     }
     current = validateRuntimeState({ ...current, sequence: current.sequence + 1, checkpoint: { phase: outcome.action, artifact: outcome.checkpointArtifact, verdict: outcome.status, next: transition.action }, lastTransition: { idempotencyKey: key, action: outcome.action, inputHash, outcomeHash: hashObject(outcome), afterStateHash: hashObject({ action: transition.action }) }, traceCursor: { sequence: current.sequence + 1, eventHash: null, chainHash: null } });
+    if (outcome.action === 'Verify' && current.verifyResumeAuthorization) {
+      current = validateRuntimeState({ ...current, verifyResumeAuthorization: null });
+    }
   }
   fail('dispatch transition limit exceeded');
 }
@@ -746,9 +765,10 @@ function validateRecoveryAuthorities(authorityRefs) {
 function validateRecoveryTraceMetadata(event, previous = null) {
   const stranded = event.operation === STRANDED_RECOVERY_OPERATION;
   const materialization = event.operation === DISPATCH_MATERIALIZATION_RECOVERY_OPERATION;
-  if ((!stranded && !materialization) || event.role !== 'HUMAN' || event.action !== event.target || event.sourceStatus !== 'HUMAN_HANDOFF'
+  const verifyResume = event.operation === HUMAN_VERIFY_RESUME_OPERATION;
+  if ((!stranded && !materialization && !verifyResume) || event.role !== 'HUMAN' || event.action !== event.target || event.sourceStatus !== 'HUMAN_HANDOFF'
     || event.previousSequence !== event.sequence - 1 || event.newSequence !== event.sequence) fail('invalid recovery trace metadata');
-  if ((stranded && event.target !== STRANDED_RECOVERY_TARGET) || (materialization && event.target !== 'Apply 7.5 Testing')) fail('invalid recovery trace target');
+  if ((stranded && event.target !== STRANDED_RECOVERY_TARGET) || (materialization && event.target !== 'Apply 7.5 Testing') || (verifyResume && event.target !== 'Verify')) fail('invalid recovery trace target');
   validateRecoveryAuthorization(event.authorization);
   assertObject(event.authorityFingerprints, 'authorityFingerprints');
   if (canonicalJson(Object.keys(event.authorityFingerprints).sort()) !== canonicalJson(['artifacts', ...recoveryAuthorityKeys].sort())) fail('ambiguous recovery authority fingerprints');
@@ -759,16 +779,28 @@ function validateRecoveryTraceMetadata(event, previous = null) {
   if (!event.contextAudit || event.contextAudit.operation !== event.operation
     || canonicalJson(event.contextAudit.references) !== canonicalJson(STRANDED_RECOVERY_AUTHORITY_REFERENCES)) fail('recovery context provenance mismatch');
   if (event.stateMaterialization.status !== 'READY' || event.stateMaterialization.checkpoint?.phase !== event.target
-    || event.stateMaterialization.checkpoint?.verdict !== 'BLOCKED' || event.stateMaterialization.checkpoint?.next !== event.target) fail('invalid recovery after state');
+     || event.stateMaterialization.checkpoint?.verdict !== 'BLOCKED' || event.stateMaterialization.checkpoint?.next !== event.target) fail('invalid recovery after state');
+  if (verifyResume) {
+    const resolution = event.resolution;
+    if (!resolution || !own(resolution, new Set(['blockerId', 'blockerClass', 'summary', 'reference']))
+      || typeof resolution.blockerId !== 'string' || !resolution.blockerId.trim() || resolution.blockerId.length > 200
+      || !VERIFY_RESOLVABLE_CLASSES.has(resolution.blockerClass)
+      || typeof resolution.summary !== 'string' || !resolution.summary.trim() || resolution.summary.length > 500
+      || (resolution.reference !== null && (typeof resolution.reference !== 'string' || resolution.reference.length > 300))) fail('invalid Verify resolution provenance');
+    const authorization = event.stateMaterialization.verifyResumeAuthorization;
+    if (!authorization || authorization.sourceSequence !== event.previousSequence
+      || authorization.sourceEventHash !== event.previousEventHash || authorization.blockerId !== resolution.blockerId) fail('Verify resolution authorization mismatch');
+  }
   if (previous) {
     if (previous.change !== event.change || previous.sequence !== event.previousSequence
       || previous.stateMaterialization.status !== 'HUMAN_HANDOFF'
-       || previous.stateMaterialization.checkpoint?.phase !== (stranded ? STRANDED_RECOVERY_TARGET : 'Apply 7.4 Integration')
+       || previous.stateMaterialization.checkpoint?.phase !== (stranded ? STRANDED_RECOVERY_TARGET : materialization ? 'Apply 7.4 Integration' : 'Verify')
       || previous.stateMaterialization.checkpoint?.verdict !== 'BLOCKED'
       || previous.stateMaterialization.checkpoint?.next !== null
       || previous.stateMaterialization.checkpoint?.artifact !== event.stateMaterialization.checkpoint?.artifact
       || canonicalJson(previous.stateMaterialization.attempts) !== canonicalJson(event.stateMaterialization.attempts)
-      || canonicalJson(previous.stateMaterialization.fingerprints) !== canonicalJson(event.authorityFingerprints)) fail('invalid recovery source provenance');
+       || canonicalJson(previous.stateMaterialization.fingerprints) !== canonicalJson(event.authorityFingerprints)) fail('invalid recovery source provenance');
+    if (verifyResume && (previous.action !== 'Verify' || previous.stateMaterialization.checkpoint?.phase !== 'Verify' || previous.stateMaterialization.checkpoint?.verdict !== 'BLOCKED')) fail('Verify resolution source provenance mismatch');
   }
 }
 
@@ -855,6 +887,63 @@ async function readTrace(changePath) {
     events.push(event);
   }
   return validateTraceSequence(events);
+}
+
+function validateHumanVerifyResumeRequest(input) {
+  assertObject(input, 'Verify resume request');
+  const allowed = new Set(['root', 'change', 'canonicalPath', 'expectedSequence', 'target', 'authorityRefs', 'fingerprints', 'authorization', 'resolution']);
+  if (!own(input, allowed)) fail('unknown Verify resume request field');
+  if (input.target !== 'Verify') fail('invalid Verify resume target');
+  if (!Number.isSafeInteger(input.expectedSequence) || input.expectedSequence < 1) fail('invalid Verify resume sequence');
+  validateRecoveryAuthorization(input.authorization);
+  validateRecoveryAuthorities(input.authorityRefs);
+  assertObject(input.resolution, 'Verify resolution');
+  if (!own(input.resolution, new Set(['blockerId', 'blockerClass', 'summary', 'reference']))) fail('invalid Verify resolution');
+  if (typeof input.resolution.blockerId !== 'string' || !input.resolution.blockerId.trim() || input.resolution.blockerId.length > 200) fail('invalid Verify resolution blocker id');
+  if (!VERIFY_RESOLVABLE_CLASSES.has(input.resolution.blockerClass) || typeof input.resolution.summary !== 'string' || !input.resolution.summary.trim() || input.resolution.summary.length > 500 || (input.resolution.reference !== null && (typeof input.resolution.reference !== 'string' || input.resolution.reference.length > 300))) fail('invalid Verify resolution');
+  const identity = validateIdentity({ root: input.root, change: input.change, canonicalPath: input.canonicalPath });
+  assertObject(input.fingerprints, 'fingerprints');
+  if (canonicalJson(Object.keys(input.fingerprints).sort()) !== canonicalJson(['artifacts', ...recoveryAuthorityKeys].sort())) fail('ambiguous Verify resume fingerprints');
+  for (const key of recoveryAuthorityKeys) assertHash(input.fingerprints[key], `fingerprints.${key}`);
+  assertObject(input.fingerprints.artifacts, 'fingerprints.artifacts');
+  for (const hash of Object.values(input.fingerprints.artifacts)) assertHash(hash, 'artifact fingerprint');
+  return identity;
+}
+
+/** Reopen exactly one exhausted Verify handoff after explicit HUMAN resolution. */
+export async function recoverHumanVerifyResume(input = {}) {
+  const identity = validateHumanVerifyResumeRequest(input);
+  const { change, expectedSequence, authorityRefs, fingerprints, authorization, resolution } = input;
+  const runtimePath = join(identity.changePath, '.sdd-runtime');
+  const lockPath = join(runtimePath, 'human-verify-resume.lock');
+  let lock;
+  try { lock = await open(lockPath, 'wx', 0o600); } catch (error) { if (error.code === 'EEXIST') fail('concurrent Verify resume request'); throw error; }
+  try {
+    const state = validateRuntimeState(JSON.parse(await readFile(join(runtimePath, 'state.json'), 'utf8')));
+    if (state.change !== change || state.canonicalPath !== identity.changePath || state.sequence !== expectedSequence || state.status !== 'HUMAN_HANDOFF') fail('stale Verify resume checkpoint');
+    if (state.checkpoint.phase !== 'Verify' || state.checkpoint.verdict !== 'BLOCKED' || state.checkpoint.next !== null || (state.attempts.Verify || 0) < 2) fail('Verify resume requires exhausted terminal handoff');
+    if (state.verifyResumeAuthorization !== undefined && state.verifyResumeAuthorization !== null) fail('Verify resume authorization already pending');
+    if (canonicalJson(state.fingerprints) !== canonicalJson(fingerprints)) fail('Verify resume fingerprint mismatch');
+    const actual = await fingerprintFiles(Object.values(authorityRefs).map((path) => join(identity.root, path)));
+    const actualByKey = Object.fromEntries(Object.entries(authorityRefs).map(([key, path]) => [key, actual[join(identity.root, path)]]));
+    if (canonicalJson(actualByKey) !== canonicalJson(Object.fromEntries([...recoveryAuthorityKeys].map((key) => [key, fingerprints[key]])))) fail('authority fingerprint mismatch');
+    const events = await readTrace(identity.changePath);
+    if (events.length !== expectedSequence || events.at(-1)?.sequence !== expectedSequence) fail('Verify resume trace sequence mismatch');
+    const handoff = events.at(-1);
+    const blockedVerifies = events.filter((event) => event.action === 'Verify' && event.stateMaterialization.checkpoint?.phase === 'Verify' && event.stateMaterialization.checkpoint?.verdict === 'BLOCKED');
+    if (handoff.action !== 'Verify' || handoff.stateMaterialization.status !== 'HUMAN_HANDOFF' || handoff.stateMaterialization.checkpoint?.next !== null || blockedVerifies.length < 2) fail('Verify resume source provenance mismatch');
+    if (canonicalJson(materialization({ ...handoff.stateMaterialization, schemaVersion: 2, change, canonicalPath: identity.changePath, traceCursor: { sequence: handoff.sequence, eventHash: handoff.eventHash, chainHash: handoff.chainHash } })) !== canonicalJson(materialization(state))) fail('state and Verify handoff materialization mismatch');
+    if (state.traceCursor.eventHash !== handoff.eventHash || state.traceCursor.chainHash !== handoff.chainHash) fail('state and Verify handoff cursor mismatch');
+
+    const after = validateRuntimeState({ ...state, status: 'READY', sequence: expectedSequence + 1,
+      checkpoint: { phase: 'Verify', artifact: state.checkpoint.artifact, verdict: 'BLOCKED', next: 'Verify' },
+      verifyResumeAuthorization: { sourceSequence: expectedSequence, sourceEventHash: handoff.eventHash, blockerClass: resolution.blockerClass, blockerId: resolution.blockerId },
+      traceCursor: { sequence: expectedSequence + 1, eventHash: null, chainHash: null },
+      lastTransition: { inputHash: hashObject({ operation: HUMAN_VERIFY_RESUME_OPERATION, change, expectedSequence, resolution, authorization }), outcomeHash: hashObject({ operation: HUMAN_VERIFY_RESUME_OPERATION, sourceEventHash: handoff.eventHash, resolution }), afterStateHash: hashObject({ operation: HUMAN_VERIFY_RESUME_OPERATION, target: 'Verify' }) } });
+    const event = createTraceEvent({ change, sequence: after.sequence, action: 'Verify', role: 'HUMAN', inputHash: after.lastTransition.inputHash, outcomeHash: after.lastTransition.outcomeHash, beforeState: state, afterState: after, operation: HUMAN_VERIFY_RESUME_OPERATION, previousSequence: expectedSequence, newSequence: after.sequence, sourceStatus: 'HUMAN_HANDOFF', target: 'Verify', authorization, authorityFingerprints: state.fingerprints, resolution, contextAudit: { bootstrapReadCount: 1, normalPhaseBootstrapReadCount: 0, references: authorityRefs, operation: HUMAN_VERIFY_RESUME_OPERATION, actor: authorization.actor, approval: authorization.approval } });
+    validateTraceSequence([...events, event]);
+    return { ...(await persistTransition({ changePath: identity.changePath, event, state: after })), state: validateRuntimeState({ ...after, traceCursor: { sequence: event.sequence, eventHash: event.eventHash, chainHash: event.chainHash } }), event };
+  } finally { await lock.close(); await unlink(lockPath).catch(() => {}); }
 }
 
 /**

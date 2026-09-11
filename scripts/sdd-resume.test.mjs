@@ -329,6 +329,13 @@ describe('/sdd-resume resolution', () => {
     assert.equal(result.reason, 'corrupt-runtime-state');
   });
 
+  test('plain resume does not reopen a terminal HUMAN handoff', () => {
+    const state = buildInitialState({ root: '/repo', change: 'terminal-change', fingerprints: { workflow: 'a'.repeat(64), modelMap: 'b'.repeat(64), config: 'c'.repeat(64) } });
+    const result = resolveResume({ branch: 'fix/terminal-change', activeChanges: [{ name: 'terminal-change', runtimeState: { ...state, status: 'HUMAN_HANDOFF', checkpoint: { phase: 'Verify', artifact: 'verify-report.md', verdict: 'BLOCKED', next: null } } }] });
+    assert.equal(result.status, 'STOP');
+    assert.equal(result.reason, 'terminal-human-handoff');
+  });
+
   test('Direct and Resume commands declare runtime bootstrap and autonomous dispatch boundaries', () => {
     const direct = readFileSync(new URL('../.opencode/commands/sdd-direct.md', import.meta.url), 'utf8');
     const resume = readFileSync(new URL('../.opencode/commands/sdd-resume.md', import.meta.url), 'utf8');
