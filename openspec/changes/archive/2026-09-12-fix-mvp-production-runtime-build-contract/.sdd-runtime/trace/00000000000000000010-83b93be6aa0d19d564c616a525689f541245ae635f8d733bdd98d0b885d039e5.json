@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "sequence": 10,
+  "idempotencyKey": "c9364b6f5b1b48564939a9b3bbd5bdf5b9122ba288423bc59b0a4490f6bfd530",
+  "previousEventHash": "7fc2f5e5683dce6f4196bcb9a85f08483f5c91cf0d04acc4b34873d8e98381f5",
+  "chainHash": "7aec3dfe90fe669fbf9f370f2eeb641057d8968102d23a81c4e039f689ebff8c",
+  "change": "fix-mvp-production-runtime-build-contract",
+  "action": "Apply 7.5 Testing",
+  "role": "MID",
+  "inputHash": "3c677c4cd84700809a7e0e1482ce2e4f2689c1837b21db7ec01d7410e19915f0",
+  "outcomeHash": "3c677c4cd84700809a7e0e1482ce2e4f2689c1837b21db7ec01d7410e19915f0",
+  "route": {
+    "configured": "MID",
+    "resolved": "MID",
+    "rejections": []
+  },
+  "beforeStateHash": "6491780556886923e8127e238e03ea9c2e89eb666dfd7819364ebfbf5c7eb25f",
+  "afterStateHash": "312bc083a3e64ef1a4622b054df40bd0c843546e79040626f4a17fbadc8d0505",
+  "stateMaterialization": {
+    "status": "READY",
+    "sequence": 10,
+    "checkpoint": {
+      "phase": "Apply 7.5 Testing",
+      "artifact": "apply-7.5-testing.md",
+      "verdict": "PASS",
+      "next": "Apply 7.6 Apply Summary"
+    },
+    "fingerprints": {
+      "artifacts": {},
+      "workflow": "98aa565a1dc874571df48469dc423e23c59ad060d3f5d6b378fff8e771d56181",
+      "modelMap": "6416ad479213ce7e039bbcf048ffe5321510ce6a71c0fd0f2328a79253b88935",
+      "config": "09e58a7ff63cabe4ace41dac924ccba1fe64ca55eed0bf7cf415cf9c054326b1"
+    },
+    "attempts": {
+      "Design": 1,
+      "Architecture Review": 1,
+      "Tasks": 1,
+      "Tasks Review": 1,
+      "Workload Guard": 1,
+      "Apply 7.1 Foundation": 1,
+      "Apply 7.2 Core Engine": 1,
+      "Apply 7.3 Feature Implementation": 1,
+      "Apply 7.4 Integration": 1,
+      "Apply 7.5 Testing": 1
+    },
+    "traceCursor": {
+      "sequence": 10,
+      "eventHash": null,
+      "chainHash": null
+    },
+    "lastTransition": {
+      "idempotencyKey": "c9364b6f5b1b48564939a9b3bbd5bdf5b9122ba288423bc59b0a4490f6bfd530",
+      "action": "Apply 7.5 Testing",
+      "inputHash": "3c677c4cd84700809a7e0e1482ce2e4f2689c1837b21db7ec01d7410e19915f0",
+      "outcomeHash": "3c677c4cd84700809a7e0e1482ce2e4f2689c1837b21db7ec01d7410e19915f0",
+      "afterStateHash": "52efe5bfb555a057c666b83c503f79ea8fdff9ca22fae06d6fe23aeffbe283eb"
+    }
+  },
+  "contextAudit": {
+    "bootstrapReadCount": 1,
+    "normalPhaseBootstrapReadCount": 0,
+    "references": {
+      "workflow": "docs/SDD-WORKFLOW.md",
+      "modelMap": ".opencode/sdd-model-map.json",
+      "config": "openspec/config.yaml"
+    }
+  },
+  "timestamp": "2026-09-12T09:00:33.384Z",
+  "eventHash": "83b93be6aa0d19d564c616a525689f541245ae635f8d733bdd98d0b885d039e5"
+}

@@ -7,14 +7,18 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY apps/tenant-web/package.json apps/tenant-web/
 COPY packages/shared/package.json packages/shared/
+COPY packages/ui/package.json packages/ui/
 RUN pnpm install --frozen-lockfile
 
 # Build
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/tenant-web/node_modules ./apps/tenant-web/node_modules
+COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=deps /app/packages/ui/node_modules ./packages/ui/node_modules
 COPY --from=deps /app/pnpm-lock.yaml ./
 COPY . .
-RUN cd apps/tenant-web && npx next build
+RUN pnpm --filter tenant-web build
 
 # Production
 FROM node:20-alpine AS runner
@@ -25,8 +29,6 @@ RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/tenant-web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/tenant-web/.next/static ./apps/tenant-web/.next/static
-# No public directory yet — create if needed later
-# COPY --from=builder --chown=nextjs:nodejs /app/apps/tenant-web/public ./apps/tenant-web/public
 
 USER nextjs
 ENV NODE_ENV=production
