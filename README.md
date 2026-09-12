@@ -88,6 +88,25 @@ Turborepo levantará las apps en paralelo:
 
 > Los puertos pueden ajustarse en las variables de entorno de cada app.
 
+## Producción
+
+The production profile exposes only Caddy on ports 80 and 443. The API,
+tenant web, PostgreSQL, and Redis services remain private to the Compose
+network or bind data ports to loopback.
+
+1. Create an external `.env` from `.env.example` and set production secrets.
+   Do not restore or commit `.env.production`.
+2. Set `DOMAIN=crmmaster.com`, `AUTH_COOKIE_TRANSPORT=https`, and leave
+   `NEXT_PUBLIC_API_URL` empty so browser requests use the same origin.
+3. Start the production topology:
+
+```bash
+docker compose --profile production up -d --build
+```
+
+Caddy routes `/api/*` to the API and all other tenant paths to Tenant Web.
+The production deployment has no admin-web service or public admin path.
+
 ---
 
 ## Scripts principales

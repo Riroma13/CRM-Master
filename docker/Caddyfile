@@ -2,40 +2,16 @@
 # Wildcard TLS: *.crmmaster.com
 # Ajusta el dominio en producción
 
-{$DOMAIN:*.crmmaster.com} {
+{$DOMAIN:crmmaster.com} {
     tls {$LETS_ENCRYPT_EMAIL:admin@crmmaster.com}
 
-    # Admin Web (Mission Control)
-    @admin host admin.crmmaster.com
-    handle @admin {
-        reverse_proxy admin-web:3002
-    }
-
-    # API
-    @api host api.crmmaster.com
-    handle @api {
+    # Tenant API stays same-origin and private behind Caddy.
+    handle_path /api/* {
         reverse_proxy api:3001
     }
 
-    # Tenant Web (cualquier otro subdominio → portal del cliente)
+    # Every remaining path belongs to the tenant web runtime.
     handle {
         reverse_proxy tenant-web:3000
-    }
-}
-
-# Local dev — sin TLS
-:80 {
-    @admin_ dev host admin.localhost
-    handle @admin_ {
-        reverse_proxy host.docker.internal:3002
-    }
-
-    @api_ dev host api.localhost
-    handle @api_ {
-        reverse_proxy host.docker.internal:3001
-    }
-
-    handle {
-        reverse_proxy host.docker.internal:3000
     }
 }
